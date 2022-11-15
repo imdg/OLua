@@ -1,0 +1,10 @@
+extern class coroutine
+    public static func close(co as any) as bool
+    public static func create(f as any) as any
+    public static func isyieldable([co as any]) as bool
+    public static func resume(arg as any, [val as any]) as (bool, any)
+    public static func running() as (any, bool)
+    public static func status(co as any) as string
+    public static func yield(val as any) as any
+    public static func wrap(f as any) as any
+end

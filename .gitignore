@@ -1,0 +1,9 @@
+*
+!.gitignore
+!*/
+!src/**
+!test/**
+!thirdparty/**
+!CMakeLists.txt
+!api/**
+!doc/**
