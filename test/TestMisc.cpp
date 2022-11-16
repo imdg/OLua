@@ -9,8 +9,10 @@
 namespace OL
 {
 
-bool TestWildcard(const TCHAR* Str, const TCHAR* Filter)
+bool TestWildcard(const TCHAR* InStr, const TCHAR* InFilter)
 {
+    TCHAR* Str = (TCHAR*)InStr;
+    TCHAR* Filter = (TCHAR*)InFilter;
     if(*Filter == 0 && *Str == 0)
         return true;
     else if(*Filter == 0 || *Str == 0)

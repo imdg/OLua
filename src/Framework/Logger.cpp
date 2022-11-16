@@ -17,7 +17,7 @@ FILE* GLogFile = nullptr;
 
 void Logger::Init()
 {
-    Env::MakeSavedDir("logs");
+    Env::MakeSavedDir(T("logs"));
 
     OLString Dir = Env::GetSavedDir(T("logs"));
 
@@ -64,7 +64,7 @@ void Logger::Log(ELogLevel Level, int Module, const char* File, int Line, const 
 
     va_list ap;
     va_start(ap, Fmt);
-    Written = vsnprintf(Buffer, CurrSize, Fmt, ap);
+    Written = t_vsnprintf(Buffer, CurrSize, Fmt, ap);
     va_end(ap);
 
     while(Written >= CurrSize - 1)
@@ -73,7 +73,7 @@ void Logger::Log(ELogLevel Level, int Module, const char* File, int Line, const 
         Buffer = (TCHAR*)realloc(Buffer, CurrSize);
         va_list ap2;
         va_start(ap2, Fmt);
-        Written = vsnprintf(Buffer, CurrSize, Fmt, ap2);
+        Written = t_vsnprintf(Buffer, CurrSize, Fmt, ap2);
         va_end(ap2);
     }
     

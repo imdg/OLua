@@ -395,7 +395,7 @@ void TextSerializer::WriteOLMap(void* Data, TypeID KeyType, TypeID ValueType,  b
         if(! ElemType.IsRTTI())
         {
             WriteBaseType(RealData, ElemType);
-            Output->WriteText("\n");
+            Output->WriteText(T("\n"));
         }
         else
         {
@@ -448,28 +448,28 @@ void TextSerializer::DecreaseIndent()
 
 static const TCHAR* StaticIndent[] =
 {
-    "",
-    "    ",
-    "        ",
-    "            ",
-    "                ",
-    "                    ",
-    "                        ",
-    "                            ",
-    "                                ",
-    "                                    ",
-    "                                        ",
-    "                                            ",
-    "                                                ",
-    "                                                    ",
-    "                                                        ",
-    "                                                            ",
-    "                                                                ",
-    "                                                                    ",
-    "                                                                        ",
-    "                                                                            ",
-    "                                                                                ",
-    "                                                                                    ",
+    T(""),
+    T("    "),
+    T("        "),
+    T("            "),
+    T("                "),
+    T("                    "),
+    T("                        "),
+    T("                            "),
+    T("                                "),
+    T("                                    "),
+    T("                                        "),
+    T("                                            "),
+    T("                                                "),
+    T("                                                    "),
+    T("                                                        "),
+    T("                                                            "),
+    T("                                                                "),
+    T("                                                                    "),
+    T("                                                                        "),
+    T("                                                                            "),
+    T("                                                                                "),
+    T("                                                                                    "),
 };
 
 static int StaticIndentLen = 22;
@@ -482,7 +482,7 @@ const TCHAR* TextSerializer::GetIndent()
         OLString IndentText;
         for(int i = 0; i < Indent; i++)
         {
-            IndentText += "    ";
+            IndentText += T("    ");
         }
         static TCHAR Buffer[512];
 

@@ -43,7 +43,7 @@ public:
             TextSerializer ts(&fs);
             for(int i = 0; i < Stats.Count(); i++)
             {
-                fs.WriteFormat("\n---------- STAT: %d -------------------\n", i);
+                fs.WriteFormat(T("\n---------- STAT: %d -------------------\n"), i);
                 ts.WriteRTTI(Stats[i].Get(), &(Stats[i]->GetType()) );
             }
 

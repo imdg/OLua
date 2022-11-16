@@ -10,7 +10,7 @@ class GenCharTab : public Action
 public:
     virtual int Run()
     {
-        OLString Text = "\n";
+        OLString Text = T("\n");
         for(int i = 0; i < 255; i++)
         {
             TCHAR ch = (TCHAR)i;

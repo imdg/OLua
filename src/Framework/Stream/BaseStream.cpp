@@ -13,7 +13,7 @@ void BaseStream::WriteFormat(const TCHAR* Format, ...)
 
     va_list ap;
     va_start(ap, Format);
-    Written = vsnprintf(Buffer, CurrSize, Format, ap);
+    Written = t_vsnprintf(Buffer, CurrSize, Format, ap);
     va_end(ap);
 
     while (Written >= CurrSize - 1)
@@ -22,7 +22,7 @@ void BaseStream::WriteFormat(const TCHAR* Format, ...)
         Buffer = (TCHAR *)realloc(Buffer, CurrSize);
         va_list ap2;
         va_start(ap2, Format);
-        Written = vsnprintf(Buffer, CurrSize, Format, ap2);
+        Written = t_vsnprintf(Buffer, CurrSize, Format, ap2);
         va_end(ap2);
     }
 

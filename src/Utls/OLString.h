@@ -2,6 +2,7 @@
 
 #include <string>
 #include "Defs.h"
+#include "TextEncoding.h"
 #include "OLHash.h"
 namespace OL
 {
@@ -11,7 +12,9 @@ namespace OL
 
     class OLString
     {
+
     public:
+        typedef std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR>> StdStringType;
         OLString();
         OLString(const TCHAR* InStr);
         OLString(const TCHAR* InStr, int Len);
@@ -60,8 +63,10 @@ namespace OL
 
         void Strcpy(TCHAR* Buffer, int Len);
         static int StrCmp(const TCHAR* Str1, const TCHAR* Str2);
+        
     private:
-        std::string InnerStr;
+
+        StdStringType InnerStr;
         friend OLHash<OLString>;
         
     };
@@ -71,7 +76,7 @@ namespace OL
     {
         inline uint64 operator() (const OLString& _Keyval) const
         {
-            return (uint64)std::hash<std::string>()(_Keyval.InnerStr);
+            return (uint64)std::hash<typename OLString::StdStringType>()(_Keyval.InnerStr);
         }
     };
 

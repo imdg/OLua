@@ -622,7 +622,7 @@ AStat* Parser::Parse_FuncDef(bool IsExtern)
             return nullptr;
         }
 
-        if(FuncName != "")
+        if(FuncName != T(""))
         {
             OwnerName.Add(FuncName);
         }

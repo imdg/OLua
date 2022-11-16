@@ -143,7 +143,7 @@ public:
             fprintf(CommonFile, "#pragma once\n");
             for(int i = 0; i < List.Count(); i++)
             {
-                fprintf(CommonFile, "#include \"%s.h\"\n", List[i].ClassName.CStr());
+                fprintf(CommonFile, "#include \"%s.h\"\n", T2A(List[i].ClassName.CStr()));
             }
 
             fclose(CommonFile);
@@ -157,7 +157,7 @@ public:
             fprintf(DeclFile, "#pragma once\n");
             for(int i = 0; i < List.Count(); i++)
             {
-                fprintf(DeclFile, "class %s;\n", List[i].ClassName.CStr());
+                fprintf(DeclFile, "class %s;\n", T2A(List[i].ClassName.CStr()));
             }
 
             fclose(DeclFile);

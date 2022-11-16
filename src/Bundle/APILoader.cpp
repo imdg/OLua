@@ -41,7 +41,7 @@ OLString APILoader::FindAPIPath(OLString UserSpecifiedPath)
 {
     if(UserSpecifiedPath == T(""))
     {
-        return Env::GetBinPath() + "/api";
+        return Env::GetBinPath() + T("/api");
     }
     else
     {

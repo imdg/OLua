@@ -86,9 +86,11 @@ message("WIN32:${WIN32}")
 if ("${WIN32}" EQUAL "1")
 	add_definitions(-DPLATFORM_WIN)
 	add_definitions(-D_AMD64_)
+	add_definitions(-DUSE_WCHAR)
 	message("Apply Windows platform")
 else()
 	add_definitions(-DPLATFORM_UNIX)
+	add_definitions(-DUSE_WCHAR)
 	message("Apply Unix-like platform")
 
 
@@ -103,4 +105,5 @@ set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 #set(CMAKE_CXX_FLAGS "-std=c++14")
 set (CMAKE_CXX_STANDARD 11)
 include(CPack)
+
 

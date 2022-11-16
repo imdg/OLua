@@ -52,7 +52,7 @@ namespace OL
 
     int OLString::StrCmp(const TCHAR* Str1, const TCHAR* Str2)
     {
-        return strcmp(Str1, Str2);
+        return t_strcmp(Str1, Str2);
     }
 
 #define BASE_SIZE 512
@@ -65,7 +65,7 @@ namespace OL
 
         va_list ap;
         va_start(ap, Format);
-        Written = vsnprintf(Buffer, CurrSize, Format, ap);
+        Written = t_vsnprintf(Buffer, CurrSize, Format, ap);
         va_end(ap);
 
         while(Written >= CurrSize - 1)
@@ -74,7 +74,7 @@ namespace OL
             Buffer = (TCHAR*)realloc(Buffer, CurrSize);
             va_list ap2;
             va_start(ap2, Format);
-            Written = vsnprintf(Buffer, CurrSize, Format, ap2);
+            Written = t_vsnprintf(Buffer, CurrSize, Format, ap2);
             va_end(ap2);
         }
 
@@ -91,7 +91,7 @@ namespace OL
 
         va_list ap;
         va_start(ap, Format);
-        Written = vsnprintf(Buffer, CurrSize, Format, ap);
+        Written = t_vsnprintf(Buffer, CurrSize, Format, ap);
         va_end(ap);
 
         while(Written >= CurrSize - 1)
@@ -100,7 +100,7 @@ namespace OL
             Buffer = (TCHAR*)realloc(Buffer, CurrSize);
             va_list ap2;
             va_start(ap2, Format);
-            Written = vsnprintf(Buffer, CurrSize, Format, ap2);
+            Written = t_vsnprintf(Buffer, CurrSize, Format, ap2);
             va_end(ap2);
         }
 
@@ -176,7 +176,7 @@ namespace OL
 
     void OLString::Strcpy(TCHAR* Buffer, int Len)
     {
-        strncpy(Buffer, InnerStr.c_str(), Len);
+        t_strncpy(Buffer, InnerStr.c_str(), Len);
     }
 
     int OLString::FindSubstr(const TCHAR* Str) const
@@ -202,7 +202,7 @@ namespace OL
 
     OLString& OLString::Replace(const TCHAR* From, const TCHAR* To)
     {
-        int Len = strlen(From);
+        int Len = t_strlen(From);
         size_t pos = 0;
         while((pos = InnerStr.find_first_of(From)) != std::string::npos)
         {

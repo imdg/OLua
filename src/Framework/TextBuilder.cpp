@@ -114,7 +114,7 @@ TextParagraph& TextParagraph::IndentDec()
 
 TextParagraph& TextParagraph::NewLine()
 {
-    return Append("\n");
+    return Append(T("\n"));
 }
 
 TextParagraph& TextParagraph::Hold(void* PtrData, int IntData)
@@ -255,7 +255,7 @@ TextParagraph& TextParagraph::AppendF(const TCHAR* Fmt, ...)
 
     va_list ap;
     va_start(ap, Fmt);
-    Written = vsnprintf(Buffer, CurrSize, Fmt, ap);
+    Written = t_vsnprintf(Buffer, CurrSize, Fmt, ap);
     va_end(ap);
 
     while(Written >= CurrSize - 1)
@@ -264,7 +264,7 @@ TextParagraph& TextParagraph::AppendF(const TCHAR* Fmt, ...)
         Buffer = (TCHAR*)realloc(Buffer, CurrSize);
         va_list ap2;
         va_start(ap2, Fmt);
-        Written = vsnprintf(Buffer, CurrSize, Fmt, ap2);
+        Written = t_vsnprintf(Buffer, CurrSize, Fmt, ap2);
         va_end(ap2);
     }
 
@@ -378,7 +378,7 @@ const TCHAR* TextBuilder::GetIndentText(int Indent)
         OLString IndentText;
         for(int i = 0; i < Indent; i++)
         {
-            IndentText += "    ";
+            IndentText += T("    ");
         }
         static TCHAR Buffer[512];
 

@@ -93,9 +93,9 @@ OLString Env::FileNameFromPath(OLString Path)
 void Env::InitEnv()
 {
 #ifdef PLATFORM_WIN
-    char path[MAX_PATH];
-    ::GetModuleFileNameA(nullptr, path, MAX_PATH);
-    BinPath = path;
+    wchar_t path[MAX_PATH];
+    ::GetModuleFileNameW(nullptr, path, MAX_PATH);
+    BinPath = W2T(path);
     BinPath = NormalizePath(BinPath, true);
 
     if(CmdConfig::GetInst()->HasParam(T("--saved")))
@@ -123,8 +123,8 @@ void Env::InitEnv()
     }
 
     
-    ::GetCurrentDirectoryA(MAX_PATH, path);
-    SysCurrDir = path;
+    ::GetCurrentDirectoryW(MAX_PATH, path);
+    SysCurrDir = W2T(path);
     
 #else
     // to do
@@ -136,9 +136,9 @@ OLString Env::FullPath(OLString RelativePath)
 {
 
 #ifdef PLATFORM_WIN
-    char path[MAX_PATH];
-    _fullpath(path, RelativePath.CStr(), MAX_PATH);
-    return NormalizePath(path, false);
+    wchar_t path[MAX_PATH];
+    _wfullpath(path, T2W(RelativePath.CStr()), MAX_PATH);
+    return NormalizePath(W2T(path), false);
 #else
     OL_ASSERT(0 && "to be implemented on this platform");
 #endif
@@ -154,10 +154,10 @@ void Env::MakeDir(const OLString& AbsPath)
         if(AbsPath[Pos] == C('\\') || AbsPath[Pos] == C('/') )
         {
             OLString Partial = AbsPath.Sub(0, Pos);
-            CreateDirectoryA(T2A(Partial.CStr()), nullptr);
+            CreateDirectoryW(T2W(Partial.CStr()), nullptr);
         }
     }
-    CreateDirectoryA(T2A(AbsPath.CStr()), nullptr);
+    CreateDirectoryW(T2W(AbsPath.CStr()), nullptr);
 
 #else
 // to do
@@ -222,7 +222,7 @@ OLString Env::MakeReletivePath(OLString Root, OLString Path)
 void Env::IterateFileInDir(OLString DirPath, bool Recursive, OLFunc<void(OLString Path, bool IsDir)> Callback)
 {
 #ifdef PLATFORM_WIN
-    WIN32_FIND_DATAA FindFileData;
+    WIN32_FIND_DATAW FindFileData;
     HANDLE hFind = INVALID_HANDLE_VALUE;
     OLString SearchPathName = DirPath;
     for(int i = 0; i < DirPath.Len(); i++)
@@ -231,7 +231,7 @@ void Env::IterateFileInDir(OLString DirPath, bool Recursive, OLFunc<void(OLStrin
             SearchPathName[i] = C('\\');
     }
     SearchPathName.Append(T("\\*"));
-    hFind = FindFirstFileA(SearchPathName.CStr(), &FindFileData); 
+    hFind = FindFirstFileW(T2W(SearchPathName.CStr()), &FindFileData); 
 
     if (hFind == INVALID_HANDLE_VALUE)
     {
@@ -240,9 +240,9 @@ void Env::IterateFileInDir(OLString DirPath, bool Recursive, OLFunc<void(OLStrin
     }
     else
     {
-        while (FindNextFileA(hFind, &FindFileData) != 0)
+        while (FindNextFileW(hFind, &FindFileData) != 0)
         {
-            OLString FileLocalName = FindFileData.cFileName;
+            OLString FileLocalName = W2T(FindFileData.cFileName);
             bool IsDir = (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
             if ( IsDir && (FileLocalName == T(".") || FileLocalName == T("..")) )
                 continue;
@@ -274,7 +274,7 @@ OLString Env::ToAbsPath(OLString AnyPath)
 {
     if(AnyPath.IsRelativePath())
     {
-        return SysCurrDir + "/" + AnyPath;
+        return SysCurrDir + T("/") + AnyPath;
     }
     else
     {

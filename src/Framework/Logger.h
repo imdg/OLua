@@ -1,5 +1,5 @@
 #include "Defs.h"
-
+#include "TextEncoding.h"
 namespace OL
 {
 

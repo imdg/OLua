@@ -1316,7 +1316,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AForList> Node)
 
     CurrText->Append(T(" in ")).Merge(IterText).Append(T(" do")).NewLine()
         .Merge(FromTop(Index, Node->VarList.Count() + 1))
-        .Indent().Append("end").NewLine();
+        .Indent().Append(T("end")).NewLine();
 
     ContentStack.PopTo(Index);
     return VS_Continue;
@@ -1346,7 +1346,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AForNum> Node)
     }
     CurrText->Append(T(" do")).NewLine()
         .Merge(FromTop(Index, MainBlockIndex))
-        .Indent().Append("end").NewLine();
+        .Indent().Append(T("end")).NewLine();
 
     ContentStack.PopTo(Index);
     return VS_Continue;

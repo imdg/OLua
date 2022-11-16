@@ -105,24 +105,24 @@ EBinOp ASubexpr::ConvertBinOp(ETokenType Tk)
 // Do not change the order, must match the enum definition
 BinOpInfo GBinOpData[] = 
 {
-    {BO_Add, 10, true, "+"},
-    {BO_Sub, 10, true, "-"},
-    {BO_Mul, 11, true, "*"},
-    {BO_Div, 11, true, "/"},
-    {BO_IDiv, 11, true, "//"},
-    {BO_Cat, 9, false, ".."},
-    {BO_And, 2, true, "and"},
-    {BO_Or, 1, true, "or"},
-    {BO_ShiftL, 7, true, "<<"},
-    {BO_ShiftR, 7, true, ">>"},
-    {BO_Greater, 3, true, ">"},
-    {BO_Less, 3, true, "<"},
-    {BO_GreaterEqual, 3, true, ">="},
-    {BO_LessEqual, 3, true, "<="},
-    {BO_Power, 14, false, "^"},
-    {BO_NotEqual, 3, true, "~="},
-    {BO_Equal, 3, true, "=="},
-    { BO_None, 0, false, ""}
+    {BO_Add, 10, true, T("+")},
+    {BO_Sub, 10, true, T("-")},
+    {BO_Mul, 11, true, T("*")},
+    {BO_Div, 11, true, T("/")},
+    {BO_IDiv, 11, true, T("//")},
+    {BO_Cat, 9, false, T("..")},
+    {BO_And, 2, true, T("and")},
+    {BO_Or, 1, true, T("or")},
+    {BO_ShiftL, 7, true, T("<<")},
+    {BO_ShiftR, 7, true, T(">>")},
+    {BO_Greater, 3, true, T(">")},
+    {BO_Less, 3, true, T("<")},
+    {BO_GreaterEqual, 3, true, T(">=")},
+    {BO_LessEqual, 3, true, T("<=")},
+    {BO_Power, 14, false, T("^")},
+    {BO_NotEqual, 3, true, T("~=")},
+    {BO_Equal, 3, true, T("==")},
+    { BO_None, 0, false, T("")}
 };
 
 
@@ -155,10 +155,10 @@ int ASubexpr::GetBinOpPrio()
 
 const TCHAR* ASubexpr::UniopToString(EUniOp Op)
 {
-    if(Op == UO_Minus)      return "-";
-    if(Op == UO_Length)      return "#";
-    if(Op == UO_Not)      return "not";
-    if(Op == UO_BNot)      return "~";
+    if(Op == UO_Minus)      return T("-");
+    if(Op == UO_Length)      return T("#");
+    if(Op == UO_Not)      return T("not");
+    if(Op == UO_BNot)      return T("~");
 
     return nullptr;
 

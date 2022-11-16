@@ -113,7 +113,7 @@ public:
     virtual int Run()
     {
         ProjectCollector::DirInfo& NewDir = GProject.Dirs.AddConstructed();
-        if(Cmd().HasKey("--path") == false)
+        if(Cmd().HasKey(T("--path")) == false)
         {
             ERROR(LogProjecct, T("'--path' is required"));
             return -1;
@@ -123,48 +123,48 @@ public:
         NewDir.OutPath = NewDir.DirPath + T("/output");
         NewDir.IntermediatePath = NewDir.DirPath + T("/intermediate");
 
-        if(Cmd().HasKey("--out") != false)
+        if(Cmd().HasKey(T("--out")) != false)
         {
             NewDir.OutPath = GetFullPathForAction(WorkingDirectory, Cmd().GetFirstParam(T("--out")));
             NewDir.IntermediatePath = NewDir.OutPath + T("/intermediate");
         }
 
-        if(Cmd().HasKey("--intermediate") != false)
+        if(Cmd().HasKey(T("--intermediate")) != false)
         {
             NewDir.IntermediatePath = GetFullPathForAction(WorkingDirectory, Cmd().GetFirstParam(T("--intermediate")));
         }
 
-        if(Cmd().HasKey("--filter") != false)
+        if(Cmd().HasKey(T("--filter")) != false)
             NewDir.FileFilter = Cmd().GetFirstParam(T("--filter"));
         else
             NewDir.FileFilter = T("*.olu");
 
-        if(Cmd().HasKey("--no_subdir"))
+        if(Cmd().HasKey(T("--no_subdir")))
             NewDir.IncludeSubDir = false;
         else
             NewDir.IncludeSubDir = true;
 
-        if(Cmd().HasKey("--id_ext"))
+        if(Cmd().HasKey(T("--id_ext")))
             NewDir.IncludeExt = true;
         else
             NewDir.IncludeExt = false;
 
-        if(Cmd().HasKey("--id_splitter"))
+        if(Cmd().HasKey(T("--id_splitter")))
             NewDir.PathSplitter = Cmd().GetFirstParam(T("--id_splitter"));
         else
             NewDir.PathSplitter = T("/");
 
-        if(Cmd().HasKey("--id_prefix"))
+        if(Cmd().HasKey(T("--id_prefix")))
             NewDir.Prefix = Cmd().GetFirstParam(T("--id_prefix"));
         else
             NewDir.Prefix = T("");
 
-        if(Cmd().HasKey("--id_suffix"))
+        if(Cmd().HasKey(T("--id_suffix")))
             NewDir.Prefix = Cmd().GetFirstParam(T("--id_suffix"));
         else
             NewDir.Prefix = T("");
 
-        if(Cmd().HasKey("--out_ext"))
+        if(Cmd().HasKey(T("--out_ext")))
             NewDir.OutExt = Cmd().GetFirstParam(T("--out_ext"));
         else
             NewDir.OutExt = T(".lua");
@@ -180,7 +180,7 @@ public:
     virtual int Run()
     {
         ProjectCollector::FileInfo& NewFile = GProject.Files.AddConstructed();
-        if(Cmd().HasKey("--path") == false)
+        if(Cmd().HasKey(T("--path")) == false)
         {
             ERROR(LogProjecct, T("'--path' is required"));
             return -1;
@@ -194,7 +194,7 @@ public:
             NewFile.IntermediateFile = NewFile.FilePath + T(".oli");
         }
 
-        if(Cmd().HasKey("--out") == false)
+        if(Cmd().HasKey(T("--out")) == false)
         {
             ERROR(LogProjecct, T("'--out' is required"));
             return -1;
@@ -205,7 +205,7 @@ public:
             NewFile.IntermediateFile = NewFile.OutPath + T(".oli");
         }
 
-        if(Cmd().HasKey("--id") == false)
+        if(Cmd().HasKey(T("--id")) == false)
         {
             ERROR(LogProjecct, T("'--id' is required"));
             return -1;
@@ -215,7 +215,7 @@ public:
             NewFile.FileIdentity = Cmd().GetFirstParam(T("--id"));
         }
 
-        if(Cmd().HasKey("--intermediate") != false)
+        if(Cmd().HasKey(T("--intermediate")) != false)
         {
             NewFile.IntermediateFile = GetFullPathForAction(WorkingDirectory, Cmd().GetFirstParam(T("--intermediate")));
         }
@@ -231,7 +231,7 @@ public:
     virtual int Run()
     {
         BuildSetting Setting;
-        if(Cmd().HasKey("--entry") == true)
+        if(Cmd().HasKey(T("--entry")) == true)
         {
             Setting.EntryPath = GetFullPathForAction(WorkingDirectory, Cmd().GetFirstParam(T("--entry")));
         }

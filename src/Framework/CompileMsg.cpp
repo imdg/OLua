@@ -250,7 +250,7 @@ void CompileMsg::Log(ECompileMsgType msg, int Line, int Col, ...)
 
     va_list ap;
     va_start(ap, Col);
-    vsnprintf(Buffer, BASE_SIZE, CurrMsgDetail.Text, ap);
+    t_vsnprintf(Buffer, BASE_SIZE, CurrMsgDetail.Text, ap);
     va_end(ap);
 
     OLString FullText;

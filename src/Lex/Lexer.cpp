@@ -66,7 +66,7 @@ void Token::Reset()
     Tk = TK_none;
     IntVal = 0;
     FltVal = 0;
-    StrOrNameVal = "";
+    StrOrNameVal = T("");
     LineInfo.Line = 0;
     LineInfo.Col = 0;
 }
@@ -912,7 +912,7 @@ bool Lexer::ReadString(Token& tk, const TCHAR Quoater)
 
     tk.Tk = TK_stringVal;
     OLString& Str = tk.StrOrNameVal;
-    Str = "";
+    Str = T("");
 
     int Ch = Reader.NextChar();
     Reader.BeginNewToken();

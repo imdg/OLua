@@ -25,7 +25,7 @@ void CmdConfig::ParseCommandline(int argc, const char** argv)
 {
     if(argc < 2)
         return;
-    Act = argv[1];
+    Act = OLString(A2T(argv[1]));
 
     OLString CurrKey(T(""));
 
