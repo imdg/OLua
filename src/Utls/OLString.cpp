@@ -1,9 +1,11 @@
 #include <utility>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <codecvt>
+#include <locale> 
 
 #include "OLString.h"
-
+#include "OLList.h"
 namespace OL
 {
     OLString::OLString()
@@ -346,6 +348,33 @@ namespace OL
         return true;
 #else
         OL_ASSERT(0 && "to be implemented on this platform");
+#endif
+    }
+
+
+    OLString OLString::FromUTF8(const char* Src)
+    {
+#ifdef USE_WCHAR
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> Converter;
+        OLString Ret;
+        Ret.InnerStr = Converter.from_bytes(Src);
+        return Ret;
+#else
+        return OLString(Src);
+#endif
+
+    }
+
+    void OLString::ToUTF8(OLList<char>& Output)
+    {
+#ifdef USE_WCHAR        
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> Converter;
+        std::string Utf8Str = Converter.to_bytes(InnerStr);
+        int Len = (int)Utf8Str.length();
+        Output.Reserve(Len + 1);
+        memcpy(Output.Data(), Utf8Str.data(), Len + 1);
+#else
+        return OLString(*this);
 #endif
     }
 

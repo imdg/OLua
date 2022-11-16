@@ -13,8 +13,10 @@ typedef wchar_t TCHAR;
 #define T2A(x) (StringConverter<TCHAR, char>(x).Get())
 #define A2T(x) (StringConverter<char, TCHAR>(x).Get())
 
+
 #define T2W(x) x
 #define W2T(x) x
+
 
 #define t_strcmp wcscmp
 #define t_strncpy wcsncpy
@@ -40,6 +42,7 @@ typedef char TCHAR;
 #define t_vsnprintf vsnprintf
 #endif
 
+int Utf8ToWchar(const char* Src, int SrcSize, wchar_t* Dst, int DstSize);
 
 template <typename CharType>
 class StringOp
@@ -82,6 +85,35 @@ public:
     };
 
     To* Get()
+    {
+        return Buffer;
+    }
+};
+
+class Utf8ToWcharConverter
+{
+public:
+    wchar_t* Buffer;
+    Utf8ToWcharConverter(const char* Src)
+    {
+        int SrcSize = (StringOp<char>::Len(Src) + 1) ;
+        int DstSize = Utf8ToWchar(Src, SrcSize, nullptr, 0);
+        if(DstSize == -1)
+        {
+            Buffer = new wchar_t[4];
+            wcscpy(Buffer, L"???");
+            return;
+        }
+        Buffer = new wchar_t[DstSize];
+        Utf8ToWchar(Src, SrcSize, Buffer, DstSize);
+    };
+
+    ~Utf8ToWcharConverter()
+    {
+        delete[] Buffer;
+    };
+
+    wchar_t* Get()
     {
         return Buffer;
     }

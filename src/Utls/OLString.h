@@ -7,6 +7,8 @@
 namespace OL
 {
     class OLString;
+    template<typename Ty>
+    class OLList;
     template<> 
     struct OLHash<OLString>;
 
@@ -63,6 +65,10 @@ namespace OL
 
         void Strcpy(TCHAR* Buffer, int Len);
         static int StrCmp(const TCHAR* Str1, const TCHAR* Str2);
+
+        static OLString FromUTF8(const char* Src);
+        void ToUTF8(OLList<char>& Output);
+
         
     private:
 

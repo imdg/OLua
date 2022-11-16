@@ -82,20 +82,25 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	add_definitions(-DUSE_MSVC=1)
 endif()
 
-message("WIN32:${WIN32}")
-if ("${WIN32}" EQUAL "1")
+message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
 	add_definitions(-DPLATFORM_WIN)
 	add_definitions(-D_AMD64_)
 	add_definitions(-DUSE_WCHAR)
 	message("Apply Windows platform")
-else()
-	add_definitions(-DPLATFORM_UNIX)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+	add_definitions(-DPLATFORM_MAC)
 	add_definitions(-DUSE_WCHAR)
-	message("Apply Unix-like platform")
+	message("Apply macOS platform")
 
-
-
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+	add_definitions(-DPLATFORM_LINUX)
+	add_definitions(-DUSE_WCHAR)
+	message("Apply Linux platform")
+else()
+	message("This platform has not been tested. Possible errors exist: ${CMAKE_SYSTEM_NAME}") 
 endif()
+
 
 add_executable(OLua ${ALL_SOURCE_FILE})
 

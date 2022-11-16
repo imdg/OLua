@@ -126,7 +126,8 @@ void Env::InitEnv()
     ::GetCurrentDirectoryW(MAX_PATH, path);
     SysCurrDir = W2T(path);
     
-#else
+#elif defined(PLATFORM_MAC)
+    //readlink()
     // to do
     OL_ASSERT(0 && "to be implemented on this platform");
 #endif    
