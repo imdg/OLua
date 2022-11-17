@@ -1,3 +1,4 @@
+#include "TextEncoding.h"
 #include "CmdConfig.h"
 #include "OLString.h"
 namespace OL
@@ -32,6 +33,33 @@ void CmdConfig::ParseCommandline(int argc, const char** argv)
     for(int i = 2; i < argc; i++)
     {
         OLString Cmd(A2T(argv[i]));
+        if(Cmd.FindSubstr(T("--")) == 0)
+        {
+            CurrKey = Cmd;
+            AddKey(CurrKey);
+        }
+        else
+        {
+            if(CurrKey == T(""))
+                continue;
+
+            AddParam(CurrKey, Cmd);
+        }
+    }
+
+}
+
+void CmdConfig::ParseCommandlineT(int argc, const TCHAR** argv)
+{
+    if(argc < 2)
+        return;
+    Act = OLString(argv[1]);
+
+    OLString CurrKey(T(""));
+
+    for(int i = 2; i < argc; i++)
+    {
+        OLString Cmd(argv[i]);
         if(Cmd.FindSubstr(T("--")) == 0)
         {
             CurrKey = Cmd;

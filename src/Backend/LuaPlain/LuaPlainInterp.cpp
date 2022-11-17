@@ -227,6 +227,7 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<ASuper> Node)
 
 EVisitStatus LuaPlainInterp::Visit(SPtr<AConstExpr> Node)
 {
+    OLString tmp;
     SPtr<TextParagraph> Text = OutText.NewParagraph();
     switch(Node->Type)
     {
@@ -239,6 +240,10 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<AConstExpr> Node)
     case IT_string:
         // to do: string modifiers
         Text->AppendF(T("\"%s\""), Node->StrVal.CStr());
+        //Text->AppendF(T("\"%s\""), T("写死"));
+        
+        //tmp.Printf(T("--%ls--"), T("哈哈"));
+        //Text->Append(tmp);
         break;   
     case IT_bool:
         Text->AppendF(T("%s"), Node->BoolVal ? T("true") : T("false"));
@@ -462,50 +467,44 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ANormalCall> Node)
             if(Scope->Type == ST_Class)
             {
                 SPtr<ClassType> ScopeClass = Scope->OwnerTypeDesc.Lock().PtrAs<ClassType>();
-                FindMemberResult Found = ScopeClass->FindMemberByDeclNode(Ref->Decl->DeclNode.Lock(), true);
-
-                if(Found.IsClassMember && Found.FromClass != nullptr)
+                if(Ref->Decl != nullptr)
                 {
-                    // OLString InCodeName = LPClassHelper::InCodeMemberName(Found.FromClass) Node->Func->As<AVarRef>()->VarName;
-                    // if(Found.FromClass->MemberAttrib != nullptr)
-                    // {
-                    //     SPtr<DeclearAttributes> Attrib = Found.FromClass->MemberAttrib.Lock();
-                    //     if(Attrib->HasItem(T("lua_alias"), IT_string))
-                    //     {
-                    //         InCodeName = Attrib->GetString(T("lua_alias"));
-                    //     }
-                    // }
-                    if(Found.FromClass->Type == Member_Function)
+                    FindMemberResult Found = ScopeClass->FindMemberByDeclNode(Ref->Decl->DeclNode.Lock(), true);
+
+                    if(Found.IsClassMember && Found.FromClass != nullptr)
                     {
-                        if(Found.FromClass->Owner->IsExternal)
+                        if(Found.FromClass->Type == Member_Function)
                         {
-                            ConvertToMetatableCall = true;
-                            MemberFuncName = LPClassHelper::InCodeMemberName(Found.FromClass); // Node->Func->As<AVarRef>()->VarName;
-                        }
-                        else if((Found.FromClass->Flags & CMF_Abstract)
-                            || (Found.FromClass->Flags & CMF_Virtual)
-                            || (Found.FromClass->Flags & CMF_Override) )
-                        {
-                            ConvertToMetatableCall = true;
-                            MemberFuncName = LPClassHelper::InCodeMemberName(Found.FromClass); //Node->Func->As<AVarRef>()->VarName;
-                        }
-                        else if(Found.FromClass->Flags & CMF_Constructor)
-                        {
-                            ConvertToCtor = true;
-                            MemberFuncName = LPClassHelper::MakeConstructorName(Found.FromClass->Owner.Lock(), Found.FromClass->Name, T("impl"));
-                        }
-                        else 
-                        {
-                            ConvertToMemberFunc = true;
-                            MemberFuncName = LPClassHelper::MakeMemberName(Found.FromClass->Owner.Lock(), Found.FromClass, T(""));
-                            if((Found.FromClass->Flags & CMF_Static) == 0)
+                            if(Found.FromClass->Owner->IsExternal)
                             {
-                                NeedSelf = true;
+                                ConvertToMetatableCall = true;
+                                MemberFuncName = LPClassHelper::InCodeMemberName(Found.FromClass); // Node->Func->As<AVarRef>()->VarName;
                             }
+                            else if((Found.FromClass->Flags & CMF_Abstract)
+                                || (Found.FromClass->Flags & CMF_Virtual)
+                                || (Found.FromClass->Flags & CMF_Override) )
+                            {
+                                ConvertToMetatableCall = true;
+                                MemberFuncName = LPClassHelper::InCodeMemberName(Found.FromClass); //Node->Func->As<AVarRef>()->VarName;
+                            }
+                            else if(Found.FromClass->Flags & CMF_Constructor)
+                            {
+                                ConvertToCtor = true;
+                                MemberFuncName = LPClassHelper::MakeConstructorName(Found.FromClass->Owner.Lock(), Found.FromClass->Name, T("impl"));
+                            }
+                            else 
+                            {
+                                ConvertToMemberFunc = true;
+                                MemberFuncName = LPClassHelper::MakeMemberName(Found.FromClass->Owner.Lock(), Found.FromClass, T(""));
+                                if((Found.FromClass->Flags & CMF_Static) == 0)
+                                {
+                                    NeedSelf = true;
+                                }
+                            }
+                            SelfName = LPClassHelper::MakeSelfName(Found.FromClass->Owner.Lock());
                         }
-                        SelfName = LPClassHelper::MakeSelfName(Found.FromClass->Owner.Lock());
+                        break;
                     }
-                    break;
                 }
             }
             else
@@ -1211,17 +1210,20 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<AVarRef> Node)
         if(Scope->Type == ST_Class)
         {
             SPtr<ClassType> ScopeClass = Scope->OwnerTypeDesc.Lock().PtrAs<ClassType>();
-            FindMemberResult Found = ScopeClass->FindMemberByDeclNode(Decl->DeclNode.Lock(), true);
-            if(Found.IsClassMember && Found.FromClass != nullptr)
+            if(Decl != nullptr)
             {
-                OLString InCodeName = LPClassHelper::InCodeMemberName(Found.FromClass);
+                FindMemberResult Found = ScopeClass->FindMemberByDeclNode(Decl->DeclNode.Lock(), true);
+                if(Found.IsClassMember && Found.FromClass != nullptr)
+                {
+                    OLString InCodeName = LPClassHelper::InCodeMemberName(Found.FromClass);
 
-                OLString SelfName = LPClassHelper::MakeSelfName(ScopeClass);
-                if (Found.FromClass->Flags & CMF_Static)
-                    CurrText->AppendF(T("%s.%s"), LPClassHelper::MakeStaticTableName(ScopeClass, T("")).CStr(), InCodeName.CStr());
-                else
-                    CurrText->AppendF(T("%s.%s"), SelfName.CStr(), InCodeName.CStr());
-                break;
+                    OLString SelfName = LPClassHelper::MakeSelfName(ScopeClass);
+                    if (Found.FromClass->Flags & CMF_Static)
+                        CurrText->AppendF(T("%s.%s"), LPClassHelper::MakeStaticTableName(ScopeClass, T("")).CStr(), InCodeName.CStr());
+                    else
+                        CurrText->AppendF(T("%s.%s"), SelfName.CStr(), InCodeName.CStr());
+                    break;
+                }
             }
             
         }

@@ -15,7 +15,8 @@ public:
     virtual void WriteText(const TCHAR* InBuffer) override;
 
     void OpenWrite(OLString FileName);
-    void Close();
+    virtual void Close() override;
+    virtual void Flush() override;
 
     FILE* FilePtr;
 };

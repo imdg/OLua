@@ -24,7 +24,7 @@
 #include "ImportedScopeGroup.h"
 #include "LuaPlainInterp.h"
 #include "LPClassLib.h"
-
+#include "BuildSetting.h"
 namespace OL
 {
 
@@ -58,9 +58,16 @@ SourceFile::SourceFile(OLString InFileName)
     : FileName(InFileName), UnbindVarCount(0), UnbindTypeCount(0)
 {
     CM.SetFile(InFileName.CStr());
+
     ImportedScope = new ImportedScopeGroup();
 }
 
+void SourceFile::ApplyBuildSetting(BuildSetting& Setting)
+{
+    if(Setting.AllowUnresolvedType)
+        CM.SetAsWarning(CMT_UnresolvedVar);
+
+}
 
 void SourceFile::RunVisitor(SPtr<ARoot> Ast, RecursiveVisitor& Vis, bool EnableBreak, OLFunc<void(DebugVisitor&)> LoggerSetter)
 {

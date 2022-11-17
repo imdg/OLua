@@ -246,16 +246,27 @@ SPtr<TextParagraph> TextParagraph::Duplicate()
 
 
 #define BASE_SIZE 512
-
+#include <cwchar>
+#include <locale.h>
 TextParagraph& TextParagraph::AppendF(const TCHAR* Fmt, ...)
 {
     TCHAR* Buffer = (TCHAR*)malloc(BASE_SIZE * sizeof(TCHAR));
     int CurrSize = BASE_SIZE;
     int Written = -1;
 
+    TCHAR* RealFormat = (TCHAR*)Fmt;
+#if (defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)) && USE_WCHAR
+    OLString TempFormat = Fmt;
+    TempFormat.Replace(T("%s"), T("%ls"));
+    RealFormat = (TCHAR*)TempFormat.CStr();
+#endif  
+    //setlocale(LC_ALL, "chs");
+    //char* l = setlocale(LC_ALL, "");
     va_list ap;
     va_start(ap, Fmt);
-    Written = t_vsnprintf(Buffer, CurrSize, Fmt, ap);
+    Written = t_vsnprintf(Buffer, CurrSize, RealFormat, ap);
+    //Written = std::vswprintf(Buffer, CurrSize, RealFormat, ap);
+    //Written = wprintf(T("========= %ls"), T("中文"));
     va_end(ap);
 
     while(Written >= CurrSize - 1)
@@ -264,7 +275,7 @@ TextParagraph& TextParagraph::AppendF(const TCHAR* Fmt, ...)
         Buffer = (TCHAR*)realloc(Buffer, CurrSize);
         va_list ap2;
         va_start(ap2, Fmt);
-        Written = t_vsnprintf(Buffer, CurrSize, Fmt, ap2);
+        //Written = t_vsnprintf(Buffer, CurrSize, RealFormat, ap2);
         va_end(ap2);
     }
 

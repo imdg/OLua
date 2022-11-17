@@ -13,7 +13,7 @@ namespace OL
 {
  
 
-#define TR_EOF  (-1)
+#define TR_EOF  (0)
 
 
 class TokenReader
@@ -54,6 +54,7 @@ private:
     int Line;
     int LastLineEnd;
     OLString SourceFileName;
+    OLString BufferString;
 };
 
 

@@ -1,4 +1,5 @@
-
+#include "TextEncoding.h"
+#include "OLString.h"
 namespace OL
 {
 
@@ -78,4 +79,23 @@ int Utf8ToWchar(const char* Src, int SrcSize, wchar_t* Dst, int DstSize)
     }
     return (UsedDstSize + 1)  * sizeof(wchar_t);
 }
+
+
+
+
+
+
+ToUtf8Helper::ToUtf8Helper(const OLString& Src)
+{
+    Src.ToUTF8(Buffer);
+}
+
+
+char* ToUtf8Helper::Get()
+{
+    return Buffer.Data();
+}
+
+
+
 }

@@ -64,10 +64,15 @@ namespace OL
         TCHAR* Buffer = (TCHAR*)malloc(BASE_SIZE * sizeof(TCHAR));
         int CurrSize = BASE_SIZE;
         int Written = -1;
-
+        TCHAR* RealFormat = (TCHAR*)Format;
+#if (defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)) && USE_WCHAR
+        OLString TempFormat = Format;
+        TempFormat.Replace(T("%s"), T("%ls"));
+        RealFormat = (TCHAR*)TempFormat.CStr();
+#endif  
         va_list ap;
         va_start(ap, Format);
-        Written = t_vsnprintf(Buffer, CurrSize, Format, ap);
+        Written = t_vsnprintf(Buffer, CurrSize, RealFormat, ap);
         va_end(ap);
 
         while(Written >= CurrSize - 1)
@@ -76,7 +81,7 @@ namespace OL
             Buffer = (TCHAR*)realloc(Buffer, CurrSize);
             va_list ap2;
             va_start(ap2, Format);
-            Written = t_vsnprintf(Buffer, CurrSize, Format, ap2);
+            Written = t_vsnprintf(Buffer, CurrSize, RealFormat, ap2);
             va_end(ap2);
         }
 
@@ -91,9 +96,16 @@ namespace OL
         int CurrSize = BASE_SIZE;
         int Written = -1;
 
+        TCHAR* RealFormat = (TCHAR*)Format;
+#if (defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)) && USE_WCHAR
+        OLString TempFormat = Format;
+        TempFormat.Replace(T("%s"), T("%ls"));
+        RealFormat = (TCHAR*)TempFormat.CStr();
+#endif  
+
         va_list ap;
         va_start(ap, Format);
-        Written = t_vsnprintf(Buffer, CurrSize, Format, ap);
+        Written = t_vsnprintf(Buffer, CurrSize, RealFormat, ap);
         va_end(ap);
 
         while(Written >= CurrSize - 1)
@@ -102,7 +114,7 @@ namespace OL
             Buffer = (TCHAR*)realloc(Buffer, CurrSize);
             va_list ap2;
             va_start(ap2, Format);
-            Written = t_vsnprintf(Buffer, CurrSize, Format, ap2);
+            Written = t_vsnprintf(Buffer, CurrSize, RealFormat, ap2);
             va_end(ap2);
         }
 
@@ -202,14 +214,60 @@ namespace OL
         
     }
 
+    bool MatchStr(const TCHAR* MainStr, const TCHAR* SubStr)
+    {
+        TCHAR* P1 = (TCHAR*)MainStr;
+        TCHAR* P2 = (TCHAR*)SubStr;
+
+        while(*P1 != 0 && *P2 != 0)
+        {
+            if(*P1 != *P2)
+                return false;
+            P1++;
+            P2++;
+
+        }
+        if(*P2 == 0)
+            return true;
+        return false;
+    }
+
     OLString& OLString::Replace(const TCHAR* From, const TCHAR* To)
     {
-        int Len = t_strlen(From);
+        int FromLen = t_strlen(From);
+        int ToLen = t_strlen(To);
+        StdStringType Str(From);
         size_t pos = 0;
-        while((pos = InnerStr.find_first_of(From)) != std::string::npos)
+        size_t next_begin = 0;
+        int SrcLen = Len();
+
+        OLList<TCHAR> Out;
+        int SrcPos = 0;
+        const TCHAR* SrcBuf = CStr();
+        while(SrcPos < SrcLen && SrcBuf[SrcPos] != 0)
         {
-            InnerStr.replace(pos, Len, To);
+            bool IsMatch = true;
+            if(MatchStr(SrcBuf + SrcPos, From))
+            {
+                for(int DstIdx = 0; DstIdx < ToLen; DstIdx++)
+                    Out.Add(To[DstIdx]);
+                SrcPos += FromLen;
+            }
+            else
+            {
+                Out.Add(SrcBuf[SrcPos]);
+                SrcPos++;
+            }
         }
+        Out.Add(0);
+        InnerStr = Out.Data();
+
+
+        // while((pos = InnerStr.find_first_of(Str, next_begin)) != std::string::npos)
+        // {
+        //     InnerStr.replace(pos, FromLen, To);
+        //     next_begin = pos + ToLen;
+        // }
         return *this;
     }
 
@@ -346,6 +404,10 @@ namespace OL
             }
         }
         return true;
+#elif defined(PLATFORM_MAC) || defined(PLATFORM_LINUX) 
+    if(InnerStr.length() > 0 && InnerStr[0] == C('/'))
+        return false;
+    return true;
 #else
         OL_ASSERT(0 && "to be implemented on this platform");
 #endif
@@ -365,17 +427,19 @@ namespace OL
 
     }
 
-    void OLString::ToUTF8(OLList<char>& Output)
+    void OLString::ToUTF8(OLList<char>& Output) const
     {
 #ifdef USE_WCHAR        
         std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> Converter;
         std::string Utf8Str = Converter.to_bytes(InnerStr);
         int Len = (int)Utf8Str.length();
-        Output.Reserve(Len + 1);
+        Output.Resize(Len + 1);
         memcpy(Output.Data(), Utf8Str.data(), Len + 1);
 #else
         return OLString(*this);
 #endif
     }
+
+
 
 }

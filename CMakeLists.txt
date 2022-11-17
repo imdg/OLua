@@ -45,7 +45,7 @@ while(${SOURCE_LIST_LEN} GREATER 0)
 endwhile()
 
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+
 
 add_definitions(-DNOUA_USE_MACOSX)
 add_definitions(-D_HAS_EXCEPTIONS=0)
@@ -87,16 +87,20 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
 	add_definitions(-DPLATFORM_WIN)
 	add_definitions(-D_AMD64_)
 	add_definitions(-DUSE_WCHAR)
+
+	SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 	message("Apply Windows platform")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 	add_definitions(-DPLATFORM_MAC)
 	add_definitions(-DUSE_WCHAR)
 	message("Apply macOS platform")
+	SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}/)
 
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
 	add_definitions(-DPLATFORM_LINUX)
 	add_definitions(-DUSE_WCHAR)
 	message("Apply Linux platform")
+	SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 else()
 	message("This platform has not been tested. Possible errors exist: ${CMAKE_SYSTEM_NAME}") 
 endif()

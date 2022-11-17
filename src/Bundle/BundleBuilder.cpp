@@ -19,7 +19,7 @@ BundleBuilder::BundleBuilder(BuildSetting& InSetting) : TotalError(0), TotalWarn
 void BundleBuilder::PrepareBuild()
 {
     OLString APIPath = APIs.FindAPIPath(Settings.APIPath);
-    APIs.LoadAPI(APIPath);
+    APIs.LoadAPI(APIPath, Settings);
 }
 
 void BundleBuilder::AddTotalError(int Count)
@@ -41,7 +41,9 @@ void BundleBuilder::DoNextLocalBuild()
     SPtr<SourceFile> NewSource = new SourceFile(Pending.SrcPath);
     NewSource->OutputName = Pending.DstPath;
     NewSource->FileIdenty = Pending.Identity;
+    NewSource->ApplyBuildSetting(Settings);
     APIs.ApplyAPIToSource(NewSource);
+
 
     BundleFiles.Add(NewSource);
     BundleFilesIndex.Add(Pending.SrcPath, NewSource);
@@ -122,7 +124,7 @@ void BundleBuilder::DoNextVarBind()
 void BundleBuilder::FlushVarUnmatchedFile()
 {
     OLList<SPtr<SourceFile>> Files;
-    GlobalSymbols.GetTypeUnmatched(Files);
+    GlobalSymbols.GetVarUnmatched(Files);
 
     for(int i = 0; i < Files.Count(); i++)
     {
@@ -180,6 +182,11 @@ void BundleBuilder::DoNextFileWrite()
         return;
 
     SPtr<SourceFile> CurrFile = TextFinished.DequeueHead();
+    if(CurrFile->MainBlock == nullptr)
+    {
+        ERROR(LogCompile, T("Fail to emitt %s"), CurrFile->OutputName.CStr());
+        return;
+    }
     VERBOSE(LogCompile, T("Emitting %s"), CurrFile->OutputName.CStr());
     FileStream FS;
     FS.OpenWrite(CurrFile->OutputName);
@@ -187,6 +194,7 @@ void BundleBuilder::DoNextFileWrite()
     if(DebugMode)
         CurrFile->OutText.DebugMode = true;
 
+    
     CurrFile->OutText.WriteStreamFrom(FS, CurrFile->MainBlock);
     FS.Close();
 }
@@ -269,6 +277,7 @@ void BundleBuilder::Run()
             return;
         }
     }
+    FlushTypeUnmatchedFile();
 
     while(TypeBindFinshed.Count() > 0)
     {
@@ -279,6 +288,7 @@ void BundleBuilder::Run()
             return;
         }
     }
+    FlushVarUnmatchedFile();
 
     for(int i = 0; i < FilesInLib.Count(); i++)
     {

@@ -1039,8 +1039,13 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefClass(SPtr<ClassT
             {
                 if((Member.FromClass->Flags & CMF_Public) == 0)
                 {
-                    CM.Log(CMT_PrivateMember, Node->Line,  Name.CStr(), Class->Name.CStr());
+                    if((Member.FromClass->Flags & CMF_Protected) == 0 || !Class->IsBaseType(Member.FromClass->Owner.Lock().Get()))
+                    {
+                        CM.Log(CMT_PrivateMember, Node->Line,  Name.CStr(), Class->Name.CStr());
+                    }
+                    
                 }
+
             }
             // ClassName:Member  not allowed
             if(UseTypeName && UseColon)

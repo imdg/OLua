@@ -137,7 +137,7 @@ MsgDetailInfo MsgDetails[] = {
 
     {CMT_NoType,                    DEFAULT_LEVEL_ERROR,    T("Cannot find type: '%s'. It will be compiled as 'any' if this message is processed as a warning") },
     {CMT_NoBaseType,                DEFAULT_LEVEL_ERROR,    T("Cannot find base class or interface: %s") },
-    {CMT_UnresolvedVar,             DEFAULT_LEVEL_ERROR,    T("Undecleared variable found: %s. It will be compiled as a global variable with type 'any' if this message is processed as a warning ") },
+    {CMT_UnresolvedVar,             DEFAULT_LEVEL_ERROR,    T("Undecleared variable found: '%s'. It will be compiled as a global variable with type 'any' if this message is processed as a warning ") },
     {CMT_UseBeforeDecl,             DEFAULT_LEVEL_ERROR,    T("Variable '%s' has been used before declearation") },
     {CMT_NameConflict,             DEFAULT_LEVEL_ERROR,    T("Name '%s' conflicted to the previous declearation at line: %d") },
 
@@ -248,9 +248,18 @@ void CompileMsg::Log(ECompileMsgType msg, int Line, int Col, ...)
 
     TCHAR Buffer[BASE_SIZE];
 
+    
+    TCHAR* RealFormat = (TCHAR*)CurrMsgDetail.Text;
+#if (defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)) && USE_WCHAR
+    OLString TempFormat = CurrMsgDetail.Text;
+    TempFormat.Replace(T("%s"), T("%ls"));
+    RealFormat = (TCHAR*)TempFormat.CStr();
+#endif 
+
+
     va_list ap;
     va_start(ap, Col);
-    t_vsnprintf(Buffer, BASE_SIZE, CurrMsgDetail.Text, ap);
+    t_vsnprintf(Buffer, BASE_SIZE, RealFormat, ap);
     va_end(ap);
 
     OLString FullText;

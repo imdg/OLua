@@ -1,9 +1,12 @@
 #include "Common.h"
 #include "OLFunc.h"
+#include <stdio.h>
 
 namespace OL
 {
 
+extern FILE* FOpenWin(OLString FileName, const char* Mode);
+extern FILE* FOpenLin(OLString FileName, const char* Mode);
 class Env
 {
 public:
@@ -28,7 +31,6 @@ public:
     static void BreakPath(OLString Path, OLList<OLString> OutPath);
 
     static void IterateFileInDir(OLString DirPath, bool Recursive, OLFunc<void(OLString Path, bool IsDir)> Callback);
-    static OLString FullPath(OLString RelativePath);
 
     static OLString ToAbsPath(OLString AnyPath);
     

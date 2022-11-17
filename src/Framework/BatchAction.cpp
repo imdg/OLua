@@ -7,16 +7,16 @@
 namespace OL
 {
 
-bool IsSpace(char Ch)
+bool IsSpace(TCHAR Ch)
 {
-    if(Ch == '\t' || Ch == '\v' || Ch == '\f' || Ch == ' ' )
+    if(Ch == C('\t') || Ch == C('\v') || Ch == C('\f') || Ch == C(' ') )
         return true;
     return false;
 }
 
-bool IsNewLine(char Ch)
+bool IsNewLine(TCHAR Ch)
 {
-    if(Ch == '\r' || Ch == '\n')
+    if(Ch == C('\r') || Ch == C('\n'))
         return true;
     return false;
 }
@@ -30,27 +30,42 @@ int BatchAction::Run()
     }
     OLString BatchFileName = Cmd().GetFirstParam(T("--batchfile"));
     
-    OLString BathFileFullPath = Env::FullPath(BatchFileName);
+    OLString BathFileFullPath = BatchFileName;
+    if(BatchFileName.IsRelativePath())
+    {
+        BathFileFullPath = Env::GetSysCurrDir() + T("/") + BatchFileName;
+    }
     OLString SubActionWorkingDir = BathFileFullPath.ParentPath();
 
-    FILE* BatchFile = fopen(T2A(BatchFileName.CStr()), "rb");
+    FILE* BatchFile = t_fopen(BathFileFullPath.CStr(), "rb");
+    if(BatchFile == NULL)
+    {
+        ERROR(LogAction, T("Cannot load batch file: %s"), BathFileFullPath.CStr());
+        return -1;
+    }
     fseek(BatchFile, 0, SEEK_END);
-    long Len = ftell(BatchFile);
+    long RawLen = ftell(BatchFile);
     fseek(BatchFile, 0, SEEK_SET);
 
-    char* Content = new char[Len + 1];
-    fread(Content, 1, Len, BatchFile);
+    char* RawContent = new char[RawLen + 1];
+    fread(RawContent, 1, RawLen, BatchFile);
     fclose(BatchFile);
+    RawContent[RawLen] = 0;
+    OLString ContentStr = OLString::FromUTF8(RawContent);
+
+    long Len = ContentStr.Len();
+    TCHAR* Content = new TCHAR[Len + 1];
+    memcpy(Content, ContentStr.CStr(), Len * sizeof(TCHAR));
     Content[Len] = 0;
 
     long Curr = 0;
-    char LastCh = ' ';
-    OLList<const char*> CurrCmdLine;
-    CurrCmdLine.Add("OLua");
-
+    TCHAR LastCh = ' ';
+    OLList<const TCHAR*> CurrCmdLine;
+    CurrCmdLine.Add(T("OLua"));
+    
     for(int Curr = 0; Curr < Len+1; Curr++)
     {
-        char Ch = Content[Curr];
+        TCHAR Ch = Content[Curr];
         if(IsNewLine(Ch) || Curr == Len)
         {
             Content[Curr] = 0;
@@ -58,14 +73,14 @@ int BatchAction::Run()
             {
                 Content[Curr] = 0;
                 CmdConfig NewCmd(false);
-                NewCmd.ParseCommandline(CurrCmdLine.Count(), CurrCmdLine.Data());
+                NewCmd.ParseCommandlineT(CurrCmdLine.Count(), CurrCmdLine.Data());
 
                 
                 OLString Info;
                 Info.AppendF(T("Running batch action step: %s: "), NewCmd.Act.CStr());
                 for(int i = 1; i < CurrCmdLine.Count(); i++)
                 {
-                    Info.AppendF(T("%s "), A2T(CurrCmdLine[i]));
+                    Info.AppendF(T("%s "), CurrCmdLine[i]);
                 }
                 //Info.Append(T("\n"));
                 VERBOSE(LogAction, (TCHAR*)Info.CStr());
@@ -78,7 +93,7 @@ int BatchAction::Run()
 
             }
             CurrCmdLine.Clear();
-            CurrCmdLine.Add("OLua");
+            CurrCmdLine.Add(T("OLua"));
         }
         else
         {

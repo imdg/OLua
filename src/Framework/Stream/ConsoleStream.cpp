@@ -14,7 +14,19 @@ void ConsoleStream::Write(byte* InBuffer, int InSize)
 
 void ConsoleStream::WriteText(const TCHAR* InBuffer)
 {
-    printf("%s", T2A(InBuffer));
+#ifdef PLATFORM_WIN    
+    wprintf(L"%s", T2W(InBuffer));
+#elif defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)
+    printf("%s", TS2U(OLString(InBuffer)));
+#else
+    printf("$s", T2A(InBuffer));
+#endif
+}
+
+void ConsoleStream::Flush()
+{
+    
+
 }
 
 }

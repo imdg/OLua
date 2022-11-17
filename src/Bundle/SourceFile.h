@@ -36,7 +36,7 @@ DECLEAR_STRUCT_RTTI(SymbolExport)
 
 class ImportedScopeGroup;
 class LPClassLib;
-
+class BuildSetting;
 class SourceFile
 {
     DECLEAR_RTTI();
@@ -50,6 +50,7 @@ public:
     SPtr<ARoot>         AstRoot;
     SPtr<SymbolTable>   Symbols;
     CompileMsg          CM;
+    
 
     OLMap<OLString, SymbolImport> ImportVars;
     OLMap<OLString, SymbolImport> ImportTypes;
@@ -79,6 +80,8 @@ public:
     bool BindVar(OLString Name, SPtr<SourceFile> DeclFile);
     void AddAPISource(SPtr<SourceFile> APIFile);
     void PrintUnbindError();
+
+    void ApplyBuildSetting(BuildSetting& Setting);
 
 };
 

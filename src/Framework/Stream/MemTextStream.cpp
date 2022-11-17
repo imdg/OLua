@@ -17,5 +17,7 @@ void MemTextStream::WriteText(const TCHAR* InBuffer)
     Str.Append(InBuffer);
 }
 
+void MemTextStream::Flush()
+{}
 
 }

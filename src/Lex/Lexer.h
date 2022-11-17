@@ -200,7 +200,7 @@ private:
     bool ReadDefine(MacroDefine& DefineInfo);
     bool ExpandMacro(OLString Name, CodeLineInfo Line, int Level);
     bool ReadMacroCallParam(OLLinkedList<Token>& TokenList, Token& Last, ETokenType EndMark1, ETokenType EndMark2, bool IncludeEndMark);
-
+    bool CheckChFeature(TCHAR Ch, uint Feature);
     struct CondiCompileState
     {
         enum EState

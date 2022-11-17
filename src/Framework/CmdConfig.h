@@ -15,6 +15,7 @@ public:
     CmdConfig();
     CmdConfig(bool InIsGlobal);
     void ParseCommandline(int argc, const char** argv);
+    void ParseCommandlineT(int argc, const TCHAR** argv);
     OLList<OLString>& GetParam(const TCHAR* Key);
     const OLString& GetFirstParam(const TCHAR* Key, const OLString& Default);
     const OLString& GetFirstParam(const TCHAR* Key);

@@ -579,7 +579,9 @@ void SymbolScope::FinishUnresolvedSymbol(OLList<SPtr<SymbolScope>>& InSymbolScop
                 if(Resolved == false)
                 {
                     if(IsType == false && (Phase == SRP_GlobalVar || Phase == SRP_Standalone))
+                    {
                         CM.Log(CMT_UnresolvedVar, Ref->RefNode->Line, Ref->Name.CStr());
+                    }
                 }
             }
         }

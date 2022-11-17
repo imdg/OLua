@@ -6,12 +6,16 @@
 #include <stdio.h>
 #include "Timer.h"
 
+#include "ConsoleStream.h"
+#include "FileStream.h"
 
 
 namespace OL
 {
 
-FILE* GLogFile = nullptr;
+//FILE* GLogFile = nullptr;
+ConsoleStream GConsole;
+FileStream GLogFile;
 
 
 
@@ -22,8 +26,9 @@ void Logger::Init()
     OLString Dir = Env::GetSavedDir(T("logs"));
 
     OLString LogFilePath = Dir + T("/OLuaLog.log");
-    
-    GLogFile = fopen(T2A(LogFilePath.CStr()), "wb");
+    GLogFile.OpenWrite(LogFilePath);
+
+    //GLogFile = t_fopen(LogFilePath, "wb");
 
 
 
@@ -31,22 +36,23 @@ void Logger::Init()
 
 void Logger::Uninit()
 {
-    fclose(GLogFile);
+    //fclose(GLogFile);
+    GLogFile.Close();
 }
 
-const char* LevelStr(ELogLevel Level)
+const TCHAR* LevelStr(ELogLevel Level)
 {
     switch (Level)
     {
-    case ELogLevel::LogLevelVerbose: return "Verbose";
-    case ELogLevel::LogLevelInfo: return "Info";
-    case ELogLevel::LogLevelWarning: return "Warning";
-    case ELogLevel::LogLevelError: return "Error";
-    case ELogLevel::LogLevelFatal: return "Fatal";
+    case ELogLevel::LogLevelVerbose: return T("Verbose");
+    case ELogLevel::LogLevelInfo: return T("Info");
+    case ELogLevel::LogLevelWarning: return T("Warning");
+    case ELogLevel::LogLevelError: return T("Error");
+    case ELogLevel::LogLevelFatal: return T("Fatal");
         
     
     default:
-        return "";
+        return T("");
     }
 }
 
@@ -62,9 +68,16 @@ void Logger::Log(ELogLevel Level, int Module, const char* File, int Line, const 
     int CurrSize = BASE_SIZE;
     int Written = -1;
 
+    TCHAR* RealFormat = (TCHAR*)Fmt;
+#if (defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)) && USE_WCHAR
+    OLString TempFormat = Fmt;
+    TempFormat.Replace(T("%s"), T("%ls"));
+    RealFormat = (TCHAR*)TempFormat.CStr();
+#endif 
+
     va_list ap;
     va_start(ap, Fmt);
-    Written = t_vsnprintf(Buffer, CurrSize, Fmt, ap);
+    Written = t_vsnprintf(Buffer, CurrSize, RealFormat, ap);
     va_end(ap);
 
     while(Written >= CurrSize - 1)
@@ -73,26 +86,29 @@ void Logger::Log(ELogLevel Level, int Module, const char* File, int Line, const 
         Buffer = (TCHAR*)realloc(Buffer, CurrSize);
         va_list ap2;
         va_start(ap2, Fmt);
-        Written = t_vsnprintf(Buffer, CurrSize, Fmt, ap2);
+        Written = t_vsnprintf(Buffer, CurrSize, RealFormat, ap2);
         va_end(ap2);
     }
     
-    char timeStr[128];
 
     DateTime CurrTime = Timer::GetCurrTime();
-    snprintf(timeStr, 128, "%02d:%02d:%02d.%03d", CurrTime.Hour, CurrTime.Minute, CurrTime.Second, (int)CurrTime.Millisecond  );
+    OLString TimeStr;
+    TimeStr.Printf(T("%02d:%02d:%02d.%03d"), CurrTime.Hour, CurrTime.Minute, CurrTime.Second, (int)CurrTime.Millisecond  );
   
+    OLString FileName = OLString::FromUTF8(File);
+    OLString OutStr;
     if(File[0] != 0)
     {
-        printf("[%s - %s:%d] [%s]:  %s\n", timeStr, File, Line, LevelStr(Level), T2A(Buffer));
-        fprintf(GLogFile, "[%s - %s:%d] [%s]:  %s\n", timeStr, File, Line, LevelStr(Level), T2A(Buffer));
+        OutStr.Printf(T("[%s - %s:%d] [%s]:  %s\n"), TimeStr.CStr(), FileName.CStr(), Line, LevelStr(Level), Buffer);
     }
     else
     {
-        printf("[%s] [%s]:  %s\n", timeStr, LevelStr(Level), T2A(Buffer));
-        fprintf(GLogFile, "[%s] [%s]:  %s\n", timeStr, LevelStr(Level), T2A(Buffer));
+        OutStr.Printf(T("[%s] [%s]:  %s\n"), TimeStr.CStr(), LevelStr(Level), Buffer);
     }
-    fflush(GLogFile);
+    GConsole.WriteText(OutStr.CStr());
+    GLogFile.WriteText(OutStr.CStr());
+
+    GLogFile.Flush();
     delete[] Buffer;
 }
 
@@ -100,9 +116,13 @@ void Logger::LogRaw(int Module, const TCHAR* Msg)
 {
     if((Module & (~ModuleFilter)) == 0 )
         return;
-    printf("%s\n", Msg);
-    fprintf(GLogFile, "%s\n", Msg);
-    fflush(GLogFile);
+
+    OLString OutStr;
+
+    OutStr.Printf(T("%s\n"), Msg);
+    GConsole.WriteText(OutStr.CStr());
+    GLogFile.WriteText(OutStr.CStr());
+    GLogFile.Flush();
 }
 
 uint64 Logger::ModuleFilter = 0;

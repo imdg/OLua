@@ -10,7 +10,7 @@ https://opensource.org/licenses/MIT.
 #include "TokenReader.h"
 #include <stdio.h>
 #include "Logger.h"
-
+#include "Env.h"
 namespace OL
 {
 
@@ -23,7 +23,7 @@ TokenReader::TokenReader()
 
 TokenReader::~TokenReader()
 {
-    delete[] Buffer;
+    //delete[] Buffer;
 }
 
 void TokenReader::BeginNewToken()
@@ -37,6 +37,7 @@ int TokenReader::NextChar()
     if(End >= Len)
         return TR_EOF;
 
+    //VERBOSE(LogMisc, T("NextChar, %d line: %d, col: %d"), (int)(Buffer[End]), Line, End-LastLineEnd );
     if(Buffer[End] == C('\n'))
     {
         LastLineEnd = End;
@@ -93,7 +94,7 @@ int TokenReader::SkipSpace(bool SkipLine)
     int Count = 0;
     if(End >= Len)
         return 0;
-    while(Buffer[End] == '\t' || Buffer[End] == '\v' || Buffer[End] == '\f' || Buffer[End] == '\r' || Buffer[End] == ' ' || Buffer[End] == '\n')
+    while(Buffer[End] == C('\t') || Buffer[End] == C('\v') || Buffer[End] == C('\f') || Buffer[End] == C('\r') || Buffer[End] == C(' ') || Buffer[End] == C('\n'))
     {
         if(End < Len)
         {
@@ -122,12 +123,14 @@ void TokenReader::NextCharUntil(TCHAR Ch)
         if(Buffer[End] == Ch)
             break;
         End++;
+        //VERBOSE(LogMisc, T("NextCharUntil 1, %d line: %d, col: %d"), (int)(Buffer[End]), Line, End-LastLineEnd );
         if (Buffer[End] == C('\n'))
         {
             LastLineEnd = End;
             Line++;
         }
     }
+    
 }
 void TokenReader::NextCharUntil(TCHAR Ch1, TCHAR Ch2)
 {
@@ -136,6 +139,7 @@ void TokenReader::NextCharUntil(TCHAR Ch1, TCHAR Ch2)
         if(Buffer[End] == Ch1 || Buffer[End] == Ch2)
             break;
         End++;
+        //VERBOSE(LogMisc, T("NextCharUntil 2, %d line: %d, col: %d"), (int)(Buffer[End]), Line, End-LastLineEnd );
         if (Buffer[End] == C('\n'))
         {
             LastLineEnd = End;
@@ -150,6 +154,7 @@ void TokenReader::NextCharUntil(TCHAR Ch1, TCHAR Ch2, TCHAR Ch3)
         if(Buffer[End] == Ch1 || Buffer[End] == Ch2 || Buffer[End] == Ch3)
             break;
         End++;
+        //VERBOSE(LogMisc, T("NextCharUntil 3, %d line: %d, col: %d"), (int)(Buffer[End]), Line, End-LastLineEnd );
         if (Buffer[End] == C('\n'))
         {
             LastLineEnd = End;
@@ -164,6 +169,7 @@ void TokenReader::NextCharUntil(TCHAR Ch1, TCHAR Ch2, TCHAR Ch3, TCHAR Ch4)
         if(Buffer[End] == Ch1 || Buffer[End] == Ch2 || Buffer[End] == Ch3 || Buffer[End] == Ch4)
             break;
         End++;
+        //VERBOSE(LogMisc, T("NextCharUntil 4, %d line: %d, col: %d"), (int)(Buffer[End]), Line, End-LastLineEnd );
         if (Buffer[End] == C('\n'))
         {
             LastLineEnd = End;
@@ -183,16 +189,16 @@ int TokenReader::GetCol()
 
 void TokenReader::LoadFromMemory(const TCHAR* SrcBuffer, int SrcLen)
 {
-    Buffer = new TCHAR[SrcLen+1];
-    memcpy(Buffer, SrcBuffer, sizeof(TCHAR) * SrcLen);
-    Buffer[SrcLen] = 0;
-    Len = SrcLen;
+    BufferString = SrcBuffer;
+    Buffer = (TCHAR*)BufferString.CStr();
+    Len = BufferString.Len();
+
     SourceFileName = T("Memory code");
 }
 
 void TokenReader::LoadFromFile(const TCHAR* FileName)
 {
-    FILE* file = fopen(T2A(FileName), "rb");
+    FILE* file = t_fopen(FileName, "rb");
     if(file == nullptr)
     {
         ERROR(LogStream, T("Cannot open file %s"), FileName);
@@ -201,15 +207,22 @@ void TokenReader::LoadFromFile(const TCHAR* FileName)
 
     fseek(file, 0, SEEK_END);
     long SrcLen = ftell(file);
-    Buffer = new TCHAR[SrcLen + 1];
+    
+    char* TmpBuffer = new char[SrcLen + 1];
 
     fseek(file, 0, SEEK_SET);
-    fread(Buffer, 1, SrcLen, file);
+    fread(TmpBuffer, 1, SrcLen, file);
     fclose(file);
 
-    Buffer[SrcLen] = 0;
-    Len = SrcLen;
+    TmpBuffer[SrcLen] = 0;
+
+    BufferString = OLString::FromUTF8(TmpBuffer);
+    delete[] TmpBuffer;
+    Buffer = (TCHAR*)BufferString.CStr();
+    Len = BufferString.Len();
     SourceFileName = FileName;
+
+    //VERBOSE(LogMisc, T("Load File: %s"), SourceFileName.CStr());
 }
 
 OLString& TokenReader::GetSourceFileName()

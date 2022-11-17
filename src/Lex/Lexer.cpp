@@ -42,7 +42,7 @@ int CharFeature[] = {
 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 
 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 
 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 
-0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
+0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
 
 
 };
@@ -177,6 +177,13 @@ Lexer::Lexer(TokenReader& SrcReader, CompileMsg& InCM)
     EnableForceEOF = false;
     BreakOnNextToken = false;
     CondiCompile.Add(CondiCompileState{CondiCompileState::Enable});
+}
+
+bool Lexer::CheckChFeature(TCHAR Ch, uint Feature)
+{
+    if(Ch > 255)
+        return (Feature & (CH_NAME | CH_NAME_START)) != 0;
+    return (CharFeature[Ch] & Feature) != 0 ;
 }
 
 Token& Lexer::Next()
@@ -850,7 +857,8 @@ void Lexer::ReadSingleToken(Token& tk, bool ForMacro, bool NoKeywords)
             if(ReadNumber(tk) == false)
                 tk.Tk = TK_error;
         }
-        else if((CharFeature[Ch] & CH_NAME_START) != 0 )
+        //else if((CharFeature[Ch] & CH_NAME_START) != 0 )
+        else if(CheckChFeature(Ch, CH_NAME_START))
         {
             if(ReadName(tk, NoKeywords) == false)
                 tk.Tk = TK_error;
@@ -868,14 +876,16 @@ void Lexer::ReadSingleToken(Token& tk, bool ForMacro, bool NoKeywords)
 
 bool Lexer::IsDigit(TCHAR Ch)
 {
-    return (CharFeature[Ch] & CH_DIGIT) != 0;
+    return CheckChFeature(Ch, CH_DIGIT);
+    //return (CharFeature[Ch] & CH_DIGIT) != 0;
 }
 
 int Lexer::ReadHexChar()
 {
-    auto HexToNum = [](TCHAR InCh) -> int
+    auto HexToNum = [this](TCHAR InCh) -> int
     {
-        if((CharFeature[InCh] & CH_DIGIT) != 0)
+        //if((CharFeature[InCh] & CH_DIGIT) != 0)
+        if(CheckChFeature(InCh, CH_DIGIT))
             return InCh - C('0');
         else if(InCh >= 'a' && InCh <= 'f')
             return InCh - C('a') + 10;
@@ -885,7 +895,8 @@ int Lexer::ReadHexChar()
     int Ch1 = Reader.NextChar();
     if(Ch1 == TR_EOF)
         return -1;
-    if((CharFeature[Ch1] & CH_HEX_DIGIT) == 0)
+    //if((CharFeature[Ch1] & CH_HEX_DIGIT) == 0)
+    if(!CheckChFeature(Ch1, CH_HEX_DIGIT))
     {
         CM.Log(CMT_HexExpected, Reader.GetLine(), Reader.GetCol());
         return -1;
@@ -894,7 +905,8 @@ int Lexer::ReadHexChar()
     int Ch2 = Reader.NextChar();
     if(Ch2 == TR_EOF)
         return -1;
-    if((CharFeature[Ch2] & CH_HEX_DIGIT) == 0)
+    //if((CharFeature[Ch2] & CH_HEX_DIGIT) == 0)
+    if(!CheckChFeature(Ch2, CH_HEX_DIGIT))
     {
         CM.Log(CMT_HexExpected, Reader.GetLine(), Reader.GetCol());
         return -1;
@@ -981,7 +993,8 @@ bool Lexer::ReadNumber(Token& tk)
         Index++;
         if(IsHex == false)
         {
-            if(CharFeature[Ch] & CH_DIGIT)
+            //if(CharFeature[Ch] & CH_DIGIT)
+            if(CheckChFeature(Ch, CH_DIGIT))
             {
                 Ch = Reader.NextChar();
                 continue;
@@ -989,7 +1002,8 @@ bool Lexer::ReadNumber(Token& tk)
         }
         else
         {
-            if(CharFeature[Ch] & CH_HEX_DIGIT)
+            //if(CharFeature[Ch] & CH_HEX_DIGIT)
+            if(CheckChFeature(Ch, CH_HEX_DIGIT))
             {
                 Ch = Reader.NextChar();
                 continue;
@@ -1013,7 +1027,8 @@ bool Lexer::ReadNumber(Token& tk)
                 IsExponent = true;
                 Reader.NextCharIfCurr(C('+'), C('-'));
                 Ch = Reader.CurrChar();
-                if((CharFeature[Ch] & CH_DIGIT) == false)
+                //if((CharFeature[Ch] & CH_DIGIT) == false)
+                if(!CheckChFeature(Ch, CH_DIGIT))
                 {
                     CM.Log(CMT_ExponentNumErr, Reader.GetLine(), Reader.GetCol(), Reader.Pick().CStr());
                     return false;
@@ -1030,7 +1045,8 @@ bool Lexer::ReadNumber(Token& tk)
             {
                 IsDecimal = true;
                 Ch = Reader.CurrChar();
-                if((CharFeature[Ch] & CH_DIGIT) == false)
+                //if((CharFeature[Ch] & CH_DIGIT) == false)
+                if(!CheckChFeature(Ch, CH_DIGIT))
                 {
                     CM.Log(CMT_DecimalNumErr, Reader.GetLine(), Reader.GetCol(), Reader.Pick().CStr());
                     return false;
@@ -1065,7 +1081,8 @@ bool Lexer::ReadName(Token& tk, bool NoKeywords)
     Reader.BeginNewToken();
 
     TCHAR Ch = Reader.NextChar();
-    while(Ch != TR_EOF && (CharFeature[Ch] & CH_NAME) != 0)
+    //while(Ch != TR_EOF && (CharFeature[Ch] & CH_NAME) != 0)
+    while(Ch != TR_EOF && CheckChFeature(Ch, CH_NAME))
     {
         Ch = Reader.NextChar();
     }

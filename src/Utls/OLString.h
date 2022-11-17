@@ -2,8 +2,8 @@
 
 #include <string>
 #include "Defs.h"
-#include "TextEncoding.h"
 #include "OLHash.h"
+
 namespace OL
 {
     class OLString;
@@ -11,6 +11,8 @@ namespace OL
     class OLList;
     template<> 
     struct OLHash<OLString>;
+
+    
 
     class OLString
     {
@@ -67,7 +69,9 @@ namespace OL
         static int StrCmp(const TCHAR* Str1, const TCHAR* Str2);
 
         static OLString FromUTF8(const char* Src);
-        void ToUTF8(OLList<char>& Output);
+        void ToUTF8(OLList<char>& Output) const ;
+
+
 
         
     private:

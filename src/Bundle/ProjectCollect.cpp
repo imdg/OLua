@@ -271,6 +271,23 @@ public:
             Setting.MainFunc = T("");
         }
 
+        Setting.AllowUnresolvedType = true;
+        if(Cmd().HasKey(T("--allow_unresolved")))
+        {
+            OLString txt = Cmd().GetFirstParam(T("--allow_unresolved"));
+            if(txt == T("0") || txt == T("false") || txt == T("no"))
+                Setting.AllowUnresolvedType = false;
+        }
+
+        if(Cmd().HasKey(T("--main")))
+        {
+            Setting.MainFunc = Cmd().GetFirstParam(T("--main"));
+        }
+        else
+        {
+            Setting.MainFunc = T("");
+        }
+
         BundleBuilder Builder(Setting);
         GProject.ApplyBuilder(Builder);
         Builder.Run();

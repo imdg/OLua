@@ -13,7 +13,7 @@ public:
     MemTextStream();
     virtual void Write(byte* InBuffer, int InSize) override;
     virtual void WriteText(const TCHAR* InBuffer) override;
-
+    virtual void Flush() override;
 
     OLString Str;
 };

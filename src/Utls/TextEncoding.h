@@ -2,45 +2,12 @@
 #ifdef USE_WCHAR
 #include <wchar.h>
 #endif
+#include "OLList.h"
+
 
 namespace OL
 {
-#ifdef USE_WCHAR
-typedef wchar_t TCHAR;
-#define T(x) L ## x
-#define C(x) L ## x
 
-#define T2A(x) (StringConverter<TCHAR, char>(x).Get())
-#define A2T(x) (StringConverter<char, TCHAR>(x).Get())
-
-
-#define T2W(x) x
-#define W2T(x) x
-
-
-#define t_strcmp wcscmp
-#define t_strncpy wcsncpy
-#define t_strlen wcslen
-#define t_vsnprintf vswprintf
-
-
-#else
-typedef char TCHAR;
-// Wrapper for all hardcode string
-#define T(x) x
-#define C(x) x
-
-#define T2A(x) x
-#define A2T(x) x
-
-#define T2W(x) (StringConverter<TCHAR, wchar_t>(x).Get())
-#define W2T(x) (StringConverter<wchar_t, TCHAR>(x).Get())
-
-#define t_strcmp strcmp
-#define t_strncpy strncpy
-#define t_strlen strlen
-#define t_vsnprintf vsnprintf
-#endif
 
 int Utf8ToWchar(const char* Src, int SrcSize, wchar_t* Dst, int DstSize);
 
@@ -74,7 +41,7 @@ public:
         From* CurrSrc = (From*)Src;
         while(*CurrSrc != 0)
         {
-            *(++CurrDst) = (To)*(++CurrSrc);
+            *(CurrDst++) = (To)*(CurrSrc++);
         }
         *CurrDst = 0;
     };
@@ -120,5 +87,14 @@ public:
 };
 
 
+class OLString;
+class ToUtf8Helper
+{
+public:
+    OLList<char> Buffer;
+    ToUtf8Helper(const OLString& Src);
+    char* Get();
+
+};
 
 }

@@ -4,24 +4,6 @@
 namespace OL
 {
 
-// const char* a[] =  { _ET2(name, id) };
-
-// #define TEST_SLIDER(_3, _2, _1, x, ...) x
-// #define EXPAND_TEST(...) TEST_SLIDER(## __VA_ARGS__, _ET3, _ET2, _ET1)(__VA_ARGS__)
-// #define TEST_ENUM(name, ...) char* name[] = { EXPAND_TEST( __VA_ARGS__) }
-
-// #define EXPAND_TEST_NUM(...) TEST_SLIDER(  __VA_ARGS__, 3, 2, 1)
-// #define TEST_ENUM_NUM(name, ...) int name = EXPAND_TEST_NUM( __VA_ARGS__);
-
-// //TEST_ENUM_NUM(my_name, x,y)
-// //int name = TEST_SLIDER(x, y, 3, 2, 1);
-// int name = EXPAND_TEST_NUM(x, y);
-
-// RTTI_ENUM(ETestEnum,
-//     Item1,
-//     Item2,
-//     Item3, Item4
-// )
 
 RTTI_ENUM(ECompileMsgType,
     CMT_Dummy,

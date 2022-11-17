@@ -1,12 +1,12 @@
 #include "APILoader.h"
 #include "CmdConfig.h"
 #include "Env.h"
-
+#include "BuildSetting.h"
 
 namespace OL
 {
 
-bool APILoader::LoadAPI(OLString APIPath)
+bool APILoader::LoadAPI(OLString APIPath, BuildSetting& Setting)
 {
 
     Env::IterateFileInDir(APIPath, true, [this](OLString Path, bool IsDir)
@@ -19,12 +19,14 @@ bool APILoader::LoadAPI(OLString APIPath)
             return;
 
         SPtr<SourceFile> APISource = new SourceFile(Path);
+        
         APIFiles.Add(APISource);
     });
 
 
     for(int i = 0; i < APIFiles.Count(); i++)
     {
+        APIFiles[i]->ApplyBuildSetting(Setting);
         APIFiles[i]->DoLocalCompile();
         APIFiles[i]->DoTypeResolve();
         APIFiles[i]->DoResolveAsAPI();

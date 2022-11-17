@@ -184,7 +184,7 @@ void ClassType::AddConstructor(SPtr<AClassContructor> Node, SPtr<FuncSigniture> 
         return;
     ClassMemberDesc& NewMember = Members.AddConstructed();
     NewMember.Name = Node->Name;
-    NewMember.Flags = CMF_Constructor;
+    NewMember.Flags = CreateFlag(Node->Modifier) | CMF_Constructor;
     NewMember.Type = Member_Function;
     NewMember.DeclTypeDesc = FuncSig;
     NewMember.Init = nullptr;

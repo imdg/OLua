@@ -1,6 +1,21 @@
 
 #ifdef PLATFORM_WIN
 #include <windows.h>
+#elif defined(PLATFORM_MAC)
+#include <mach-o/dyld.h>
+#include <limits.h>
+#include <sys/param.h> 
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#elif defined(PLATFORM_LINUX)
+#include <unistd.h>
+#include <stdio.h>
+#include <limits.h>
+#include<sys/types.h>
+#include<dirent.h>
+#include<sys/stat.h>
+#include <sys/param.h> 
 #endif
 
 #include "Env.h"
@@ -8,6 +23,28 @@
 #include <stdlib.h>
 namespace OL
 {
+
+FILE* FOpenWin(OLString FileName, const char* Mode)
+{
+#ifdef PLATFORM_WIN
+#if USE_WCHAR
+    return _wfopen(FileName.CStr(), A2T(Mode));
+#else
+    return fopen(FileName.CStr(), Mode);
+#endif
+#else
+    return nullptr;
+#endif
+}
+
+FILE* FOpenLin(OLString FileName, const char* Mode)
+{
+
+    OLList<char> utf8;
+    FileName.ToUTF8(utf8);
+    return fopen(utf8.Data(), Mode);
+}
+
 
 OLString Env::SavedPath;
 OLString Env::BinPath;
@@ -68,6 +105,10 @@ OLString Env::NormalizePath(OLString Src, bool RemoveLast)
         SegLen--;
 
     OLString Ret;
+#if defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)
+    if(SrcLen > 0 && Src[0] == C('/'))
+        Ret.Append(T("/"));
+#endif
     for(int i = 0; i < SegLen; i++)
     {
         Ret.Append(PathStack[i]);
@@ -98,6 +139,30 @@ void Env::InitEnv()
     BinPath = W2T(path);
     BinPath = NormalizePath(BinPath, true);
 
+    ::GetCurrentDirectoryW(MAX_PATH, path);
+    SysCurrDir = W2T(path);
+#elif defined(PLATFORM_MAC)
+ 
+    char RawPath[MAXPATHLEN + 1];
+    unsigned int Size = MAXPATHLEN + 1;
+    int Result = _NSGetExecutablePath(RawPath, &Size);
+    RawPath[Size] = '\0';
+    BinPath = NormalizePath(OLString::FromUTF8(RawPath), true);
+
+    getcwd(RawPath, MAXPATHLEN);
+    SysCurrDir = OLString::FromUTF8(RawPath);
+#elif defined(PLATFORM_LINUX)
+    char RawPath[PATH_MAX];
+    readlink( "/proc/self/exe", RawPath, PATH_MAX );
+    BinPath = NormalizePath(OLString::FromUTF8(RawPath));
+
+    getcwd(RawPath, PATH_MAX);
+    SysCurrDir = OLString::FromUTF8(RawPath);
+#else
+    OL_ASSERT(0 && "to be implemented on this platform");
+#endif 
+
+
     if(CmdConfig::GetInst()->HasParam(T("--saved")))
     {
         OLString TempPath;
@@ -121,29 +186,9 @@ void Env::InitEnv()
     {
         DataPath.Printf(T("%s/data"), BinPath.CStr());
     }
-
-    
-    ::GetCurrentDirectoryW(MAX_PATH, path);
-    SysCurrDir = W2T(path);
-    
-#elif defined(PLATFORM_MAC)
-    //readlink()
-    // to do
-    OL_ASSERT(0 && "to be implemented on this platform");
-#endif    
 }
 
-OLString Env::FullPath(OLString RelativePath)
-{
 
-#ifdef PLATFORM_WIN
-    wchar_t path[MAX_PATH];
-    _wfullpath(path, T2W(RelativePath.CStr()), MAX_PATH);
-    return NormalizePath(W2T(path), false);
-#else
-    OL_ASSERT(0 && "to be implemented on this platform");
-#endif
-}
 void Env::MakeDir(const OLString& AbsPath)
 {
 #ifdef PLATFORM_WIN
@@ -159,7 +204,29 @@ void Env::MakeDir(const OLString& AbsPath)
         }
     }
     CreateDirectoryW(T2W(AbsPath.CStr()), nullptr);
+#elif defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)
+    int Pos = 0;
+    int Len = AbsPath.Len();
+    for(int Pos = 0; Pos < Len; Pos++)
+    {
+        if((AbsPath[Pos] == C('\\') || AbsPath[Pos] == C('/') ) && Pos != 0)
+        {
+            OLString Partial = AbsPath.Sub(0, Pos);
 
+            OLList<char> utf8;
+            Partial.ToUTF8(utf8);
+            struct stat st = {0};
+            if (stat(utf8.Data(), &st) == -1) 
+                mkdir(utf8.Data(), 0700);
+        }
+    }
+    {
+        OLList<char> utf8;
+        AbsPath.ToUTF8(utf8);
+        struct stat st;
+        if (stat(utf8.Data(), &st) == -1) 
+            mkdir(utf8.Data(), 0700);
+    }
 #else
 // to do
     OL_ASSERT(0 && "to be implemented on this platform");
@@ -168,14 +235,9 @@ void Env::MakeDir(const OLString& AbsPath)
 
 void Env::MakeSavedDir(const TCHAR* SubPath)
 {
-#ifdef PLATFORM_WIN
     OLString FullPath;
     FullPath.Printf(T("%s/%s"), GetSavedPath().CStr(), SubPath );
     MakeDir(FullPath);
-#else
-// to do
-    OL_ASSERT(0 && "to be implemented on this platform");
-#endif
 }
 
 OLString Env::GetSavedDir(const TCHAR* SubPath)
@@ -259,6 +321,42 @@ void Env::IterateFileInDir(OLString DirPath, bool Recursive, OLFunc<void(OLStrin
         }
         FindClose(hFind);
     }
+#elif defined(PLATFORM_MAC) || defined(PLATFORM_LINUX)
+        DIR* dir;
+        struct dirent *ent;
+        struct stat states;
+        
+        OLList<char> utf8;
+        DirPath.ToUTF8(utf8);
+        dir = opendir(utf8.Data());
+        if(dir == NULL)
+            return;
+        while((ent=readdir(dir)) != NULL)
+        {
+            
+            if(!strcmp(".", ent->d_name) || !strcmp("..", ent->d_name))
+            {
+                continue;
+            }
+            else
+            {
+                OLString CurrFullName = DirPath + T("/") + OLString::FromUTF8(ent->d_name);
+
+                stat(TS2U(CurrFullName), &states);
+                if(S_ISDIR(states.st_mode))
+                {
+                    Callback(CurrFullName, true);
+                    if(Recursive)
+                        IterateFileInDir(CurrFullName, Recursive, Callback);
+                }
+                else
+                {
+                    Callback(CurrFullName, false);
+                }
+            }
+        }
+
+        closedir(dir);
 #else
 // to do
     OL_ASSERT(0 && "to be implemented on this platform");
