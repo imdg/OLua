@@ -33,7 +33,8 @@ typedef wchar_t TCHAR;
 #define t_strcmp wcscmp
 #define t_strncpy wcsncpy
 #define t_strlen wcslen
-#define t_vsnprintf vswprintf
+//#define t_vsnprintf vswprintf
+#define t_vsnprintf OL_vswprintf
 
 
 #else

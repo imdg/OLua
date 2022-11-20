@@ -3,13 +3,15 @@
 #include <wchar.h>
 #endif
 #include "OLList.h"
-
+#include <stdarg.h>
 
 namespace OL
 {
 
 
-int Utf8ToWchar(const char* Src, int SrcSize, wchar_t* Dst, int DstSize);
+extern int Utf8ToWchar(const char* Src, int SrcSize, wchar_t* Dst, int DstSize);
+extern int OL_vswprintf(wchar_t* const Dst, size_t const DstSize, wchar_t const* const Fmt, va_list Args);
+
 
 template <typename CharType>
 class StringOp

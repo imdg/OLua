@@ -8,6 +8,8 @@
 #include "OLList.h"
 namespace OL
 {
+    extern int OL_vswprintf(wchar_t* const Dst, size_t const DstSize, wchar_t const* const Fmt, va_list Args);
+    
     OLString::OLString()
     {
     }
