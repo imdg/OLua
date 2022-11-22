@@ -19,7 +19,7 @@ public:
     virtual bool IsConstant();
     
     //OLString TypeName;
-    SPtr<ATypeIdentity> TypeInfo;
+    SPtr<ATypeIdentity> TargetType;
 
     SPtr<ASimpleExpr> CastExpr;
 };

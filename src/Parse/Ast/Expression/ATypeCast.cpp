@@ -5,7 +5,7 @@ namespace OL
 
 RTTI_BEGIN_INHERITED(ATypeCast, ASimpleExpr)
     //RTTI_MEMBER(TypeName)
-    RTTI_MEMBER(TypeInfo)
+    RTTI_MEMBER(TargetType)
     RTTI_MEMBER(CastExpr)
 RTTI_END(ATypeCast)
 
@@ -33,7 +33,7 @@ EVisitStatus ATypeCast::Accept(RecursiveVisitor* Vis)
     Status = CastExpr->Accept(Vis);
     RETURN_IF_STOP(Status);
 
-    Status = TypeInfo->Accept(Vis);
+    Status = TargetType->Accept(Vis);
     RETURN_IF_STOP(Status);
         
     return Vis->EndVisit(SThis);

@@ -114,7 +114,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ATypeCast> Node)
     int Index = IndexStack.PickPop();
     ASSERT_CHILD_NUM(Index, 1);
 
-    SPtr<TypeDescBase> TargetType = CurrScope->FindTypeByNode(Node->TypeInfo.Get(), true);
+    SPtr<TypeDescBase> TargetType = CurrScope->FindTypeByNode(Node->TargetType.Get(), true);
 
     TypeDeriContex& Top = DeriStack.Top();
     bool Ret = CheckType(Top.PrimaryType, TargetType, Node.Get(), true);

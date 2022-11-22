@@ -273,7 +273,7 @@ AExpr*     Parser::Parse_TypeExp()
 
         ATypeCast* Ret = AstPool::New<ATypeCast>(Curr.LineInfo);
         //Ret->TypeName = Curr.StrOrNameVal;
-        Ret->TypeInfo = TargetType;
+        Ret->TargetType = TargetType;
         Ret->CastExpr = MainExpr;
         return Ret;
         

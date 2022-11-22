@@ -229,10 +229,10 @@ public:
         return InnerPtr.lock().get();
     }
 
-    Ty operator* () const
-    {
-        return *(InnerPtr.lock());
-    }
+    //Ty operator* () const
+    //{
+    //    return *(InnerPtr.lock());
+    //}
 
     operator bool() const 
     {

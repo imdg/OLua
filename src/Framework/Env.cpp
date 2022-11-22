@@ -24,6 +24,7 @@ https://opensource.org/licenses/MIT.
 #include<dirent.h>
 #include<sys/stat.h>
 #include <sys/param.h> 
+#include <string.h>
 #endif
 
 #include "Env.h"
@@ -162,7 +163,7 @@ void Env::InitEnv()
 #elif defined(PLATFORM_LINUX)
     char RawPath[PATH_MAX];
     readlink( "/proc/self/exe", RawPath, PATH_MAX );
-    BinPath = NormalizePath(OLString::FromUTF8(RawPath));
+    BinPath = NormalizePath(OLString::FromUTF8(RawPath), true);
 
     getcwd(RawPath, PATH_MAX);
     SysCurrDir = OLString::FromUTF8(RawPath);

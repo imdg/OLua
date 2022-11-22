@@ -11,6 +11,7 @@ https://opensource.org/licenses/MIT.
 #include "Env.h"
 #include "Logger.h"
 #include <stdio.h>
+#include <string.h>
 
 namespace OL
 {

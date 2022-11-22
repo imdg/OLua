@@ -11,6 +11,7 @@ https://opensource.org/licenses/MIT.
 #include <stdlib.h>
 #include <codecvt>
 #include <locale> 
+#include <string.h>
 
 #include "OLString.h"
 #include "OLList.h"

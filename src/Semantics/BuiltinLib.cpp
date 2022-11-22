@@ -91,13 +91,13 @@ public:
     {
     };
 
-    template< >
+    //template< >
     void ParamImpl(EIntrinsicType Arg, bool IsConst, bool IsVariableParam, bool IsOptional)
     {
         FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, CodeLineInfo::Zero );
     };
 
-    template< >
+    //template< >
     void ParamImpl(SPtr<TypeDescBase> Arg, bool IsConst, bool IsVariableParam, bool IsOptional)
     {
         FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, CodeLineInfo::Zero );
@@ -143,13 +143,13 @@ public:
     {
     };
 
-    template< >
+    //template< >
     void ReturnImpl(EIntrinsicType Arg)
     {
         FuncSig->AddReturn(Arg, CodeLineInfo::Zero );
     };
 
-    template< >
+    //template< >
     void ReturnImpl(SPtr<TypeDescBase> Arg)
     {
         FuncSig->AddReturn(Arg, CodeLineInfo::Zero );

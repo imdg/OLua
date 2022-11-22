@@ -15,8 +15,8 @@ https://opensource.org/licenses/MIT.
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 
-#else
-
+#elif defined(PLATFORM_LINUX)
+#include <time.h>
 #endif
 
 #include "Timer.h"
@@ -31,6 +31,9 @@ LARGE_INTEGER Frenquency;
 #elif defined(PLATFORM_MAC)
 time_t          StartRealTime;
 uint64_t        StartHPTime;
+#elif defined(PLATFORM_LINUX)
+timespec        StartRealTime;
+timespec        StartHPTime;
 #endif
 
 void Timer::Init()
@@ -46,6 +49,9 @@ void Timer::Init()
 #elif defined(PLATFORM_MAC)
     time(&StartRealTime);
     StartHPTime = clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW);
+#elif defined(PLATFORM_LINUX)
+    clock_gettime(CLOCK_REALTIME, &StartRealTime);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &StartHPTime);
 #endif
 }
 
@@ -97,7 +103,17 @@ DateTime Timer::GetCurrTime()
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
+
+    // timespec time1, time2;
+    // int temp;
+    // uint64_t CurrHPTime = clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time1);
+
+    
+    //timespec curr;
+    //clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &curr);
+    //time_t low_prec = StartRealTime.tv_sec + curr.tv_nsec / 10000000;
+
+    timeinfo = localtime ( &(rawtime) );
     DateTime Ret;
     Ret.Year = timeinfo->tm_year;
     Ret.Month = timeinfo->tm_mon;
@@ -105,6 +121,9 @@ DateTime Timer::GetCurrTime()
     Ret.Hour = timeinfo->tm_hour;
     Ret.Minute = timeinfo->tm_min;
     Ret.Second = timeinfo->tm_sec;
+
+    //Ret.Millisecond = ((curr.tv_nsec - StartHPTime.tv_nsec) / 1000000)%1000;
+    //Ret.Timestamp = curr.tv_nsec / 1000000;
 
     Ret.Millisecond = 0;
     Ret.Timestamp = 0;

@@ -8,6 +8,8 @@ https://opensource.org/licenses/MIT.
 
 #include "TextEncoding.h"
 #include "OLString.h"
+#include <string.h>
+
 namespace OL
 {
 
