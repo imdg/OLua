@@ -54,6 +54,7 @@ RTTI_ENUM(EDeclType,
     DT_Enum,
     DT_Function,
     DT_Variant,
+    DT_Alias
 )
 struct Declearation
 {

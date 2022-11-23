@@ -248,10 +248,7 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<AConstExpr> Node)
     case IT_string:
         // to do: string modifiers
         Text->AppendF(T("\"%s\""), Node->StrVal.CStr());
-        //Text->AppendF(T("\"%s\""), T("写死"));
-        
-        //tmp.Printf(T("--%ls--"), T("哈哈"));
-        //Text->Append(tmp);
+
         break;   
     case IT_bool:
         Text->AppendF(T("%s"), Node->BoolVal ? T("true") : T("false"));
@@ -333,9 +330,9 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AColonCall> Node)
     bool IsVirtual = false;
     bool IsRawStyle = false;
 
-    if(Target->ExprType.Lock()->Is<ClassType>())
+    if(Target->ExprType.Lock()->ActuallyIs<ClassType>())
     {
-        SPtr<ClassType> Class = Target->ExprType.Lock().PtrAs<ClassType>();
+        SPtr<ClassType> Class = Target->ExprType->ActuallyAs<ClassType>();
         FindMemberResult Found = Class->FindMember(Node->NameAfter, true);
         if(Found.IsClassMember && Found.FromClass != nullptr)
         {
@@ -395,9 +392,9 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AColonCall> Node)
             IsRawStyle = true;
         }
     }
-    else if(Target->ExprType.Lock()->Is<InterfaceType>())
+    else if(Target->ExprType->ActuallyIs<InterfaceType>())
     {
-        SPtr<InterfaceType> Interface = Target->ExprType.Lock().PtrAs<InterfaceType>();
+        SPtr<InterfaceType> Interface = Target->ExprType->ActuallyAs<InterfaceType>();
         InterfaceMember* Found = Interface->FindMember(Node->NameAfter, true);
         if(Found != nullptr)
         {
@@ -474,7 +471,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ANormalCall> Node)
         {
             if(Scope->Type == ST_Class)
             {
-                SPtr<ClassType> ScopeClass = Scope->OwnerTypeDesc.Lock().PtrAs<ClassType>();
+                SPtr<ClassType> ScopeClass = Scope->OwnerTypeDesc->ActuallyAs<ClassType>();
                 if(Ref->Decl != nullptr)
                 {
                     FindMemberResult Found = ScopeClass->FindMemberByDeclNode(Ref->Decl->DeclNode.Lock(), true);
@@ -602,15 +599,15 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ADotMember> Node)
     int Index = IndexStack.PickPop();
     SPtr<TextParagraph> Text = ContentStack[Index].CurrText;
 
-    if(Node->Target->ExprType->Is<EnumType>())
+    if(Node->Target->ExprType->ActuallyIs<EnumType>())
     {
-        SPtr<EnumType> Enum = Node->Target->ExprType.Lock().PtrAs<EnumType>();
+        SPtr<EnumType> Enum = Node->Target->ExprType->ActuallyAs<EnumType>();
         int Val = Enum->GetItemValue(Node->Field);
         Text->AppendF(T("%d"), Val);
     }
-    else if(Node->Target->ExprType->Is<ClassType>())
+    else if(Node->Target->ExprType->ActuallyIs<ClassType>())
     {
-        SPtr<ClassType> Class = Node->Target->ExprType.Lock().PtrAs<ClassType>();
+        SPtr<ClassType> Class = Node->Target->ExprType->ActuallyAs<ClassType>();
         FindMemberResult Found = Class->FindMember(Node->Field, true);
         if(Found.FromClass == nullptr)
         {
@@ -757,8 +754,8 @@ EVisitStatus LuaPlainInterp::BeginVisit(SPtr<AClass> Node)
 {
     
     SPtr<TypeDescBase> Type = CurrScope->FindTypeByNode(Node.Get(), false);
-    OL_ASSERT(Type->Is<ClassType>());
-    SPtr<ClassType> Class = Type.PtrAs<ClassType>();
+    OL_ASSERT(Type->ActuallyIs<ClassType>());
+    SPtr<ClassType> Class = Type->ActuallyAs<ClassType>();
 
 
     ContentStack.Add(NodeGen(Node, OutText.NewParagraph()));
@@ -785,7 +782,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AClass> Node)
 
     //ContentStack[Index].CurrText->NewLine().AppendF(T("------------ Begin class: %s ----------------------"), Node->ClassName.CStr()).NewLine();
 
-    SPtr<ClassType> Class = CurrScope->OwnerTypeDesc.Lock().PtrAs<ClassType>();
+    SPtr<ClassType> Class = CurrScope->OwnerTypeDesc->ActuallyAs<ClassType>();
     SPtr<ClassType> BaseClass = Class->GetSuperClass();
 
     bool SeperateStaticBlock =  false;
@@ -843,8 +840,8 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AClassVar> Node)
     ASSERT_CHILD_NUM(Index, Node->Decls.Count() + Node->Inits.Count());
 
     SPtr<TypeDescBase> Type = CurrScope->Parent.Lock()->FindTypeByNode(Node->Parent.Lock().Get(), false);
-    OL_ASSERT(Type->Is<ClassType>());
-    SPtr<ClassType> Class = Type.PtrAs<ClassType>();
+    OL_ASSERT(Type->ActuallyIs<ClassType>());
+    SPtr<ClassType> Class = Type->ActuallyAs<ClassType>();
 
     if(Class->IsExternal == false)
     {
@@ -876,9 +873,9 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AClassContructor> Node)
     ASSERT_CHILD_NUM(Index, 1); // The only one is AFuncBody
 
     SPtr<TypeDescBase> Type = CurrScope->Parent.Lock()->FindTypeByNode(Node->Parent.Lock().Get(), false);
-    OL_ASSERT(Type->Is<ClassType>());
+    OL_ASSERT(Type->ActuallyIs<ClassType>());
 
-    SPtr<ClassType> Class = Type.PtrAs<ClassType>();
+    SPtr<ClassType> Class = Type->ActuallyAs<ClassType>();
 
     ContentStack[Index].CurrText->Indent()
         .AppendF(T("function %s"), LPClassHelper::MakeConstructorName(Class, Node->Name, T("impl")).CStr())
@@ -903,9 +900,9 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ANormalMethod> Node)
     ASSERT_CHILD_NUM(Index, 1); // The only one is AFuncBody
 
     SPtr<TypeDescBase> Type = CurrScope->Parent.Lock()->FindTypeByNode(Node->Parent.Lock().Get(), false);
-    OL_ASSERT(Type->Is<ClassType>());
+    OL_ASSERT(Type->ActuallyIs<ClassType>());
 
-    SPtr<ClassType> Class = Type.PtrAs<ClassType>();
+    SPtr<ClassType> Class = Type->ActuallyAs<ClassType>();
     if(Node->Modifier->IsAbstract == false && Class->IsExternal == false)
     {
         FindMemberResult Found = Class->FindMember(Node->Name, false);
@@ -980,9 +977,9 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AFuncBody> Node)
     if(Node->Parent->Is<AMethod>())
     {
         SPtr<TypeDescBase> Type = CurrScope->Parent.Lock()->FindTypeByNode(CurrScope->Owner.Lock().Get(), false);
-        OL_ASSERT(Type->Is<ClassType>());
+        OL_ASSERT(Type->ActuallyIs<ClassType>());
 
-        SPtr<ClassType> Class = Type.PtrAs<ClassType>();
+        SPtr<ClassType> Class = Type->ActuallyAs<ClassType>();
         FindMemberResult Found = Class->FindMemberByDeclNode(Node->Parent.Lock(), false);
         OL_ASSERT(Found.IsClassMember == true);
         if(Found.FromClass == nullptr)
@@ -1217,7 +1214,7 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<AVarRef> Node)
     {
         if(Scope->Type == ST_Class)
         {
-            SPtr<ClassType> ScopeClass = Scope->OwnerTypeDesc.Lock().PtrAs<ClassType>();
+            SPtr<ClassType> ScopeClass = Scope->OwnerTypeDesc->ActuallyAs<ClassType>();
             if(Decl != nullptr)
             {
                 FindMemberResult Found = ScopeClass->FindMemberByDeclNode(Decl->DeclNode.Lock(), true);
@@ -1315,7 +1312,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AForList> Node)
 
     SPtr<TextParagraph> IterText = OutText.NewParagraph();
     SPtr<TypeDescBase> IterType = Node->Iterator->ExprType.Lock();
-    if(IterType->Is<TupleType>())
+    if(IterType->ActuallyIs<TupleType>())
     {
         IterText->Merge(FromTop(Index, Node->VarList.Count()));
     }

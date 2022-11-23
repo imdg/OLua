@@ -34,18 +34,18 @@ VariableParamHolder::VariableParamHolder(SPtr<ABase> Node, OLString ParamTypeNam
 
 ETypeValidation VariableParamHolder::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
 {
-    if(Target->Is<VariableParamHolder>())
+    if(Target->ActuallyIs<VariableParamHolder>())
     {
-        return ParamType->ValidateConvert(Target.PtrAs<VariableParamHolder>()->ParamType.Lock(), IsExplict);
+        return ParamType->ValidateConvert(Target->ActuallyAs<VariableParamHolder>()->ParamType.Lock(), IsExplict);
     }
     else
         return TCR_NoWay;
     
 }
 
-bool VariableParamHolder::EqualsTo(TypeDescBase* Target)
+bool VariableParamHolder::EqualsTo(SPtr<TypeDescBase> Target)
 {
-    if(Target->Is<VariableParamHolder>())
+    if(Target->ActuallyIs<VariableParamHolder>())
     {
         return ParamType->EqualsTo(Target);
     }

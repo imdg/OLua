@@ -20,6 +20,7 @@ https://opensource.org/licenses/MIT.
 #include "MapType.h"
 #include "ConstructorType.h"
 #include "VariableParamHolder.h"
+#include "TypeAlias.h"
 namespace OL
 {
 
@@ -167,6 +168,11 @@ void TypeInfoVisitor::TryReceiveComplexSubType(SPtr<TypeDescBase> Owner, SPtr<Ty
         else if(Map->IsValueTypeDecl(Node.Get()))
             Map->SetValueType(SubType);
     }
+    else if(Owner->Is<TypeAlias>())
+    {
+        SPtr<TypeAlias> Alias = Owner.PtrAs<TypeAlias>();
+        Alias->SetActualType(SubType);
+    }
 }
 EVisitStatus TypeInfoVisitor::BeginVisit(SPtr<AArrayType> Node)
 {
@@ -269,6 +275,11 @@ EVisitStatus TypeInfoVisitor::Visit(SPtr<ANamedType> Node)
             Map->SetKeyType(Node->TypeName);
         else if(Map->IsValueTypeDecl(Node.Get()))
             Map->SetValueType(Node->TypeName);
+    }
+    else if(Top->Is<TypeAlias>())
+    {
+        SPtr<TypeAlias> Alias = Top.PtrAs<TypeAlias>();
+        Alias->SetActualTypeName(Node->TypeName);
     }
 
     return VS_Continue;
@@ -495,6 +506,24 @@ EVisitStatus TypeInfoVisitor::BeginVisit(SPtr<AFuncExpr> Node)
 }
 
 EVisitStatus TypeInfoVisitor::EndVisit(SPtr<AFuncExpr> Node)
+{
+    TypeStack.Pop();
+    return VS_Continue;
+}
+
+EVisitStatus TypeInfoVisitor::BeginVisit(SPtr<AAlias> Node)
+{
+    SPtr<TypeAlias> NewAlias = new TypeAlias();
+    NewAlias->DeclNode = Node;
+    NewAlias->Name = Node->Name;
+
+    CurrScope->TypeDefs.Add(NewAlias);
+
+    TypeStack.Add(NewAlias);
+    return VS_Continue;
+}
+
+EVisitStatus TypeInfoVisitor::EndVisit(SPtr<AAlias> Node)
 {
     TypeStack.Pop();
     return VS_Continue;

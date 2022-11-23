@@ -1,11 +1,3 @@
-/*
-Copyright 2022 Dong Gen
-
-Use of this source code is governed by an MIT-style
-license that can be found in the LICENSE file or at
-https://opensource.org/licenses/MIT.
-*/
-
 #pragma once
 #include "Common.h"
 #include "ExpressionDecl.h"
@@ -68,6 +60,7 @@ public:
     virtual EVisitStatus Visit(SPtr<AClass> Node);
     virtual EVisitStatus Visit(SPtr<AEnum> Node);
     virtual EVisitStatus Visit(SPtr<AInterface> Node);
+    virtual EVisitStatus Visit(SPtr<AAlias> Node);
     virtual EVisitStatus Visit(SPtr<AAssignment> Node);
     virtual EVisitStatus Visit(SPtr<ABlockStat> Node);
     virtual EVisitStatus Visit(SPtr<ADoWhile> Node);
@@ -261,6 +254,10 @@ public:
     virtual EVisitStatus Visit(SPtr<AInterface> Node);
     virtual EVisitStatus BeginVisit(SPtr<AInterface> Node);
     virtual EVisitStatus EndVisit(SPtr<AInterface> Node);
+
+    virtual EVisitStatus Visit(SPtr<AAlias> Node);
+    virtual EVisitStatus BeginVisit(SPtr<AAlias> Node);
+    virtual EVisitStatus EndVisit(SPtr<AAlias> Node);
 
     virtual EVisitStatus Visit(SPtr<AAssignment> Node);
     virtual EVisitStatus BeginVisit(SPtr<AAssignment> Node);
@@ -513,6 +510,10 @@ public:
     virtual EVisitStatus Visit(SPtr<AInterface> Node);
     virtual EVisitStatus BeginVisit(SPtr<AInterface> Node);
     virtual EVisitStatus EndVisit(SPtr<AInterface> Node);
+
+    virtual EVisitStatus Visit(SPtr<AAlias> Node);
+    virtual EVisitStatus BeginVisit(SPtr<AAlias> Node);
+    virtual EVisitStatus EndVisit(SPtr<AAlias> Node);
 
     virtual EVisitStatus Visit(SPtr<AAssignment> Node);
     virtual EVisitStatus BeginVisit(SPtr<AAssignment> Node);

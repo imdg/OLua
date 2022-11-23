@@ -29,6 +29,7 @@ namespace OL
 //          | funcdef
 //          | lable
 //          | exprstat
+//          | aliasstat
 AStat* Parser::Parse_Stat(bool AcceptGlobal)
 {
     switch (Lex.GetCurrent().Tk)
@@ -71,6 +72,8 @@ AStat* Parser::Parse_Stat(bool AcceptGlobal)
             CM.Log(CMT_CannotDefineGlobal, Lex.GetCurrent().LineInfo);
             return nullptr;
         }
+    case TKK_alias:
+        return Parse_Alias();
     default:
         // Includs function call and assignment
         return Parse_ExprStat();
@@ -1169,6 +1172,42 @@ AAttribute* Parser::Parse_Attribute()
 
     return Attrib;
 
+}
+
+//aliasstat -> 'alias' Name 'as' TypeIdentifier
+AAlias* Parser::Parse_Alias()
+{
+    OL_ASSERT(Lex.GetCurrent().Tk == TKK_alias);
+    CodeLineInfo BegiLine = Lex.GetCurrent().LineInfo;
+    Lex.Next();
+
+    if(Lex.GetCurrent().Tk != TK_name)
+    {
+        CM.Log(CMT_NeedAliasName, Lex.GetCurrent().LineInfo);
+        return nullptr;
+    }
+
+    AAlias* Ret = AstPool::New<AAlias>(BegiLine);
+    Ret->Name = Lex.GetCurrent().StrOrNameVal;
+
+    Lex.Next();
+    if(Lex.GetCurrent().Tk != TKK_as)
+    {
+        CM.Log(CMT_AliasTypeNeeded, Lex.GetCurrent().LineInfo);
+        AstPool::Delete(Ret);
+        return nullptr;
+    }
+
+    Lex.Next();
+    ATypeIdentity* TargetType = Parse_TypeIdentity();
+    if(TargetType == nullptr)
+    {
+        AstPool::Delete(Ret);
+        return nullptr;
+    }
+
+    Ret->TargetType = TargetType;
+    return Ret;
 }
 
 

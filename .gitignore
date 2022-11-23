@@ -1,4 +1,5 @@
 *
+
 !.gitignore
 !*/
 !src/**
@@ -7,4 +8,7 @@
 !CMakeLists.txt
 !api/**
 !doc/**
-**/.DS_Store
+
+src/.DS_Store
+src/Framework/.DS_Store
+

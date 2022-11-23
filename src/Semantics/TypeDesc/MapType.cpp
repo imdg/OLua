@@ -104,22 +104,22 @@ bool MapType::IsValueTypeDecl(ATypeIdentity* Node)
 
 ETypeValidation MapType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
 {
-    if (EqualsTo(Target.Get()))
+    if (EqualsTo(Target))
         return TCR_OK;
 
-    if (Target->Is<IntrinsicType>() && Target->As<IntrinsicType>()->Type == IT_any)
+    if (Target->ActuallyIs<IntrinsicType>() && Target->ActuallyAs<IntrinsicType>()->Type == IT_any)
         return TCR_OK;
 
     return TCR_NoWay;
 }
 
-bool MapType::EqualsTo(TypeDescBase* Target)
+bool MapType::EqualsTo(SPtr<TypeDescBase> Target)
 {
-    if(Target->Is<MapType>())
+    if(Target->ActuallyIs<MapType>())
     {
-        MapType* TargetMap = Target->As<MapType>();
-        if(KeyType->EqualsTo(TargetMap->KeyType.Get()) == false 
-            || ValueType->EqualsTo(TargetMap->ValueType.Get()) == false)
+        SPtr<MapType> TargetMap = Target->ActuallyAs<MapType>();
+        if(KeyType->EqualsTo(TargetMap->KeyType.Lock()) == false 
+            || ValueType->EqualsTo(TargetMap->ValueType.Lock()) == false)
             return false;
         return true;
     }

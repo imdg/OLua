@@ -157,6 +157,7 @@ void Lexer::InitKeywordsTable()
 
     KeywordsTable.Add(T("self"), TKK_self);
     KeywordsTable.Add(T("super"), TKK_super);
+    KeywordsTable.Add(T("alias"), TKK_alias);
 
     // Only used for test
     KeywordsTable.Add(T("eof"), TK_eof);

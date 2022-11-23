@@ -149,14 +149,20 @@ bool SourceFile::DoLocalCompile()
         SymbolExport ExportInfo;
         ExportInfo.Name = RootScope->Decls[i]->Name;
         ExportInfo.Line = RootScope->Decls[i]->DeclNode->Line;
-        if(RootScope->Decls[i]->DeclType == DT_Class || RootScope->Decls[i]->DeclType == DT_Enum || RootScope->Decls[i]->DeclType == DT_Interface)
+        if(RootScope->Decls[i]->DeclType == DT_Class 
+            || RootScope->Decls[i]->DeclType == DT_Enum 
+            || RootScope->Decls[i]->DeclType == DT_Interface 
+            || RootScope->Decls[i]->DeclType == DT_Alias )
             ExportInfo.IsType = true;
         else
             ExportInfo.IsType = false;
+
+        VERBOSE(LogMisc, T("    Export %s: %s from: %s"), ExportInfo.IsType? T("Type"):T("Variant"), RootScope->Decls[i]->Name.CStr(), FileName.CStr());
         Exports.Add(RootScope->Decls[i]->Name, ExportInfo);
     }
 
     
+    // Add possible unresolved type name
     UnbindTypeCount = 0;
     for(int i = 0; i < RootScope->Refs.Count(); i++)
     {
@@ -173,6 +179,7 @@ bool SourceFile::DoLocalCompile()
                 ImportInfo.Name = CurrRef->Name;
 
                 ImportTypes.Add(CurrRef->Name, ImportInfo);
+                VERBOSE(LogMisc, T("    Import Type: %s from: %s"), CurrRef->Name.CStr(), FileName.CStr());
             }
         }
     }
@@ -183,6 +190,8 @@ bool SourceFile::DoLocalCompile()
 bool SourceFile::DoTypeResolve()
 {
     Symbols->ResolveSymbolsAndTypes(CM, SRP_GlobalType);
+
+    // Type resolved. Now add possible unresolved variant name
     SPtr<SymbolScope> RootScope = Symbols->Scopes[0];
 
     UnbindVarCount = 0;
@@ -201,6 +210,8 @@ bool SourceFile::DoTypeResolve()
                 ImportInfo.Name = CurrRef->Name;
 
                 ImportVars.Add(CurrRef->Name, ImportInfo);
+
+                VERBOSE(LogMisc, T("    Import Variant: %s from: %s"), CurrRef->Name.CStr(), FileName.CStr());
             }
         }
     }

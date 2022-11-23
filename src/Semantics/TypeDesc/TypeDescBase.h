@@ -60,7 +60,7 @@ public:
     virtual void ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolResolvePhase Phase);
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict) = 0;
-    virtual bool EqualsTo(TypeDescBase* Target) = 0;
+    virtual bool EqualsTo(SPtr<TypeDescBase> Target) = 0;
     virtual OLString ToString() = 0;
 
     virtual bool IsInt();
@@ -80,6 +80,14 @@ public:
     virtual SPtr<TypeDescBase> DeduceLValueType(SPtr<SymbolScope> Scope);
 
     virtual OLString DefaultValueText();
+
+    template<typename Ty>
+    SPtr<Ty> ActuallyAs() { return GetActualType().PtrAs<Ty>(); };
+
+    template<typename Ty>
+    bool ActuallyIs() { return GetActualType().PtrIs<Ty>(); };
+
+    virtual SPtr<TypeDescBase> GetActualType();
 
     // Sometimes a type will be deduced to another, which is a new TypeDescBase with same DeclNode. 
     // In this case the original TypeDescBase should be 'muted'

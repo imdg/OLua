@@ -88,7 +88,7 @@ ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target, bool
     SPtr<AConstructor> Ctor = DeclNode.Lock().PtrAs<AConstructor>();
     if(Ctor->HasKey == false)
     {
-        if(Target->Is<ArrayType>() == false)
+        if(Target->ActuallyIs<ArrayType>() == false)
             return TCR_NoWay;
         ETypeValidation Ret = TCR_OK;
         for(int i = 0; i < Ctor->Elems.Count(); i++)
@@ -96,7 +96,7 @@ ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target, bool
             if(Ctor->Elems[i].Value.Get()->ExprType == nullptr)
                 continue;
             
-            ETypeValidation Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Target->As<ArrayType>()->ElemType.Lock(), IsExplict);
+            ETypeValidation Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Target->ActuallyAs<ArrayType>()->ElemType.Lock(), IsExplict);
             if(Curr == TCR_NoWay)
                 return TCR_NoWay;
             if(Curr == TCR_DataLose || Curr == TCR_Unsafe)
@@ -107,7 +107,7 @@ ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target, bool
     }
     else
     {
-        if(Target->Is<MapType>() == false)
+        if(Target->ActuallyIs<MapType>() == false)
             return TCR_NoWay;
 
         ETypeValidation Ret = TCR_OK;
@@ -116,7 +116,7 @@ ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target, bool
             ETypeValidation Curr = TCR_OK;
             if (Ctor->Elems[i].Key.Get()->ExprType != nullptr)
             {
-                Curr = Ctor->Elems[i].Key.Get()->ExprType->ValidateConvert(Target->As<MapType>()->KeyType.Lock(), IsExplict);
+                Curr = Ctor->Elems[i].Key.Get()->ExprType->ValidateConvert(Target->ActuallyAs<MapType>()->KeyType.Lock(), IsExplict);
                 if (Curr == TCR_NoWay)
                     return TCR_NoWay;
                 if (Curr == TCR_DataLose || Curr == TCR_Unsafe)
@@ -125,7 +125,7 @@ ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target, bool
 
             if (Ctor->Elems[i].Value.Get()->ExprType != nullptr)
             {
-                Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Target->As<MapType>()->ValueType.Lock(), IsExplict);
+                Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Target->ActuallyAs<MapType>()->ValueType.Lock(), IsExplict);
                 if (Curr == TCR_NoWay)
                     return TCR_NoWay;
                 if (Curr == TCR_DataLose || Curr == TCR_Unsafe)
@@ -152,9 +152,9 @@ SPtr<TypeDescBase> ConstructorType::DeduceLValueType(SPtr<SymbolScope> Scope)
             if(CurrElemType == nullptr)
                 continue;
 
-            if(CurrElemType->Is<VariableParamHolder>())
+            if(CurrElemType->ActuallyIs<VariableParamHolder>())
             {
-                CurrElemType = CurrElemType.PtrAs<VariableParamHolder>()->ParamType.Lock();
+                CurrElemType = CurrElemType->ActuallyAs<VariableParamHolder>()->ParamType.Lock();
             }
 
             if(Array->ElemType == nullptr)
@@ -216,7 +216,7 @@ SPtr<TypeDescBase> ConstructorType::DeduceLValueType(SPtr<SymbolScope> Scope)
     return nullptr;
 }
 
-bool ConstructorType::EqualsTo(TypeDescBase* Target)
+bool ConstructorType::EqualsTo(SPtr<TypeDescBase> Target)
 {
     return false;
 }

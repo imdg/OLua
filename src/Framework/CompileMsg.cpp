@@ -139,6 +139,9 @@ MsgDetailInfo MsgDetails[] = {
     {CMT_ExpectAttribName,        DEFAULT_LEVEL_ERROR,    T("Expect a valid attribute name") },
     {CMT_AttribSytexErr,        DEFAULT_LEVEL_ERROR,    T("Attribute syntex error. It should be like '[ name = value, ... ]'") },
     {CMT_AttribValueErr,        DEFAULT_LEVEL_ERROR,    T("Cannot use this token as attribute value. Only integer, float, bool and nil is allowed") },
+
+    {CMT_NeedAliasName,        DEFAULT_LEVEL_ERROR,    T("Expect a name for 'alias'") },
+    {CMT_AliasTypeNeeded,        DEFAULT_LEVEL_ERROR,    T("Expect keyword 'as' and a type identifier for the alias") },
     
 
 
@@ -154,6 +157,8 @@ MsgDetailInfo MsgDetails[] = {
     {CMT_ClassBaseTypeError,        DEFAULT_LEVEL_ERROR,    T("Type '%s' cannot be the base type of a class. Only interfaces or a class is allowed") },
     {CMT_MixedInherit,        DEFAULT_LEVEL_ERROR,    T("External and non-external classes cannot inherit each other.") },
 
+    {CMT_NoAliasType,            DEFAULT_LEVEL_ERROR,    T("Cannot find type: '%s'. This alias will be seen as 'any' if this message is processed as a warning") },
+    
     {CMT_NoVariableParam,        DEFAULT_LEVEL_ERROR,    T("Cannot use '...' because variable param is not defined in the owner function.") },
 
 

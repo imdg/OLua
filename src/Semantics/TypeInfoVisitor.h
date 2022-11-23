@@ -54,6 +54,10 @@ public:
     virtual EVisitStatus BeginVisit(SPtr<AFuncExpr> Node);
     virtual EVisitStatus EndVisit(SPtr<AFuncExpr> Node);
 
+    virtual EVisitStatus BeginVisit(SPtr<AAlias> Node);
+    virtual EVisitStatus EndVisit(SPtr<AAlias> Node);
+
+
     virtual EVisitStatus EndVisit(SPtr<AVarDecl> Node);
 
     virtual EVisitStatus BeginVisit(SPtr<AClassVar> Node);

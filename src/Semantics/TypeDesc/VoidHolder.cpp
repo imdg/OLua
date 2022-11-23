@@ -33,7 +33,7 @@ ETypeValidation VoidHolder::ValidateConvert(SPtr<TypeDescBase> Target, bool IsEx
     return TCR_NoWay;
 }
 
-bool VoidHolder::EqualsTo(TypeDescBase* Target)
+bool VoidHolder::EqualsTo(SPtr<TypeDescBase> Target)
 {
     if(Target->Is<VoidHolder>())
         return true;

@@ -317,20 +317,20 @@ void FuncSigniture::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESym
 
 ETypeValidation FuncSigniture::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
 {
-    if(EqualsTo(Target.Get()))
+    if(EqualsTo(Target))
         return TCR_OK;
     
-    if(Target->Is<IntrinsicType>() && Target->As<IntrinsicType>()->Type == IT_any)
+    if(Target->ActuallyIs<IntrinsicType>() && Target->ActuallyAs<IntrinsicType>()->Type == IT_any)
         return TCR_OK;
 
     return TCR_NoWay;
 }
 
-bool FuncSigniture::EqualsTo(TypeDescBase* Target)
+bool FuncSigniture::EqualsTo(SPtr<TypeDescBase> Target)
 {
-    if(Target->Is<FuncSigniture>())
+    if(Target->ActuallyIs<FuncSigniture>())
     {
-        FuncSigniture* TargetFunc = Target->As<FuncSigniture>();
+        SPtr<FuncSigniture> TargetFunc = Target->ActuallyAs<FuncSigniture>();
         if(Params.Count() != TargetFunc->Params.Count()
             || Returns.Count() != TargetFunc->Returns.Count())
             return false;
@@ -340,7 +340,7 @@ bool FuncSigniture::EqualsTo(TypeDescBase* Target)
         
         if(HasThis)
         {
-            if(ThisType.Lock()->EqualsTo(TargetFunc->ThisType.Get()) == false)
+            if(ThisType.Lock()->EqualsTo(TargetFunc->ThisType.Lock()) == false)
                 return false;
         }
         
@@ -352,13 +352,13 @@ bool FuncSigniture::EqualsTo(TypeDescBase* Target)
                 return false;
             if(Params[i].IsOptional != TargetFunc->Params[i].IsOptional)
                 return false;
-            if(Params[i].Type.Lock()->EqualsTo(TargetFunc->Params[i].Type.Get()) == false)
+            if(Params[i].Type.Lock()->EqualsTo(TargetFunc->Params[i].Type.Lock()) == false)
                 return false;
         }
 
         for(int i = 0; i < Returns.Count(); i++)
         {
-            if(Returns[i].Type.Lock()->EqualsTo(TargetFunc->Returns[i].Type.Get()) == false)
+            if(Returns[i].Type.Lock()->EqualsTo(TargetFunc->Returns[i].Type.Lock()) == false)
                 return false;
         }
         return true;

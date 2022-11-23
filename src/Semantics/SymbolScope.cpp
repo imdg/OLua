@@ -23,7 +23,7 @@ https://opensource.org/licenses/MIT.
 #include "InterfaceType.h"
 #include "EnumType.h"
 #include "ImportedScopeGroup.h"
-
+#include "TypeAlias.h"
 
 namespace OL
 {
@@ -146,13 +146,13 @@ SPtr<Declearation> SymbolScope::FindDecl(OLString Name, bool Vars, bool Types)
         {
             if(Types)
             {
-                if((Decls[i]->DeclType == DT_Class || Decls[i]->DeclType == DT_Interface || Decls[i]->DeclType == DT_Enum))
+                if((Decls[i]->DeclType == DT_Class || Decls[i]->DeclType == DT_Interface || Decls[i]->DeclType == DT_Enum || Decls[i]->DeclType == DT_Alias ))
                     return Decls[i];
             }
             
             if(Vars)
             {
-                if((Decls[i]->DeclType != DT_Class && Decls[i]->DeclType != DT_Interface && Decls[i]->DeclType != DT_Enum))
+                if((Decls[i]->DeclType != DT_Class && Decls[i]->DeclType != DT_Interface && Decls[i]->DeclType != DT_Enum && Decls[i]->DeclType != DT_Alias))
                     return Decls[i];
             }
         }
@@ -287,7 +287,7 @@ void    SymbolScope::AddDecl(SPtr<Declearation> NewDecl, CompileMsg& CM)
 
 bool    SymbolScope::DeclIsType(SPtr<Declearation> Decl)
 {
-    if ((Decl->DeclType == DT_Class || Decl->DeclType == DT_Interface || Decl->DeclType == DT_Enum))
+    if ((Decl->DeclType == DT_Class || Decl->DeclType == DT_Interface || Decl->DeclType == DT_Enum || Decl->DeclType == DT_Alias))
         return true;
     return false;
 }
@@ -638,6 +638,11 @@ SPtr<TypeDescBase> SymbolScope::FindNamedType(OLString Name, bool Recursive)
         else if(Curr->Is<EnumType>())
         {
             if(Curr->As<EnumType>()->Name == Name)
+                return Curr;
+        }
+        else if(Curr->Is<TypeAlias>())
+        {
+            if(Curr->As<TypeAlias>()->Name == Name)
                 return Curr;
         }
     }

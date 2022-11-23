@@ -148,26 +148,26 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ADotMember> Node)
 
     SPtr<TypeDescBase> MemberType = nullptr;
     bool IsConst = false;
-    if(DotTarget.PrimaryType->Is<MapType>())
+    if(DotTarget.PrimaryType->ActuallyIs<MapType>())
     {
-        MemberType = DerefMap(DotTarget.PrimaryType.PtrAs<MapType>(), Node->Field, Node.Get());
+        MemberType = DerefMap(DotTarget.PrimaryType->ActuallyAs<MapType>(), Node->Field, Node.Get());
         IsConst = DotTarget.IsConst;
     }
-    else if(DotTarget.PrimaryType->Is<ClassType>())
+    else if(DotTarget.PrimaryType->ActuallyIs<ClassType>())
     {
-        DerefResult Deref = DerefClass(DotTarget.PrimaryType.PtrAs<ClassType>(), Node->Field, Node.Get(), DotTarget.IsType, false);
+        DerefResult Deref = DerefClass(DotTarget.PrimaryType->ActuallyAs<ClassType>(), Node->Field, Node.Get(), DotTarget.IsType, false);
         MemberType = Deref.Type;
         IsConst = Deref.IsConst;
     }
-    else if(DotTarget.PrimaryType->Is<InterfaceType>())
+    else if(DotTarget.PrimaryType->ActuallyIs<InterfaceType>())
     {
-        DerefResult Deref =  DerefInterface(DotTarget.PrimaryType.PtrAs<InterfaceType>(), Node->Field, Node.Get());
+        DerefResult Deref =  DerefInterface(DotTarget.PrimaryType->ActuallyAs<InterfaceType>(), Node->Field, Node.Get());
         MemberType = Deref.Type;
         IsConst = Deref.IsConst;  
     }
-    else if(DotTarget.PrimaryType->Is<EnumType>() && DotTarget.IsType == true)
+    else if(DotTarget.PrimaryType->ActuallyIs<EnumType>() && DotTarget.IsType == true)
     {
-        if(DerefEnum(DotTarget.PrimaryType.PtrAs<EnumType>(), Node->Field, Node.Get()) == true)
+        if(DerefEnum(DotTarget.PrimaryType->ActuallyAs<EnumType>(), Node->Field, Node.Get()) == true)
         {
             MemberType = DotTarget.PrimaryType;
         }
@@ -208,23 +208,23 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ABracketMember> Node)
     TypeDeriContex Field = DeriStack.PickPop();
     TypeDeriContex Target = DeriStack.PickPop();
 
-    if(Target.PrimaryType->Is<ArrayType>())
+    if(Target.PrimaryType->ActuallyIs<ArrayType>())
     {
         if(CheckType(Field.PrimaryType, IntrinsicType::CreateFromRaw(IT_int), Node.Get(), false) == false)
         {
             CM.Log(CMT_ArrayNeedIntIndex, Node->Line);
         }
-        DeriStack.Top().PrimaryType = Target.PrimaryType->As<ArrayType>()->ElemType.Lock();
+        DeriStack.Top().PrimaryType = Target.PrimaryType->ActuallyAs<ArrayType>()->ElemType.Lock();
         DeriStack.Top().IsConst = Target.IsConst;
         Node->ExprType = DeriStack.Top().PrimaryType;
     }
-    else if(Target.PrimaryType->Is<MapType>())
+    else if(Target.PrimaryType->ActuallyIs<MapType>())
     {
-        if(CheckType(Field.PrimaryType, Target.PrimaryType->As<MapType>()->KeyType.Lock(), Node.Get(), false) == false)
+        if(CheckType(Field.PrimaryType, Target.PrimaryType->ActuallyAs<MapType>()->KeyType.Lock(), Node.Get(), false) == false)
         {
             CM.Log(CMT_MapKeyTypeMismatch, Node->Line);
         }
-        DeriStack.Top().PrimaryType = Target.PrimaryType->As<ArrayType>()->ElemType.Lock();
+        DeriStack.Top().PrimaryType = Target.PrimaryType->ActuallyAs<ArrayType>()->ElemType.Lock();
         DeriStack.Top().IsConst = Target.IsConst;
         Node->ExprType = DeriStack.Top().PrimaryType;
     }
@@ -252,7 +252,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ANormalCall> Node)
 
     SPtr<TypeDescBase> FuncBase = DeriStack[Index + 1].PrimaryType;
 
-    if(FuncBase->Is<FuncSigniture>() == false)
+    if(FuncBase->ActuallyIs<FuncSigniture>() == false)
     {
         if(FuncBase->IsAny() == false)
         {
@@ -268,7 +268,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ANormalCall> Node)
         }
     }
 
-    SPtr<FuncSigniture> Func = FuncBase.PtrAs<FuncSigniture>();
+    SPtr<FuncSigniture> Func = FuncBase->ActuallyAs<FuncSigniture>();
     bool Match = MatchFuncCall(Func, Index, Node);
     return VS_Continue;
 }
@@ -291,19 +291,19 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
 
     SPtr<TypeDescBase> MemberType = nullptr;
     bool IsConst = false;
-    if(FuncOwner->Is<MapType>())
+    if(FuncOwner->ActuallyIs<MapType>())
     {
-        MemberType = DerefMap(FuncOwner.PtrAs<MapType>(), Node->NameAfter, Node.Get());
+        MemberType = DerefMap(FuncOwner->ActuallyAs<MapType>(), Node->NameAfter, Node.Get());
     }
-    else if(FuncOwner->Is<ClassType>())
+    else if(FuncOwner->ActuallyIs<ClassType>())
     {
-        DerefResult Deref =  DerefClass(FuncOwner.PtrAs<ClassType>(), Node->NameAfter, Node.Get(), DeriStack[Index + 1].IsType, true);
+        DerefResult Deref =  DerefClass(FuncOwner->ActuallyAs<ClassType>(), Node->NameAfter, Node.Get(), DeriStack[Index + 1].IsType, true);
         MemberType = Deref.Type;
         IsConst = Deref.IsConst;
     }
-    else if(FuncOwner->Is<InterfaceType>())
+    else if(FuncOwner->ActuallyIs<InterfaceType>())
     {
-        DerefResult Deref =  DerefInterface(FuncOwner->As<InterfaceType>(), Node->NameAfter, Node.Get());
+        DerefResult Deref =  DerefInterface(FuncOwner->ActuallyAs<InterfaceType>(), Node->NameAfter, Node.Get());
         MemberType = Deref.Type;
         IsConst = Deref.IsConst;
     }
@@ -323,7 +323,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
 
     }
 
-    if(MemberType->Is<FuncSigniture>() == false)
+    if(MemberType->ActuallyIs<FuncSigniture>() == false)
     {
         if(MemberType->IsAny())
         {
@@ -345,7 +345,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
         return VS_Stop;
     }
 
-    bool Match = MatchFuncCall(MemberType.PtrAs<FuncSigniture>(), Index, Node);
+    bool Match = MatchFuncCall(MemberType->ActuallyAs<FuncSigniture>(), Index, Node);
 
     return VS_Continue;
 
@@ -354,7 +354,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
 EVisitStatus TypeDerivationVisitor::BeginVisit(SPtr<AFuncExpr> Node)
 {
     SPtr<TypeDescBase> FuncBase = CurrScope->FindTypeByNode(Node.Get(), false);
-    OL_ASSERT(FuncBase->Is<FuncSigniture>());
+    OL_ASSERT(FuncBase->ActuallyIs<FuncSigniture>());
 
     DeriStack.Add(TypeDeriContex(Node, FuncBase, false));
     IndexStack.Add(DeriStack.Count() - 1);
@@ -653,7 +653,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
     SPtr<SymbolScope> InsideScope = CurrSymbolTable.FindByBlock(Node->MainBlock.Get());
 
     SPtr<TypeDescBase> IteratorType = DeriStack[Index + 1].PrimaryType;
-    if(IteratorType->Is<ArrayType>())
+    if(IteratorType->ActuallyIs<ArrayType>())
     {
         if(Node->VarList.Count() != 1)
         {
@@ -662,12 +662,12 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
         else
         {
             SPtr<Declearation> DeclInfo = InsideScope->FindDeclByNode(Node->VarList[0].Get());
-            CheckType(IteratorType->As<ArrayType>()->ElemType.Lock(), DeclInfo->ValueTypeDesc.Lock(), Node->Iterator.Get(), false);
+            CheckType(IteratorType->ActuallyAs<ArrayType>()->ElemType.Lock(), DeclInfo->ValueTypeDesc.Lock(), Node->Iterator.Get(), false);
         }
     }
-    else if(IteratorType->Is<MapType>())
+    else if(IteratorType->ActuallyIs<MapType>())
     {
-        SPtr<MapType> Map = IteratorType->As<MapType>();
+        SPtr<MapType> Map = IteratorType->ActuallyAs<MapType>();
         if(Node->VarList.Count() != 2)
         {
             CM.Log(CMT_MapIterMismatch, Node->Iterator->Line);
@@ -681,7 +681,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
             CheckType(Map->ValueType.Lock(), ValueDeclInfo->ValueTypeDesc.Lock(), Node->VarList[1].Get(), false);
         }
     }
-    else if(IteratorType->Is<ConstructorType>())
+    else if(IteratorType->ActuallyIs<ConstructorType>())
     {
         
         SPtr<Declearation> DeclInfo2;
@@ -702,7 +702,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
             Type2 = DeclInfo2->ValueTypeDesc.Lock();
         }
 
-        ETypeValidation Result = IteratorType->As<ConstructorType>()->ValidateIterator(Type1, Type2);
+        ETypeValidation Result = IteratorType->ActuallyAs<ConstructorType>()->ValidateIterator(Type1, Type2);
         if(Result == TCR_NoWay)
         {
             CM.Log(CMT_IterMismatch, Node->Iterator->Line);
@@ -712,9 +712,9 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
     {
 
     }
-    else if(IteratorType->Is<TupleType>())
+    else if(IteratorType->ActuallyIs<TupleType>())
     {
-        SPtr<TupleType> Tuple = IteratorType.PtrAs<TupleType>();
+        SPtr<TupleType> Tuple = IteratorType->ActuallyAs<TupleType>();
 
         auto ValidateIteratorFun = [&]() ->bool
         {
@@ -725,14 +725,14 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
                 return false;
             }
 
-            if(Tuple->Subtypes[0].Type->Is<FuncSigniture>() == false)
+            if(Tuple->Subtypes[0].Type->ActuallyIs<FuncSigniture>() == false)
             {
                 // error
                 CM.Log(CMT_IterEntryType, Node->Line);
                 return false;
             }
 
-            SPtr<FuncSigniture> IterFun = Tuple->Subtypes[0].Type.Lock().PtrAs<FuncSigniture>();
+            SPtr<FuncSigniture> IterFun = Tuple->Subtypes[0].Type.Lock()->ActuallyAs<FuncSigniture>();
             if(IterFun->Params.Count() != 2)
             {
                 // error
@@ -858,7 +858,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AGlobal> Node)
             break;
         SPtr<TypeDescBase> ExprType = StackTypes[i].PrimaryType; // DeriStack[Index + 1 + i].PrimaryType;
         SPtr<Declearation> Decl = CurrScope->FindDeclByNode(Node->Decls[i].Get());
-        if(Decl->ValueTypeDesc->IsImplicitAny() && ExprType->Is<VariableParamHolder>() == false)
+        if(Decl->ValueTypeDesc->IsImplicitAny() && ExprType->ActuallyIs<VariableParamHolder>() == false)
             Decl->ValueTypeDesc = ExprType->DeduceLValueType(CurrScope);
         else
             CheckType(ExprType, Decl->ValueTypeDesc.Lock(), Node->Decls[i].Get(), false);
@@ -886,7 +886,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ALocal> Node)
             break;
         SPtr<TypeDescBase> ExprType = StackTypes[i].PrimaryType; // DeriStack[Index + 1 + i].PrimaryType;
         SPtr<Declearation> Decl = CurrScope->FindDeclByNode(Node->Decls[i].Get());
-        if(Decl->ValueTypeDesc->IsImplicitAny() && ExprType->Is<VariableParamHolder>() == false)
+        if(Decl->ValueTypeDesc->IsImplicitAny() && ExprType->ActuallyIs<VariableParamHolder>() == false)
             Decl->ValueTypeDesc = ExprType->DeduceLValueType(CurrScope);
         else
             CheckType(ExprType, Decl->ValueTypeDesc.Lock(), Node->Decls[i].Get(), false);
@@ -1116,8 +1116,8 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefClass(SPtr<ClassT
 
 SPtr<TypeDescBase> TypeDerivationVisitor::DerefMap(SPtr<MapType> Map, OLString Name, ABase* Node)
 {
-    if(Map->KeyType->Is<IntrinsicType>() == false
-        || Map->KeyType->As<IntrinsicType>()->Type != IT_string)
+    if(Map->KeyType->ActuallyIs<IntrinsicType>() == false
+        || Map->KeyType->ActuallyAs<IntrinsicType>()->Type != IT_string)
     {
         CM.Log(CMT_MapNeedStringKey, Node->Line);
     }
@@ -1195,10 +1195,10 @@ bool TypeDerivationVisitor::MatchFuncCall(SPtr<FuncSigniture> Func, int RetIndex
             FuncParamDesc& FuncParam = Func->Params[p];
             SPtr<TypeDescBase> ParamType = Func->Params[p].Type.Lock();
             TypeDeriContex& CurrCtx = StackTypes[i]; // DeriStack[i]
-            if(ParamType->Is<VariableParamHolder>())
+            if(ParamType->ActuallyIs<VariableParamHolder>())
             {
-                if(CurrCtx.PrimaryType->Is<VariableParamHolder>() == false)
-                    ParamType = ParamType->As<VariableParamHolder>()->ParamType.Lock();
+                if(CurrCtx.PrimaryType->ActuallyIs<VariableParamHolder>() == false)
+                    ParamType = ParamType->ActuallyAs<VariableParamHolder>()->ParamType.Lock();
             }
             else
             {
@@ -1238,9 +1238,9 @@ void TypeDerivationVisitor::ExpandStackTuple(int BaseIndex, OLList<TypeDeriConte
 {
     for(int i = BaseIndex + 1; i < DeriStack.Count(); i++)
     {
-        if(DeriStack[i].PrimaryType->Is<TupleType>())
+        if(DeriStack[i].PrimaryType->ActuallyIs<TupleType>())
         {
-            SPtr<TupleType> Tuple = DeriStack[i].PrimaryType.PtrAs<TupleType>();
+            SPtr<TupleType> Tuple = DeriStack[i].PrimaryType->ActuallyAs<TupleType>();
             for(int k = 0; k < Tuple->Subtypes.Count(); k ++)
             {
                 OutList.Add(TypeDeriContex(

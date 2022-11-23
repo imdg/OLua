@@ -429,6 +429,19 @@ EVisitStatus SymbolWalker::BeginVisit(SPtr<AColonCall> Node)
     return VS_Continue;
 }
 
+EVisitStatus SymbolWalker::BeginVisit(SPtr<AAlias> Node)
+{
+    SPtr<Declearation> NewDecl = new Declearation();
+    NewDecl->ValueTypeNode = Node->TargetType;
+    NewDecl->Name = Node->Name;
+    NewDecl->DeclNode = Node;
+    NewDecl->DeclType = DT_Alias;
+    NewDecl->IsExternal = false;
+    NewDecl->IsConst = false;
+    NewDecl->IsVariableParam = false;
 
+    WalkingStack.Top()->AddDecl(NewDecl, CM);
+    return VS_Continue;
+}
 
 }

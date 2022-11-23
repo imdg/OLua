@@ -24,7 +24,7 @@ public:
     static SPtr<IntrinsicType> CreateFromRaw(EIntrinsicType RawType, bool InIsImplictAny = false);
     static bool IsIntrinsic(ETypeCat InType);
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
-    virtual bool EqualsTo(TypeDescBase* Target);
+    virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     virtual OLString ToString();
 
     virtual bool IsInt();

@@ -42,8 +42,8 @@ public:
     virtual void ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolResolvePhase Phase);
     
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
-    virtual bool EqualsTo(TypeDescBase* Target);
-    bool IsBaseType(TypeDescBase* Base);
+    virtual bool EqualsTo(SPtr<TypeDescBase> Target);
+    bool IsBaseType(SPtr<TypeDescBase> Base);
 
     virtual OLString ToString();
     virtual bool IsNilable();

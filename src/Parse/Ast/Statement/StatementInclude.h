@@ -20,3 +20,4 @@
 #include "ABlock.h"
 #include "AGlobal.h"
 #include "AAttribute.h"
+#include "AAlias.h"

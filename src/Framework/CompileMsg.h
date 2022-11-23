@@ -121,6 +121,9 @@ RTTI_ENUM(ECompileMsgType,
     CMT_AttribSytexErr,
     CMT_AttribValueErr,
 
+    CMT_NeedAliasName,
+    CMT_AliasTypeNeeded,
+    
     // Semantics
     CMT_NoType, // %s
     CMT_NoBaseType, // %s
@@ -131,6 +134,8 @@ RTTI_ENUM(ECompileMsgType,
     CMT_TooManyBaseClasses, 
     CMT_ClassBaseTypeError, //%s
     CMT_MixedInherit,
+
+    CMT_NoAliasType, //%s
 
     CMT_NoVariableParam,
 

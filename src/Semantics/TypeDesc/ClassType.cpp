@@ -99,7 +99,7 @@ bool ClassType::ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM)
     {
 
 
-        if(NewMember.DeclTypeDesc->Is<FuncSigniture>() == false || (NewMember.Flags & CMF_Static) != 0 )
+        if(NewMember.DeclTypeDesc->ActuallyIs<FuncSigniture>() == false || (NewMember.Flags & CMF_Static) != 0 )
         {
             CM.Log(CMT_OpMustBeFunc, NewMember.Decl->DeclNode->Line, NewMember.Name.CStr());
             return false;
@@ -248,11 +248,11 @@ void ClassType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, ESym
         else
         {
             UnresolvedBase[i].Resolved = true;
-            if(Found->Is<InterfaceType>())
-                BaseTypes.Add(Found);
-            else if(Found->Is<ClassType>())
+            if(Found->ActuallyIs<InterfaceType>())
+                BaseTypes.Add(Found->ActuallyAs<InterfaceType>());
+            else if(Found->ActuallyIs<ClassType>())
             {
-                bool IsExternalBase = Found->As<ClassType>()->IsExternal;
+                bool IsExternalBase = Found->ActuallyAs<ClassType>()->IsExternal;
                 if((IsExternal && !IsExternalBase) || (!IsExternal && IsExternalBase))
                 {
                     CM.Log(CMT_MixedInherit, DeclNode->Line);
@@ -262,7 +262,7 @@ void ClassType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, ESym
                     if(HasBaseClass == false)
                     {
                         HasBaseClass = true;
-                        BaseTypes.Add(Found);
+                        BaseTypes.Add(Found->GetActualType());
                     }
                     else
                         CM.Log(CMT_TooManyBaseClasses, DeclNode->Line);
@@ -287,9 +287,8 @@ void ClassType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, ESym
                 else if (Curr.RawTypeInfo->Is<ANamedType>())
                     Curr.DeclTypeDesc = InsideScope->FindNamedType(Curr.RawTypeInfo->As<ANamedType>()->TypeName, true);
                 else if (Curr.RawTypeInfo->Is<AFuncType>())
-                {
                     Curr.DeclTypeDesc = InsideScope->FindTypeByNode(Curr.RawTypeInfo->As<AFuncType>(), false);
-                }
+
             }
         }
     }
@@ -305,7 +304,7 @@ void ClassType::SetInsideScope(SPtr<SymbolScope> Scope)
     InsideScope = Scope;
 }
 
-bool ClassType::IsBaseType(TypeDescBase* Base)
+bool ClassType::IsBaseType(SPtr<TypeDescBase> Base)
 {
     for(int i = 0; i < BaseTypes.Count(); i++)
     {
@@ -313,14 +312,14 @@ bool ClassType::IsBaseType(TypeDescBase* Base)
             return true;
         
         SPtr<TypeDescBase> Curr = BaseTypes[i].Lock();
-        if(Curr->Is<ClassType>())
+        if(Curr->ActuallyIs<ClassType>())
         {
-            if(Curr->As<ClassType>()->IsBaseType(Base))
+            if(Curr->ActuallyAs<ClassType>()->IsBaseType(Base))
                 return true;
         }
-        else if(Curr->Is<InterfaceType>())
+        else if(Curr->ActuallyIs<InterfaceType>())
         {
-            if(Curr->As<InterfaceType>()->IsBaseType(Base))
+            if(Curr->ActuallyAs<InterfaceType>()->IsBaseType(Base))
                 return true;
         }
     }
@@ -329,43 +328,43 @@ bool ClassType::IsBaseType(TypeDescBase* Base)
 
 ETypeValidation ClassType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
 {
-    if(Target->Is<IntrinsicType>())
+    if(Target->ActuallyIs<IntrinsicType>())
     {
-        SPtr<IntrinsicType> Intri = Target.PtrAs<IntrinsicType>();
+        SPtr<IntrinsicType> Intri = Target->ActuallyAs<IntrinsicType>();
         if(Intri->Type == IT_any)
             return TCR_OK;
     }
 
-    if(Target->Is<ClassType>())
+    if(Target->ActuallyIs<ClassType>())
     {
-        SPtr<ClassType> Class = Target.PtrAs<ClassType>();
+        SPtr<ClassType> Class = Target->ActuallyAs<ClassType>();
         if(DeclNode == Class->DeclNode)
             return TCR_OK;
         
-        if(IsBaseType(Target.Get()))
+        if(IsBaseType(Target))
             return TCR_OK;
 
-        if(Class->IsBaseType(this))
+        if(Class->IsBaseType(SThis))
             return IsExplict ? TCR_OK : TCR_Unsafe;
     }
-    else if(Target->Is<InterfaceType>())
+    else if(Target->ActuallyIs<InterfaceType>())
     {
-        SPtr<InterfaceType> Interface = Target.PtrAs<InterfaceType>();
-        if(IsBaseType(Target.Get()))
+        SPtr<InterfaceType> Interface = Target->ActuallyAs<InterfaceType>();
+        if(IsBaseType(Target))
             return TCR_OK;
 
-        if(Interface->IsBaseType(this))
+        if(Interface->IsBaseType(SThis))
             return IsExplict ? TCR_OK : TCR_Unsafe;
     }
 
     return TCR_NoWay;
 }
 
-bool ClassType::EqualsTo(TypeDescBase* Target)
+bool ClassType::EqualsTo(SPtr<TypeDescBase> Target)
 {
-    if(Target->Is<ClassType>())
+    if(Target->ActuallyIs<ClassType>())
     {
-        ClassType* Class = Target->As<ClassType>();
+        SPtr<ClassType> Class = Target->ActuallyAs<ClassType>();
         if(DeclNode == Class->DeclNode)
             return true;
     }
@@ -393,17 +392,17 @@ FindMemberResult ClassType::FindMember(OLString Name, bool IncludeBase)
     {
         for(int i = 0; i < BaseTypes.Count(); i++)
         {
-            if(BaseTypes[i]->Is<ClassType>())
+            if(BaseTypes[i]->ActuallyIs<ClassType>())
             {
-                FindMemberResult Result = BaseTypes[i]->As<ClassType>()->FindMember(Name, true);
+                FindMemberResult Result = BaseTypes[i]->ActuallyAs<ClassType>()->FindMember(Name, true);
                 if(Result.FromClass != nullptr)
                 {
                     return Result;
                 }
             }
-            else if(BaseTypes[i] ->Is<InterfaceType>())
+            else if(BaseTypes[i] ->ActuallyIs<InterfaceType>())
             {
-                InterfaceMember* Member = BaseTypes[i]->As<InterfaceType>()->FindMember(Name, true);
+                InterfaceMember* Member = BaseTypes[i]->ActuallyAs<InterfaceType>()->FindMember(Name, true);
                 if(Member != nullptr)
                 {
                     FindMemberResult Result;
@@ -437,17 +436,17 @@ FindMemberResult ClassType::FindMemberByDeclNode(SPtr<ABase> Node, bool IncludeB
     {
         for(int i = 0; i < BaseTypes.Count(); i++)
         {
-            if(BaseTypes[i]->Is<ClassType>())
+            if(BaseTypes[i]->ActuallyIs<ClassType>())
             {
-                FindMemberResult Result = BaseTypes[i]->As<ClassType>()->FindMemberByDeclNode(Node, true);
+                FindMemberResult Result = BaseTypes[i]->ActuallyAs<ClassType>()->FindMemberByDeclNode(Node, true);
                 if(Result.FromClass != nullptr)
                 {
                     return Result;
                 }
             }
-            else if(BaseTypes[i] ->Is<InterfaceType>())
+            else if(BaseTypes[i] ->ActuallyIs<InterfaceType>())
             {
-                InterfaceMember* Member = BaseTypes[i]->As<InterfaceType>()->FindMemberByDeclNode(Node, true);
+                InterfaceMember* Member = BaseTypes[i]->ActuallyAs<InterfaceType>()->FindMemberByDeclNode(Node, true);
                 if(Member != nullptr)
                 {
                     FindMemberResult Result;
@@ -482,8 +481,8 @@ bool ClassType::IsMethod(SPtr<FuncSigniture> Func)
     for(int i = 0; i < Members.Count(); i++)
     {
         if(Members[i].DeclTypeDesc != nullptr
-            && Members[i].DeclTypeDesc->Is<FuncSigniture>()
-            && Members[i].DeclTypeDesc.Lock().PtrAs<FuncSigniture>() == Func)
+            && Members[i].DeclTypeDesc->ActuallyIs<FuncSigniture>()
+            && Members[i].DeclTypeDesc->ActuallyAs<FuncSigniture>() == Func)
             return true;
     }
 
@@ -518,7 +517,7 @@ SPtr<TypeDescBase> ClassType::AcceptBinOpOverride(EBinOp Op, SPtr<TypeDescBase> 
     if(Found.IsClassMember && Found.FromClass != nullptr)
     {
         if(Found.FromClass->Type == Member_Function && (Found.FromClass->Flags & CMF_Static) == 0)
-            Func = Found.FromClass->DeclTypeDesc.Lock().PtrAs<FuncSigniture>();
+            Func = Found.FromClass->DeclTypeDesc->ActuallyAs<FuncSigniture>();
     }
     else if(!Found.IsClassMember && Found.FromInterface != nullptr)
     {
@@ -548,7 +547,7 @@ SPtr<TypeDescBase> ClassType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
         return Override;
 
     if( (Op == BO_And || Op == BO_Or || Op == BO_Equal || Op == BO_NotEqual)
-        && (Target->Is<ClassType>() || Target->Is<InterfaceType>() || Target->IsAny() || Target->IsNil()))
+        && (Target->ActuallyIs<ClassType>() || Target->ActuallyIs<InterfaceType>() || Target->IsAny() || Target->IsNil()))
     {
         return IntrinsicType::CreateFromRaw(IT_bool);
     }
@@ -571,7 +570,7 @@ SPtr<TypeDescBase> ClassType::AccecptUniOpOverride(EUniOp Op)
     {
         if(Found.FromClass->Type == Member_Function && (Found.FromClass->Flags & CMF_Static) == 0)
         {
-            SPtr<FuncSigniture> Func = Found.FromClass->DeclTypeDesc.Lock().PtrAs<FuncSigniture>();
+            SPtr<FuncSigniture> Func = Found.FromClass->DeclTypeDesc->ActuallyAs<FuncSigniture>();
         }
     }
     else if(!Found.IsClassMember && Found.FromInterface != nullptr)
@@ -629,9 +628,9 @@ void ClassType::FindVirtualFunc(OLList<FindMemberResult>& OutList)
 
     for(int i = 0; i < BaseTypes.Count(); i++)
     {
-        if(BaseTypes[i].Lock()->Is<ClassType>())
+        if(BaseTypes[i]->ActuallyIs<ClassType>())
         {
-            BaseTypes[i].Lock().PtrAs<ClassType>()->FindVirtualFunc(OutList);
+            BaseTypes[i]->ActuallyAs<ClassType>()->FindVirtualFunc(OutList);
         }
     }
 }
@@ -649,9 +648,9 @@ void ClassType::ForAllMembers(bool IncludeBase, OLFunc<bool(ClassMemberDesc&)> C
 
     for(int i = 0; i < BaseTypes.Count(); i++)
     {
-        if(BaseTypes[i].Lock()->Is<ClassType>())
+        if(BaseTypes[i]->ActuallyIs<ClassType>())
         {
-            BaseTypes[i].Lock().PtrAs<ClassType>()->ForAllMembers(IncludeBase, Callback);
+            BaseTypes[i]->ActuallyAs<ClassType>()->ForAllMembers(IncludeBase, Callback);
         }
     }
 }

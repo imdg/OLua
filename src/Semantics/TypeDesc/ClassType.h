@@ -84,13 +84,13 @@ public:
     void SetInsideScope(SPtr<SymbolScope> Scope);
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
-    virtual bool EqualsTo(TypeDescBase* Target);
+    virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     virtual OLString ToString();
 
     static bool ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM);
     
 
-    bool IsBaseType(TypeDescBase* Base);
+    bool IsBaseType(SPtr<TypeDescBase> Base);
     FindMemberResult FindMember(OLString Name, bool IncludeBase);
 
     FindMemberResult FindMemberByDeclNode(SPtr<ABase> Node, bool IncludeBase);

@@ -74,6 +74,7 @@ public:
     AStat*          Parse_Global();
     AVarDecl*       Parse_VarDecl(bool AcceptVariableParam);
     AAttribute *    Parse_Attribute();
+    AAlias*         Parse_Alias();
 
     bool            Helper_ParseBlock(OLList< SPtr<AStat> >& Block, bool AcceptGlobal);
     bool            Helper_ParseVarDeclList(OLList < SPtr<AVarDecl> >& DeclList, bool AcceptVariableParam);

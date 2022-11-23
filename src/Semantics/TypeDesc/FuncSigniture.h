@@ -86,7 +86,7 @@ public:
     bool IsReturnDecl(ATypeIdentity* Node);
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
-    virtual bool EqualsTo(TypeDescBase* Target);
+    virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     virtual OLString ToString();
     virtual bool IsNilable();
     virtual SPtr<TypeDescBase> AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target);

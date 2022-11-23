@@ -1,11 +1,3 @@
-/*
-Copyright 2022 Dong Gen
-
-Use of this source code is governed by an MIT-style
-license that can be found in the LICENSE file or at
-https://opensource.org/licenses/MIT.
-*/
-
 #include "Common.h"
 #include "VisitorBase.h"
 #include "ExpressionInclude.h"
@@ -225,6 +217,11 @@ EVisitStatus Visitor::Visit(SPtr<AEnum> Node)
 }
 
 EVisitStatus Visitor::Visit(SPtr<AInterface> Node)
+{
+    return Visit(Node.PtrAs<AStat>());
+}
+
+EVisitStatus Visitor::Visit(SPtr<AAlias> Node)
 {
     return Visit(Node.PtrAs<AStat>());
 }
@@ -955,6 +952,21 @@ EVisitStatus RecursiveVisitor::BeginVisit(SPtr<AInterface> Node)
 }
 
 EVisitStatus RecursiveVisitor::EndVisit(SPtr<AInterface> Node)
+{
+    return EndVisit(Node.PtrAs<AStat>());
+}
+
+EVisitStatus RecursiveVisitor::Visit(SPtr<AAlias> Node)
+{
+    return Visit(Node.PtrAs<AStat>());
+}
+
+EVisitStatus RecursiveVisitor::BeginVisit(SPtr<AAlias> Node)
+{
+    return BeginVisit(Node.PtrAs<AStat>());
+}
+
+EVisitStatus RecursiveVisitor::EndVisit(SPtr<AAlias> Node)
 {
     return EndVisit(Node.PtrAs<AStat>());
 }
@@ -2246,6 +2258,30 @@ EVisitStatus VisitorWrapper::BeginVisit(SPtr<AInterface> Node)
 }
 
 EVisitStatus VisitorWrapper::EndVisit(SPtr<AInterface> Node)
+{
+    OnEndVisit(Node);
+    EVisitStatus Ret = WrappedVisitor->EndVisit(Node);
+    OnEndVisitFinish(Node, Ret);
+    return Ret;
+}
+
+EVisitStatus VisitorWrapper::Visit(SPtr<AAlias> Node)
+{
+    OnVisit(Node);
+    EVisitStatus Ret = WrappedVisitor->Visit(Node);
+    OnVisitFinish(Node, Ret);
+    return Ret;
+}
+
+EVisitStatus VisitorWrapper::BeginVisit(SPtr<AAlias> Node)
+{
+    OnBeginVisit(Node);
+    EVisitStatus Ret = WrappedVisitor->BeginVisit(Node);
+    OnBeginVisitFinish(Node, Ret);
+    return Ret;
+}
+
+EVisitStatus VisitorWrapper::EndVisit(SPtr<AAlias> Node)
 {
     OnEndVisit(Node);
     EVisitStatus Ret = WrappedVisitor->EndVisit(Node);

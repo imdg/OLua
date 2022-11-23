@@ -30,6 +30,12 @@ TypeDescBase::~TypeDescBase()
 {
     
 }
+
+SPtr<TypeDescBase> TypeDescBase::GetActualType()
+{
+    return SThis;
+}
+
 void TypeDescBase::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolResolvePhase Phase)
 {
 

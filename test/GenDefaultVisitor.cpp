@@ -413,11 +413,16 @@ public:
         WriteVisitorSPtr(HeaderContent, CPPContent);
 
         FILE* HeaderFile = fopen(T2A(VisitorHeader.CStr()), "wb");
-        fwrite(HeaderContent.CStr(), HeaderContent.Len(), 1, HeaderFile);
+
+        OLList<char> HeaderUtf8;
+        HeaderContent.ToUTF8(HeaderUtf8);
+        fwrite(HeaderUtf8.Data(), (HeaderUtf8.Count() - 1) * sizeof(char), 1, HeaderFile);
         fclose(HeaderFile);
 
         FILE* CPPFile = fopen(T2A(VisitorCPP.CStr()), "wb");
-        fwrite(CPPContent.CStr(), CPPContent.Len(), 1, CPPFile);
+        OLList<char> CPPUtf8;
+        CPPContent.ToUTF8(CPPUtf8);
+        fwrite(CPPUtf8.Data(), (CPPUtf8.Count() - 1) * sizeof(char), 1, CPPFile);
         fclose(CPPFile);
 
         VERBOSE(LogMisc, T("Write success!\n"));

@@ -24,5 +24,6 @@ class ABlock;
 
 class AGlobal;
 class AAttribute;
+class AAlias;
 
 }

@@ -157,7 +157,7 @@ void InterfaceType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, 
         else
         {
             UnresolvedBase[i].Resolved = true;
-            if(Found->Is<InterfaceType>())
+            if(Found->ActuallyIs<InterfaceType>())
             {
                 BaseInterfaces.Add(Found);
             }
@@ -169,17 +169,17 @@ void InterfaceType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, 
     }
 }
 
-bool InterfaceType::IsBaseType(TypeDescBase* Base)
+bool InterfaceType::IsBaseType(SPtr<TypeDescBase> Base)
 {
     for(int i = 0; i < BaseInterfaces.Count(); i++)
     {
-        if(BaseInterfaces[i].Get()->EqualsTo(Base))
+        if(BaseInterfaces[i]->EqualsTo(Base))
             return true;
         
         SPtr<TypeDescBase> Curr = BaseInterfaces[i].Lock();
-        if(Curr->Is<InterfaceType>())
+        if(Curr->ActuallyIs<InterfaceType>())
         {
-            if(Curr->As<InterfaceType>()->IsBaseType(Base))
+            if(Curr->ActuallyAs<InterfaceType>()->IsBaseType(Base))
                 return true;
         }
     }
@@ -188,40 +188,40 @@ bool InterfaceType::IsBaseType(TypeDescBase* Base)
 
 ETypeValidation InterfaceType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
 {
-    if(Target->Is<IntrinsicType>())
+    if(Target->ActuallyIs<IntrinsicType>())
     {
-        SPtr<IntrinsicType> Intri = Target.PtrAs<IntrinsicType>();
+        SPtr<IntrinsicType> Intri = Target->ActuallyAs<IntrinsicType>();
         if(Intri->Type == IT_any)
             return TCR_OK;
     }
 
-    if(Target->Is<ClassType>())
+    if(Target->ActuallyIs<ClassType>())
     {
-        SPtr<ClassType> Class = Target.PtrAs<ClassType>();
+        SPtr<ClassType> Class = Target->ActuallyAs<ClassType>();
 
-        if(Class->IsBaseType(this))
+        if(Class->IsBaseType(SThis))
             return IsExplict ? TCR_OK : TCR_Unsafe;
     }
-    else if(Target->Is<InterfaceType>())
+    else if(Target->ActuallyIs<InterfaceType>())
     {
-        SPtr<InterfaceType> Interface = Target.PtrAs<InterfaceType>();
+        SPtr<InterfaceType> Interface = Target->ActuallyAs<InterfaceType>();
 
         if(DeclNode == Interface->DeclNode)
             return TCR_OK;
 
-        if(IsBaseType(Target.Get()))
+        if(IsBaseType(Target))
             return TCR_OK;
 
-        if(Interface->IsBaseType(this))
+        if(Interface->IsBaseType(SThis))
             return IsExplict ? TCR_OK : TCR_Unsafe;
     }
 
     return TCR_NoWay;
 }
 
-bool InterfaceType::EqualsTo(TypeDescBase* Target)
+bool InterfaceType::EqualsTo(SPtr<TypeDescBase> Target)
 {
-    if(Target->Is<InterfaceType>() && DeclNode == Target->DeclNode)
+    if(Target->ActuallyIs<InterfaceType>() && DeclNode == Target->GetActualType()->DeclNode)
     {
         return true;
     }
@@ -245,9 +245,9 @@ InterfaceMember* InterfaceType::FindMember(OLString Name, bool IncludeBase)
     {
         for(int i = 0; i < BaseInterfaces.Count(); i++)
         {
-            if(BaseInterfaces[i]->Is<InterfaceType>())
+            if(BaseInterfaces[i]->ActuallyIs<InterfaceType>())
             {
-                InterfaceMember* Member = BaseInterfaces[i]->As<InterfaceType>()->FindMember(Name, true);
+                InterfaceMember* Member = BaseInterfaces[i]->ActuallyAs<InterfaceType>()->FindMember(Name, true);
                 if(Member != nullptr)
                     return Member;
             }
@@ -268,9 +268,9 @@ InterfaceMember* InterfaceType::FindMemberByDeclNode(SPtr<ABase> Node, bool Incl
     {
         for(int i = 0; i < BaseInterfaces.Count(); i++)
         {
-            if(BaseInterfaces[i]->Is<InterfaceType>())
+            if(BaseInterfaces[i]->ActuallyIs<InterfaceType>())
             {
-                InterfaceMember* Member = BaseInterfaces[i]->As<InterfaceType>()->FindMemberByDeclNode(Node, true);
+                InterfaceMember* Member = BaseInterfaces[i]->ActuallyAs<InterfaceType>()->FindMemberByDeclNode(Node, true);
                 if(Member != nullptr)
                     return Member;
             }

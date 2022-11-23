@@ -42,26 +42,26 @@ void EnumType::AddItem(SPtr<AEnumItem> Node)
 
 ETypeValidation EnumType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
 {
-    if(EqualsTo(Target.Get()))
+    if(EqualsTo(Target))
         return TCR_OK;
-    if(Target->Is<IntrinsicType>())
+    if(Target->ActuallyIs<IntrinsicType>())
     {
-        SPtr<IntrinsicType> Intri = Target.PtrAs<IntrinsicType>();
+        SPtr<IntrinsicType> Intri = Target->ActuallyAs<IntrinsicType>();
         if(Intri->Type == IT_any)
             return TCR_OK;
         if(Intri->Type == IT_int || Intri->Type == IT_float)
             return TCR_OK;
     }
-    if(Target->Is<EnumType>()) // Not the same enum
+    if(Target->ActuallyIs<EnumType>()) // Not the same enum
     {
         return IsExplict ? TCR_OK : TCR_Unsafe;
     }
     return TCR_NoWay;
 }
 
-bool EnumType::EqualsTo(TypeDescBase* Target)
+bool EnumType::EqualsTo(SPtr<TypeDescBase> Target)
 {
-    if(Target->Is<EnumType>() && Target->DeclNode == DeclNode)
+    if(Target->ActuallyIs<EnumType>() && Target->GetActualType()->DeclNode == DeclNode)
         return true;
     return false;
 }

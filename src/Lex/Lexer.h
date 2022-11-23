@@ -99,7 +99,7 @@ RTTI_ENUM(ETokenType,
     TKK_false,
     TKK_not,
     TKK_global,
-
+    TKK_alias,
 
     TKK_class,
     TKK_interface,

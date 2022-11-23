@@ -123,9 +123,9 @@ ETypeValidation IntrinsicType::ValidateConvert(SPtr<TypeDescBase> Target, bool I
     return TCR_NoWay;
 }
 
-bool IntrinsicType::EqualsTo(TypeDescBase* Target)
+bool IntrinsicType::EqualsTo(SPtr<TypeDescBase> Target)
 {
-    if(Target->Is<IntrinsicType>() && Target->As<IntrinsicType>()->Type == Type)
+    if(Target->ActuallyIs<IntrinsicType>() && Target->ActuallyAs<IntrinsicType>()->Type == Type)
         return true;
     return false;
 }

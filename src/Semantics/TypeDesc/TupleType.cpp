@@ -22,18 +22,18 @@ RTTI_END(TupleType)
 
 ETypeValidation TupleType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
 {
-    if(Target->Is<TupleType>())
-        return EqualsTo(Target.Get()) ? TCR_OK : TCR_NoWay;
+    if(Target->ActuallyIs<TupleType>())
+        return EqualsTo(Target) ? TCR_OK : TCR_NoWay;
     else
         return Subtypes[0].Type->ValidateConvert(Target, IsExplict);
     
 }
 
-bool TupleType::EqualsTo(TypeDescBase* Target)
+bool TupleType::EqualsTo(SPtr<TypeDescBase> Target)
 {
-    if(Target->Is<TupleType>())
+    if(Target->ActuallyIs<TupleType>())
     {
-        TupleType* TargetTuple = Target->As<TupleType>();
+        SPtr<TupleType> TargetTuple = Target->ActuallyAs<TupleType>();
         if(Subtypes.Count() != TargetTuple->Subtypes.Count())
         {
             return false;

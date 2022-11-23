@@ -67,23 +67,23 @@ bool ArrayType::IsElemTypeDecl(ATypeIdentity* Node)
 
 ETypeValidation ArrayType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
 {
-    if(EqualsTo(Target.Get()))
+    if(EqualsTo(Target))
         return TCR_OK;
-    if(Target->Is<IntrinsicType>())
+    if(Target->ActuallyIs<IntrinsicType>())
     {
-        SPtr<IntrinsicType> Intri = Target.PtrAs<IntrinsicType>();
+        SPtr<IntrinsicType> Intri = Target->ActuallyAs<IntrinsicType>();
         if(Intri->Type == IT_any)
             return TCR_OK;
     }
     return TCR_NoWay;
 }
 
-bool ArrayType::EqualsTo(TypeDescBase* Target)
+bool ArrayType::EqualsTo(SPtr<TypeDescBase> Target)
 {
-    if(Target->Is<ArrayType>() == false)
+    if(Target->ActuallyIs<ArrayType>() == false)
         return false;
 
-    if(ElemType.Lock()->EqualsTo(Target->As<ArrayType>()->ElemType.Get()))
+    if(ElemType.Lock()->EqualsTo(Target->ActuallyAs<ArrayType>()->ElemType.Lock()))
     {
         return true;
     }

@@ -66,6 +66,8 @@ public:
 
     virtual EVisitStatus Visit(SPtr<ANamedType> Node);
 
+    virtual EVisitStatus BeginVisit(SPtr<AAlias> Node);
+
 
     void    AddVarDecl(SPtr<AVarDecl> DeclNode);
 
