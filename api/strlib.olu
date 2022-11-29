@@ -1,0 +1,20 @@
+extern class[lua_alias="string"] strlib
+    public static func[lua_alias="byte"] tobyte(s as string, [i as int, j as int]) as int
+    public static func[lua_alias="char"] tochar(... as int) as string
+    public static func dump(fun as any, [strip as bool]) as string
+    public static func find(s as string, pattern as string, [init as int, plain as bool]) as (int, int, string)
+    public static func format(formatstring as string, ... as any) as string
+    --gmatch
+    public static func gsub(s as string, pattern as string, repl as any, [n as int]) as string
+    public static func len(s as string) as int
+    public static func lower(s as string) as string
+    public static func match(s as string, pattern as string, [init as int]) as string
+    public static func pack(fmt as string, ... as any) as string
+    public static func packsize(fmt as string) as string
+    public static func rep(s as string, n as int, [sep as string]) as string
+    public static func reverse(s as string) as string
+    public static func sub(s as string, i as int, [j as int]) as string
+    public static func unpack(fmt as string, s as string, [pos as int]) as any
+    public static func upper(s as string) as string
+
+end

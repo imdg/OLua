@@ -1,0 +1,39 @@
+extern class math
+    public static func abs (x as any) as any
+    public static func[lua_alias="abs"] absi (x as int) as int
+    public static func[lua_alias="abs"] absf (x as float) as float 
+
+    public static func acos (x as float) as float
+    public static func asin (x as float) as float
+    public static func atan (y as float, [x as float]) as float
+    public static func ceil (x as float) as int
+    public static func cos(x as float) as float
+    public static func deg (x as float) as float
+    public static func exp (x as float) as float
+    public static func floor (x as float) as int
+    public static func log (x as float, [base as float]) as float
+
+    public static func max (x as any, [... as any]) as any
+    public static func[lua_alias="max"] maxi (x as int, [... as int]) as int
+    public static func[lua_alias="max"] maxf (x as float, [... as float]) as float 
+    
+    public static func min (x as any, [... as any]) as any
+    public static func[lua_alias="min"] mini (x as int, [... as int]) as int
+    public static func[lua_alias="min"] minf (x as float, [... as float]) as float
+    
+    public static func modf (x as float) as (int, float)
+    public static func rad (x as float) as float
+    public static func random () as float
+    public static func[lua_alias="random"] randomi (m as int, [n as int]) as int
+    public static func randomseed([x as int, y as int]) as (int, int)
+    public static func sin (x as float) as float
+    public static func sqrt (x as float) as float
+    public static func tointeger (x as any) as int
+    public static func type (x as any) as string
+    public static func ult (m as any, n as any) as bool
+
+    public static local huge as float
+    public static local maxinteger as int
+    public static local mininteger as int
+    public static local pi as float
+end

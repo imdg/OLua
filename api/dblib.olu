@@ -1,0 +1,18 @@
+extern class debug
+    public static func debug()
+    public static func gethook([thread as any]) as any
+    public static func getinfo(... as any) as any
+    public static func getlocal(... as any) as any
+    public static func getmetatable(value as any) as [string, any]
+    public static func getupvalue(f as any, up as int) as any
+    public static func getuservalue(u as any, n as int) as (any, bool)
+    public static func sethook(... as any)
+    public static func setlocal (... as any) as string
+    public static func setmetatable (value as any, tab as any) as string
+    public static func setupvalue (f as any, up as int, value as any) as string
+    public static func setuservalue (udata as any, value as any, n as int) as any
+    public static func traceback([thread as any, msg as string, level as int]) as string
+    public static func upvalueid (f as any, n as int) as any
+    public static func upvaluejoin(f1 as any, n1 as int, f2 as any, n2 as int)
+
+end

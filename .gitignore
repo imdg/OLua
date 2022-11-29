@@ -1,0 +1,14 @@
+*
+
+!.gitignore
+!*/
+!src/**
+!test/**
+!thirdparty/**
+!CMakeLists.txt
+!api/**
+!doc/**
+
+src/.DS_Store
+src/Framework/.DS_Store
+

@@ -1,0 +1,25 @@
+extern func assert(v as bool,[message as string])
+extern func collectgarbage([opt as string, arg as int])
+extern func dofile([filename as string]) as any
+extern func error(message  as string, [level as int])
+extern func getmetatable(object as any) as any
+-- ipairs
+extern func load(chunk as any, [chunkname as string, mode as string, env as any]) as func()
+extern func loadfile([filename as string, mode as string, env as any]) as func()
+--next
+--pairs
+extern func pcall(fun as any, ... as any) as bool
+extern func print(... as any)
+extern func rawequal(v1 as any, v2 as any) as bool
+extern func rawget(table as any, index as int) as any
+extern func rawlen(v as any) as int
+extern func rawset(table as any, index as int, value as any)
+extern func select(index as int, ... as any) as any
+extern func setmetatable(table as any, metatable as any) as any
+extern func tonumber(e as any, [base as int]) as any
+
+extern func tostring(v as any) as string
+extern func type(v as any) as string
+extern func warn(msg as string, ... as any)
+extern func xpcall(f as any, msgh as func(err as string), [... as any]) as bool
+

@@ -1,0 +1,10 @@
+extern class utf8
+    public static func[lua_alias="char"] tochar(... as int) as string;
+    public static local charpattern as string;
+    public static func codes(s as string, [lax as bool] )  as ( func(s as string, pos as int) as (int, int), string, int )
+    public static func codepoint(s as string, [i as int, j as int, lax as bool]) as int
+    public static func len (s as string, [i as int, j as int, lax as bool]) as int
+    public static func offset (s as string, n as int, [i as int]) as int
+end
+
+

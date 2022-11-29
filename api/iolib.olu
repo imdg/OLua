@@ -1,0 +1,23 @@
+extern class io_file_handle
+    public func close()
+    public func flush()
+    public func lines(... as any) as (func(state as any, c as string) as string, any, string)
+    public func read(... as any) as any
+    public func seek([whence as string, offset as int]) as int
+    public func setvbuf(mode as string, [size as int])
+    public func write(... as any) as io_file_handle
+end
+
+extern class io
+    public static func close([file as io_file_handle])
+    public static func flush()
+    public static func input([file as any]) as io_file_handle
+    public static func lines([filename as string, ... as any]) as (func(state as any, c as string) as string, any, string)
+    public static func open(filename as string, [mode as string]) as io_file_handle
+    public static func output([file as any]) as io_file_handle
+    public static func popen(prog as string, [mode as string]) as io_file_handle
+    public static func read(... as any) as any
+    public static func tmpfile() as io_file_handle
+    public static func type(obj as any) as string
+    public static func write(... as any)
+end

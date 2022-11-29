@@ -1,0 +1,16 @@
+extern class os
+    public static func clock() as int
+    public static func date([format as string, time as any]) as any
+    public static func difftime(t2 as any, t1 as any) as int
+    public static func execute([command as string]) as (bool, string, int)
+    public static func exit([code as int, close as bool])
+    public static func getenv(varname as string) as string
+    public static func remove(filename as string) as (bool, string, int)
+    public static func rename(oldname as string, newname as string) as (bool, string)
+    public static func setlocale(locale as string, [category as string])
+    public static func time([tab as any]) as any
+    public static func tmpname() as string
+    
+
+end
+

@@ -1,0 +1,13 @@
+#pragma once
+#include "AClass.h"
+#include "AClassMember.h"
+#include "AClassVar.h"
+#include "AMethod.h"
+#include "AClassContructor.h"
+#include "AClassDestructor.h"
+#include "ANormalMethod.h"
+#include "ARoot.h"
+#include "AModifier.h"
+#include "AEnum.h"
+#include "AEnumItem.h"
+#include "AInterface.h"
