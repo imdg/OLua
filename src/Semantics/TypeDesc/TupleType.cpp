@@ -14,8 +14,13 @@ https://opensource.org/licenses/MIT.
 namespace OL
 {
 
-RTTI_BEGIN_INHERITED(TupleType, TypeDescBase)
+STRUCT_RTTI_BEGIN(TupleSubtype)
+    RTTI_MEMBER(Type, MF_External)
+    RTTI_MEMBER(IsNilable)
+STRUCT_RTTI_END(TupleSubtype)
 
+RTTI_BEGIN_INHERITED(TupleType, TypeDescBase)
+    RTTI_STRUCT_MEMBER(Subtypes, TupleSubtype)
 RTTI_END(TupleType)
 
 
@@ -41,6 +46,8 @@ bool TupleType::EqualsTo(SPtr<TypeDescBase> Target)
 
         for(int i = 0; i < Subtypes.Count(); i++)
         {
+            if(Subtypes[i].IsNilable != TargetTuple->Subtypes[i].IsNilable)
+                return false;
             if(Subtypes[i].Type.Lock()->EqualsTo(Target) == false)
             {
                 return false;
@@ -53,31 +60,25 @@ bool TupleType::EqualsTo(SPtr<TypeDescBase> Target)
 
 }
 
-OLString TupleType::ToString()
+OLString TupleType::ToString(bool IsNilable)
 {
     OLString Ret;
     Ret.Append(T("Tuple("));
     for(int i = 0; i < Subtypes.Count(); i++)
     {
         if(i != 0)
-            Ret.AppendF(T(", %s"), Subtypes[i].Type->ToString().CStr());
+            Ret.AppendF(T(", %s%s"), Subtypes[i].Type->ToString(Subtypes[i].IsNilable).CStr(), (IsNilable?T("?"):T("")));
         else
-            Ret.AppendF(T("%s"), Subtypes[i].Type->ToString().CStr());
+            Ret.AppendF(T("%s%s"), Subtypes[i].Type->ToString(Subtypes[i].IsNilable).CStr(), (IsNilable?T("?"):T("")));
     }   
     Ret.Append(T(")"));
     return Ret;
 }
-
-bool TupleType::IsNilable()
-{
-    return false;
-}
-
-SPtr<TypeDescBase> TupleType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
+OperatorResult TupleType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
     if(Subtypes.Count() == 0)
-        return nullptr;
-    return Subtypes[0].Type->AcceptBinOp(Op, Target);    
+        return OperatorResult{nullptr, false};
+    return Subtypes[0].Type->AcceptBinOp(Op, Target, TargetNilable);    
 }
 
 SPtr<TypeDescBase> TupleType::AcceptUniOp(EUniOp Op)
@@ -88,9 +89,9 @@ SPtr<TypeDescBase> TupleType::AcceptUniOp(EUniOp Op)
 }
 
 
-void TupleType::AddSubtype(SPtr<TypeDescBase> NewSubtype)
+void TupleType::AddSubtype(SPtr<TypeDescBase> NewSubtype, bool IsNilable)
 {
-    Subtypes.Add(TupleSubtype{NewSubtype});
+    Subtypes.Add(TupleSubtype{NewSubtype, IsNilable});
 }
 
 }

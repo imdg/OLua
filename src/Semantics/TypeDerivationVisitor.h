@@ -40,6 +40,7 @@ struct TypeDeriContex
     bool                IsType;
     bool                IsConst;
     bool                IsVariableParamRef;
+    bool                IsNilable;
 };
 
 class TypeDerivationVisitor : public ScopeVisitorBase
@@ -78,6 +79,9 @@ public:
 
     virtual EVisitStatus BeginVisit(SPtr<AParentheses> Node);
     virtual EVisitStatus EndVisit(SPtr<AParentheses> Node);
+
+    virtual EVisitStatus BeginVisit(SPtr<ANilableUnwrap> Node);
+    virtual EVisitStatus EndVisit(SPtr<ANilableUnwrap> Node);
 
     //-------- statements
 
@@ -126,7 +130,7 @@ public:
     
     virtual EVisitStatus Visit(SPtr<AVariableParamRef> Node);
 
-    bool CheckType(SPtr<TypeDescBase> From, SPtr<TypeDescBase> To, ABase* Node, bool IsExplicit);
+    bool CheckType(SPtr<TypeDescBase> From, bool IsFromNilable, SPtr<TypeDescBase> To, bool IsToNilable, ABase* Node, bool IsExplicit);
 
     //bool PopAndCheckType(SPtr<TypeDescBase> To, ABase* Node, bool IsExplicit = false);
     
@@ -134,6 +138,7 @@ public:
     {
         SPtr<TypeDescBase> Type;
         bool IsConst;
+        bool IsNilable;
     };
     
 

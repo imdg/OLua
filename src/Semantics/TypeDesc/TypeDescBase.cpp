@@ -49,9 +49,9 @@ bool TypeDescBase::IsBool() { return false; }
 bool TypeDescBase::IsNil() { return false; }
 bool TypeDescBase::IsImplicitAny() { return false;}
 
-SPtr<TypeDescBase> TypeDescBase::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
+OperatorResult TypeDescBase::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
-    return nullptr;
+    return OperatorResult{nullptr, false};
 }
 SPtr<TypeDescBase> TypeDescBase::AcceptUniOp(EUniOp Op)
 {
@@ -76,5 +76,14 @@ bool TypeDescBase::IsRefType()
 {
     return true;
 }
+
+// OperatorResult TypeDescBase::AcceptNilCoalesing(SPtr<TypeDescBase> Target, bool TargetNilable)
+// {
+//     if(TargetNilable)
+//     {
+
+//     }
+
+// }
 
 }

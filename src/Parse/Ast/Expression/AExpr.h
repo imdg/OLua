@@ -19,6 +19,7 @@ public:
 
     virtual bool IsConstant();
     WPtr<TypeDescBase> ExprType;
+    bool               IsNilable;
 };
 
 }

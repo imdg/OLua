@@ -23,9 +23,9 @@ public:
     VariableParamHolder(SPtr<ABase> Node, OLString ParamTypeName);
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
-    virtual OLString ToString();
-    virtual bool IsNilable();
-    virtual SPtr<TypeDescBase> AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target);
+    virtual OLString ToString(bool IsNilable);
+
+    virtual OperatorResult AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable);
     virtual SPtr<TypeDescBase> AcceptUniOp(EUniOp Op);
 
     virtual void ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolResolvePhase Phase);
@@ -33,6 +33,7 @@ public:
     WPtr<TypeDescBase> ParamType;
     OLString UnresolvedTypeName;
     bool IsResolved;
+    bool IsNilable;
 
 };
 }

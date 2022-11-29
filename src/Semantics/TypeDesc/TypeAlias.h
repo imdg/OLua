@@ -24,7 +24,7 @@ public:
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
-    virtual OLString ToString();
+    virtual OLString ToString(bool IsNilable);
 
     virtual bool IsInt();
     virtual bool IsFloat();
@@ -34,10 +34,9 @@ public:
     virtual bool IsNil();
     virtual bool IsImplicitAny();
 
-    virtual bool IsNilable();
     virtual bool IsRefType();
 
-    virtual SPtr<TypeDescBase> AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target);
+    virtual OperatorResult AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable);
     virtual SPtr<TypeDescBase> AcceptUniOp(EUniOp Op);
 
     virtual SPtr<TypeDescBase> DeduceLValueType(SPtr<SymbolScope> Scope);

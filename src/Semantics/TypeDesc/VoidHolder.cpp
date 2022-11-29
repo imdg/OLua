@@ -42,21 +42,16 @@ bool VoidHolder::EqualsTo(SPtr<TypeDescBase> Target)
 
 }
 
-OLString VoidHolder::ToString()
+OLString VoidHolder::ToString(bool IsNilable)
 {
     OLString Ret;
     Ret.Append(T("void"));
     return Ret;
 }
 
-bool VoidHolder::IsNilable()
+OperatorResult VoidHolder::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
-    return false;
-}
-
-SPtr<TypeDescBase> VoidHolder::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
-{
-    return nullptr;    
+    return OperatorResult{nullptr, false};
 }
 
 SPtr<TypeDescBase> VoidHolder::AcceptUniOp(EUniOp Op)

@@ -22,6 +22,7 @@ RTTI_BEGIN_INHERITED(MapType, TypeDescBase)
     RTTI_MEMBER(ValueType, MF_External)
     RTTI_MEMBER(UnresolvedKeyType)
     RTTI_MEMBER(UnresolvedValueType)
+    RTTI_MEMBER(IsValueNilable)
 RTTI_END(MapType)
 
 
@@ -66,24 +67,28 @@ void MapType::SetKeyType(SPtr<TypeDescBase> InType)
 {
     KeyType = InType;
     UnresolvedKeyType = T("");
+    //IsKeyNilable = IsNilable;
 }
 
 void MapType::SetKeyType(OLString UnresolvedName)
 {
     KeyType = nullptr;
     UnresolvedKeyType = UnresolvedName;
+    //IsKeyNilable = IsNilable;
 }
 
-void MapType::SetValueType(SPtr<TypeDescBase> InType)
+void MapType::SetValueType(SPtr<TypeDescBase> InType, bool IsNilable)
 {
     ValueType = InType;
     UnresolvedValueType = T("");
+    IsValueNilable = IsNilable;
 }
 
-void MapType::SetValueType(OLString UnresolvedName)
+void MapType::SetValueType(OLString UnresolvedName, bool IsNilable)
 {
     ValueType = nullptr;
     UnresolvedValueType = UnresolvedName;
+    IsValueNilable = IsNilable;
 }
 
 bool MapType::IsKeyTypeDecl(ATypeIdentity* Node)
@@ -118,6 +123,8 @@ bool MapType::EqualsTo(SPtr<TypeDescBase> Target)
     if(Target->ActuallyIs<MapType>())
     {
         SPtr<MapType> TargetMap = Target->ActuallyAs<MapType>();
+        if(IsValueNilable != TargetMap->IsValueNilable)
+            return false;
         if(KeyType->EqualsTo(TargetMap->KeyType.Lock()) == false 
             || ValueType->EqualsTo(TargetMap->ValueType.Lock()) == false)
             return false;
@@ -126,27 +133,22 @@ bool MapType::EqualsTo(SPtr<TypeDescBase> Target)
     return false;
 }
 
-OLString MapType::ToString()
+OLString MapType::ToString(bool IsNilable)
 {
     OLString Ret;
-    Ret.AppendF(T("<%s, %s>"), KeyType->ToString().CStr(), ValueType->ToString().CStr());
+    Ret.AppendF(T("<%s, %s>%s"), KeyType->ToString(false).CStr(), ValueType->ToString(IsValueNilable).CStr(), (IsNilable?T("?"):T("")));
     return Ret;
 }
 
-bool MapType::IsNilable()
-{
-    return true;
-}
-
-SPtr<TypeDescBase> MapType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
+OperatorResult MapType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
     if( (Op == BO_And || Op == BO_Or || Op == BO_Equal || Op == BO_NotEqual)
         && (Target->Is<MapType>() || Target->IsAny() || Target->IsNil()))
     {
-        return IntrinsicType::CreateFromRaw(IT_bool);
+        return OperatorResult{IntrinsicType::CreateFromRaw(IT_bool), false};
     }
 
-    return nullptr;
+    return OperatorResult{nullptr, false};
 
      
 }

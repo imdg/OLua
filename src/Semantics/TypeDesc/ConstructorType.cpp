@@ -146,9 +146,13 @@ SPtr<TypeDescBase> ConstructorType::DeduceLValueType(SPtr<SymbolScope> Scope)
     {
         SPtr<ArrayType> Array = new ArrayType();
         Array->DeclNode = DeclNode;
+        bool IsNilable = false;
         for(int i = 0; i < Ctor->Elems.Count(); i++)
         {
-            SPtr<TypeDescBase> CurrElemType = Ctor->Elems[i].Value.Get()->ExprType.Lock();
+            SPtr<AExpr> ExprNode = Ctor->Elems[i].Value;
+            SPtr<TypeDescBase> CurrElemType = ExprNode->ExprType.Lock();
+            if(ExprNode->IsNilable)
+                IsNilable = true;
             if(CurrElemType == nullptr)
                 continue;
 
@@ -159,17 +163,18 @@ SPtr<TypeDescBase> ConstructorType::DeduceLValueType(SPtr<SymbolScope> Scope)
 
             if(Array->ElemType == nullptr)
             {
-                Array->SetElemType(CurrElemType);
+                Array->SetElemType(CurrElemType, false); // Set nilable false temperaryly, update it when finished
             }
             else
             {
                 ETypeValidation Curr = CurrElemType->ValidateConvert(Array->ElemType.Lock(), false);
                 if(Curr != TCR_OK)
                 {
-                    Array->SetElemType(IntrinsicType::CreateFromRaw(IT_any));
+                    Array->SetElemType(IntrinsicType::CreateFromRaw(IT_any), false); // Set nilable false temperaryly, update it when finished
                 }
             }
         }
+        Array->IsElemNilable = IsNilable;
         Scope->TypeDefs.Add(Array);
         Valid = false;
         return Array;
@@ -178,15 +183,22 @@ SPtr<TypeDescBase> ConstructorType::DeduceLValueType(SPtr<SymbolScope> Scope)
     {
         SPtr<MapType> Map = new MapType();
         Map->DeclNode = DeclNode;
+        bool IsValueNilable = false;
+
+
         for(int i = 0; i < Ctor->Elems.Count(); i++)
         {
+            SPtr<AExpr> ExprNode = Ctor->Elems[i].Value;
+            if(ExprNode->IsNilable)
+                IsValueNilable = true;
+
             if(Ctor->Elems[i].Key.Get()->ExprType == nullptr)
                 continue;
             if(Map->KeyType == nullptr)
             {
                 Map->SetKeyType(Ctor->Elems[i].Key.Get()->ExprType.Lock());
             }
-            else
+            else 
             {
                 ETypeValidation Curr = Ctor->Elems[i].Key.Get()->ExprType->ValidateConvert(Map->KeyType.Lock(), false);
                 if(Curr != TCR_OK)
@@ -200,15 +212,16 @@ SPtr<TypeDescBase> ConstructorType::DeduceLValueType(SPtr<SymbolScope> Scope)
                 continue;
             if(Map->ValueType == nullptr)
             {
-                Map->SetValueType(Ctor->Elems[i].Value.Get()->ExprType.Lock());
+                Map->SetValueType(Ctor->Elems[i].Value.Get()->ExprType.Lock(), false);
             }
             else
             {
                 ETypeValidation Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Map->ValueType.Lock(), false);
                 if(Curr != TCR_OK)
-                     Map->SetValueType(IntrinsicType::CreateFromRaw(IT_any));
+                     Map->SetValueType(IntrinsicType::CreateFromRaw(IT_any), false);
             }
         }
+        Map->IsValueNilable = IsValueNilable;
         Scope->TypeDefs.Add(Map);
         Valid = false;
         return Map;   
@@ -221,16 +234,12 @@ bool ConstructorType::EqualsTo(SPtr<TypeDescBase> Target)
     return false;
 }
 
-OLString ConstructorType::ToString()
+OLString ConstructorType::ToString(bool IsNilable)
 {
     OLString Ret;
     Ret.AppendF(T("(constructor)"));
     return Ret;
 }
 
-bool ConstructorType::IsNilable()
-{
-    return false;
-}
 
 }

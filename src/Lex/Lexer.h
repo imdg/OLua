@@ -74,6 +74,9 @@ RTTI_ENUM(ETokenType,
     TKS_power,
 
     TKS_dollor,
+    TKS_question,
+    TKS_question2,
+    TKS_exclamation,
 
     TKK_function,
     TKK_static,

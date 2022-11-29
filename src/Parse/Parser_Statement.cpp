@@ -547,7 +547,7 @@ AVarDecl* Parser::Parse_VarDecl(bool AcceptVariableParam)
             TypeToken = Lex.Next();
         }
 
-        Decl->VarType = Parse_TypeIdentity();
+        Decl->VarType = Parse_TypeIdentity(true);
         if(Decl->VarType == nullptr)
         {
             AstPool::Delete(Decl);
@@ -747,12 +747,20 @@ AFuncBody* Parser::Parse_FuncBody(bool IsAbstract)
     return Ret;
 }
 
-AFuncType*      Parser::Parse_FuncType()
+AFuncType*      Parser::Parse_FuncType(bool AcceptNilable)
 {
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_function);
     Lex.Next();
     CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
-
+    bool IsNilable = false;
+    if(Lex.GetCurrent().Tk == TKS_question)
+    {
+        if(AcceptNilable == false)
+            CM.Log(CMT_NotAcceptedNilable, Lex.GetCurrent().LineInfo);
+        else
+            IsNilable = true;
+        Lex.Next();
+    }
 
     AFuncType *Ret = AstPool::New<AFuncType>(Lex.GetCurrent().LineInfo);
     if(false  == Helper_ParseFuncParam(Ret->Params))
@@ -828,7 +836,7 @@ bool Parser::Helper_ParseFuncRet(OLList<SPtr<ATypeIdentity>>& ReturnType)
     else
     {
         // Single return value
-        ATypeIdentity* RetType = Parse_TypeIdentity();
+        ATypeIdentity* RetType = Parse_TypeIdentity(true);
         if(RetType == nullptr)
         {
             CM.Log(CMT_NeedTypeName, Lex.GetCurrent().LineInfo);
@@ -1199,7 +1207,7 @@ AAlias* Parser::Parse_Alias()
     }
 
     Lex.Next();
-    ATypeIdentity* TargetType = Parse_TypeIdentity();
+    ATypeIdentity* TargetType = Parse_TypeIdentity(true);
     if(TargetType == nullptr)
     {
         AstPool::Delete(Ret);
@@ -1305,7 +1313,7 @@ bool Parser::Helper_ParseTypeList(OLList<SPtr<ATypeIdentity> >& TypeList)
 {
     while(true)
     {
-        ATypeIdentity* NewType = Parse_TypeIdentity();
+        ATypeIdentity* NewType = Parse_TypeIdentity(true);
         if(NewType == nullptr)
         {
             CM.Log(CMT_NeedTypeName, Lex.GetCurrent().LineInfo);

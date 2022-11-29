@@ -26,23 +26,25 @@ public:
     OLString UnresolvedKeyType;
     OLString UnresolvedValueType;
 
+    //bool IsKeyNilable;
+    bool IsValueNilable;
+
     virtual void ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolResolvePhase Phase);
 
     void SetKeyType(SPtr<TypeDescBase> InType);
     void SetKeyType(OLString UnresolvedName);
 
-    void SetValueType(SPtr<TypeDescBase> InType);
-    void SetValueType(OLString UnresolvedName);
+    void SetValueType(SPtr<TypeDescBase> InType, bool IsNilable);
+    void SetValueType(OLString UnresolvedName, bool IsNilable);
 
     bool IsKeyTypeDecl(ATypeIdentity* Node);
     bool IsValueTypeDecl(ATypeIdentity* Node);
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
-    virtual OLString ToString();
-    virtual bool IsNilable();
+    virtual OLString ToString(bool IsNilable);
 
-    virtual SPtr<TypeDescBase> AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target);
+    virtual OperatorResult AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable);
     virtual SPtr<TypeDescBase> AcceptUniOp(EUniOp Op);
 };
 

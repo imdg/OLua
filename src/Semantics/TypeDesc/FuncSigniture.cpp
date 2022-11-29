@@ -26,6 +26,7 @@ STRUCT_RTTI_BEGIN(FuncParamDesc)
     RTTI_MEMBER(Flags)
     RTTI_MEMBER(UnresolvedTypeName)
     RTTI_MEMBER(IsResolved)
+    RTTI_MEMBER(IsNilable)
     RTTI_STRUCT_MEMBER(Line, CodeLineInfo)
 STRUCT_RTTI_END(FuncParamDesc)
 
@@ -33,6 +34,7 @@ STRUCT_RTTI_BEGIN(FuncReturnDesc)
     RTTI_MEMBER(Type, MF_External)
     RTTI_MEMBER(UnresolvedTypeName)
     RTTI_MEMBER(IsResolved)
+    RTTI_MEMBER(IsNilable)
     RTTI_STRUCT_MEMBER(Line, CodeLineInfo)
 STRUCT_RTTI_END(FuncReturnDesc)
 
@@ -75,7 +77,7 @@ void FuncSigniture::SetCtorOwner(SPtr<TypeDescBase> InCtorOwner)
 }
 
 
-void FuncSigniture::AddParam(OLString &UnresolvedName, bool IsConst, bool IsVariableParam, bool IsOptional,  CodeLineInfo& Line)
+void FuncSigniture::AddParam(OLString &UnresolvedName, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line)
 {
     FuncParamDesc& NewDesc = Params.AddConstructed();
     NewDesc.Flags = IsConst ? FPF_Const : 0;
@@ -84,9 +86,10 @@ void FuncSigniture::AddParam(OLString &UnresolvedName, bool IsConst, bool IsVari
     NewDesc.Line = Line;
     NewDesc.IsVariableParam = IsVariableParam;
     NewDesc.IsOptional = IsOptional;
+    NewDesc.IsNilable = IsNilable;
 }
 
-void FuncSigniture::AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableParam, bool IsOptional,  CodeLineInfo& Line)
+void FuncSigniture::AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line)
 {
     FuncParamDesc& NewDesc = Params.AddConstructed();
     NewDesc.Flags = IsConst ? FPF_Const : 0;
@@ -96,9 +99,10 @@ void FuncSigniture::AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableP
     NewDesc.Line = Line;
     NewDesc.IsVariableParam = IsVariableParam;
     NewDesc.IsOptional = IsOptional;
+    NewDesc.IsNilable = IsNilable;
 }
 
-void FuncSigniture::AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVariableParam, bool IsOptional,  CodeLineInfo& Line)
+void FuncSigniture::AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line)
 {
     FuncParamDesc& NewDesc = Params.AddConstructed();
     NewDesc.Flags = IsConst ? FPF_Const : 0;
@@ -108,33 +112,37 @@ void FuncSigniture::AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVaria
     NewDesc.Line = Line;
     NewDesc.IsVariableParam = IsVariableParam;
     NewDesc.IsOptional = IsOptional;
+    NewDesc.IsNilable = IsNilable;
 }
 
-void FuncSigniture::AddReturn(SPtr<TypeDescBase> Type, CodeLineInfo& Line)
+void FuncSigniture::AddReturn(SPtr<TypeDescBase> Type, bool IsNilable, CodeLineInfo& Line)
 {
     FuncReturnDesc& NewDesc = Returns.AddConstructed();
     NewDesc.IsResolved = true;
     NewDesc.Type = Type;
     NewDesc.UnresolvedTypeName = T("");
     NewDesc.Line = Line;
+    NewDesc.IsNilable = IsNilable;
 }
 
-void FuncSigniture::AddReturn(OLString& UnresolvedName, CodeLineInfo& Line)
+void FuncSigniture::AddReturn(OLString& UnresolvedName, bool IsNilable, CodeLineInfo& Line)
 {
     FuncReturnDesc& NewDesc = Returns.AddConstructed();
     NewDesc.IsResolved = false;
     
     NewDesc.UnresolvedTypeName = UnresolvedName;
     NewDesc.Line = Line;
+    NewDesc.IsNilable = IsNilable;
 }
 
-void FuncSigniture::AddReturn(EIntrinsicType Type, CodeLineInfo& Line)
+void FuncSigniture::AddReturn(EIntrinsicType Type, bool IsNilable, CodeLineInfo& Line)
 {
     FuncReturnDesc& NewDesc = Returns.AddConstructed();
     NewDesc.IsResolved = true;
     NewDesc.Type = IntrinsicType::CreateFromRaw(Type);
     NewDesc.UnresolvedTypeName = T("");
     NewDesc.Line = Line;
+    NewDesc.IsNilable = IsNilable;
 }
 
 
@@ -155,16 +163,20 @@ void FuncSigniture::MakeUniqueReturn(SPtr<TupleType> EmptyTuple)
         UniqueReturnType = EmptyTuple;
         for(int i = 0; i < Returns.Count(); i++)
         {
-            EmptyTuple->AddSubtype(Returns[i].Type.Lock());
+            EmptyTuple->AddSubtype(Returns[i].Type.Lock(), Returns[i].IsNilable);
         }
+        // Nilable info stored inside TupleType
+        UniqueReturnIsNilable = false;
     }
     else if(Returns.Count() == 1)
     {
         UniqueReturnType = Returns[0].Type;
+        UniqueReturnIsNilable = Returns[0].IsNilable;
     }
     else
     {
         UniqueReturnType = VoidHolder::Get();
+        UniqueReturnIsNilable = false;
     }
 }
 
@@ -352,12 +364,16 @@ bool FuncSigniture::EqualsTo(SPtr<TypeDescBase> Target)
                 return false;
             if(Params[i].IsOptional != TargetFunc->Params[i].IsOptional)
                 return false;
+            if(Params[i].IsNilable != TargetFunc->Params[i].IsNilable)
+                return false;
             if(Params[i].Type.Lock()->EqualsTo(TargetFunc->Params[i].Type.Lock()) == false)
                 return false;
         }
 
         for(int i = 0; i < Returns.Count(); i++)
         {
+            if(Returns[i].IsNilable != TargetFunc->Returns[i].IsNilable)
+                return false;
             if(Returns[i].Type.Lock()->EqualsTo(TargetFunc->Returns[i].Type.Lock()) == false)
                 return false;
         }
@@ -367,16 +383,16 @@ bool FuncSigniture::EqualsTo(SPtr<TypeDescBase> Target)
 }
 
 
-OLString FuncSigniture::ToString()
+OLString FuncSigniture::ToString(bool IsNilable)
 {
     OLString Ret;
-    Ret.AppendF(T("function ("));
+    Ret.AppendF(T("function%s ("), (IsNilable?T("?"):T("")));
     bool BeginOptionalParam = false;
     for(int i = 0; i < Params.Count(); i++)
     {
         OLString TypeName = T("unknown_type");
         if(Params[i].Type != nullptr)
-            TypeName = Params[i].Type->ToString();
+            TypeName = Params[i].Type->ToString(Params[i].IsNilable);
 
         if(Params[i].IsOptional)
         {
@@ -398,7 +414,7 @@ OLString FuncSigniture::ToString()
         {
             OLString TypeName = T("unknown_type");
             if(Returns[i].Type != nullptr)
-                TypeName = Returns[i].Type->ToString();
+                TypeName = Returns[i].Type->ToString(Returns[i].IsNilable);
 
             if(i != Returns.Count() - 1)
                 Ret.AppendF(T("%s, "), TypeName.CStr());
@@ -414,20 +430,16 @@ OLString FuncSigniture::ToString()
 
     return Ret;
 }
-bool FuncSigniture::IsNilable()
-{
-    return true;
-}
 
-SPtr<TypeDescBase> FuncSigniture::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
+OperatorResult FuncSigniture::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
     if( (Op == BO_And || Op == BO_Or || Op == BO_Equal || Op == BO_NotEqual)
         && (Target->Is<FuncSigniture>() || Target->IsAny() || Target->IsNil()))
     {
-        return IntrinsicType::CreateFromRaw(IT_bool);
+        return OperatorResult{IntrinsicType::CreateFromRaw(IT_bool), false};
     }
 
-    return nullptr;
+    return OperatorResult{nullptr, false};
 
      
 }

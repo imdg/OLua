@@ -34,6 +34,7 @@ struct FuncParamDesc
     bool IsResolved;
     bool IsVariableParam;
     bool IsOptional;
+    bool IsNilable;
     CodeLineInfo Line;
 };
 DECLEAR_STRUCT_RTTI(FuncParamDesc)
@@ -43,6 +44,7 @@ struct FuncReturnDesc
     WPtr<TypeDescBase> Type;
     OLString UnresolvedTypeName;
     bool IsResolved;
+    bool IsNilable;
     CodeLineInfo Line;
 };
 DECLEAR_STRUCT_RTTI(FuncReturnDesc)
@@ -58,6 +60,7 @@ public:
     OLList<FuncReturnDesc>  Returns;
 
     WPtr<TypeDescBase>  UniqueReturnType;  // TupleType when multiple return, or the only return type, or VoidHolder
+    bool                UniqueReturnIsNilable;
 
     WPtr<TypeDescBase>  CtorOwnerType; // This indicates  that the function is a constructor when it is not null
 
@@ -72,13 +75,13 @@ public:
     void SetUnresolvedThis(OLString InThisTypeName);
     void SetCtorOwner(SPtr<TypeDescBase> InCtorOwner);
 
-    void AddParam(OLString& UnresolvedName, bool IsConst, bool IsVariableParam, bool IsOptional, CodeLineInfo& Line);
-    void AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableParam, bool IsOptional,  CodeLineInfo& Line);
-    void AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVariableParam, bool IsOptional,  CodeLineInfo& Line);
+    void AddParam(OLString& UnresolvedName, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line);
+    void AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableParam, bool IsOptional,  bool IsNilable, CodeLineInfo& Line);
+    void AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVariableParam, bool IsOptional,  bool IsNilable, CodeLineInfo& Line);
 
-    void AddReturn(SPtr<TypeDescBase> Type, CodeLineInfo& Line);
-    void AddReturn(OLString& UnresolvedName, CodeLineInfo& Line);
-    void AddReturn(EIntrinsicType Type, CodeLineInfo& Line);
+    void AddReturn(SPtr<TypeDescBase> Type, bool IsNilable, CodeLineInfo& Line);
+    void AddReturn(OLString& UnresolvedName, bool IsNilable, CodeLineInfo& Line);
+    void AddReturn(EIntrinsicType Type, bool IsNilable,  CodeLineInfo& Line);
 
     void MakeUniqueReturn(SPtr<TupleType> EmptyTuple);
 
@@ -87,9 +90,9 @@ public:
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
-    virtual OLString ToString();
-    virtual bool IsNilable();
-    virtual SPtr<TypeDescBase> AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target);
+    virtual OLString ToString(bool IsNilable);
+
+    virtual OperatorResult AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable);
     virtual SPtr<TypeDescBase> AcceptUniOp(EUniOp Op);
 
     virtual void ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolResolvePhase Phase);

@@ -84,6 +84,9 @@ struct Declearation
 
     // If this is a '...'
     bool                    IsVariableParam; 
+
+    // Is a nilable declearation
+    bool                    IsNilable;
 };
 DECLEAR_STRUCT_RTTI(Declearation)
 

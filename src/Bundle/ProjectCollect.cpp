@@ -138,9 +138,8 @@ public:
         }
 
         if(Cmd().HasKey(T("--intermediate")) != false)
-        {
             NewDir.IntermediatePath = GetFullPathForAction(WorkingDirectory, Cmd().GetFirstParam(T("--intermediate")));
-        }
+
 
         if(Cmd().HasKey(T("--filter")) != false)
             NewDir.FileFilter = Cmd().GetFirstParam(T("--filter"));
@@ -246,13 +245,9 @@ public:
         else
         {
             if(GProject.Dirs.Count() > 0)
-            {
                 Setting.EntryPath = GProject.Dirs[0].OutPath + T("/__entry.lua");
-            }
             else
-            {
                 Setting.EntryPath = WorkingDirectory + T("/__entry.lua");
-            }
         }
         
         if(GProject.Dirs.Count() == 0 && GProject.Files.Count() == 0)
@@ -262,22 +257,25 @@ public:
         }
 
         if(Cmd().HasKey(T("--api")))
-        {
             Setting.APIPath = Cmd().GetFirstParam(T("--api"));
-        }
         else
-        {
             Setting.APIPath = T("");
-        }
 
         if(Cmd().HasKey(T("--main")))
-        {
             Setting.MainFunc = Cmd().GetFirstParam(T("--main"));
-        }
         else
-        {
             Setting.MainFunc = T("");
+
+        Setting.NilSafety = VL_Warning;
+        if(Cmd().HasKey(T("--nilsafety")))
+        {
+            OLString Level = Cmd().GetFirstParam(T("--nilsafety"));
+            if(Level == T("yes") || Level == T("1") || Level == T("true") )
+                Setting.NilSafety = VL_Error;
+            else if(Level == T("no") || Level == T("0") || Level == T("false") )
+                Setting.NilSafety = VL_Warning;
         }
+       
 
         Setting.AllowUnresolvedType = true;
         if(Cmd().HasKey(T("--allow_unresolved")))
@@ -288,13 +286,14 @@ public:
         }
 
         if(Cmd().HasKey(T("--main")))
-        {
             Setting.MainFunc = Cmd().GetFirstParam(T("--main"));
-        }
         else
-        {
             Setting.MainFunc = T("");
-        }
+
+        if(Cmd().HasKey(T("--debugfile")))
+            Setting.DumpDebugFile = true;
+        else
+            Setting.DumpDebugFile = false;
 
         BundleBuilder Builder(Setting);
         GProject.ApplyBuilder(Builder);

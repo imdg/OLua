@@ -1,23 +1,25 @@
 #pragma once
 #include "Common.h"
 #include "AstCommon.h"
-#include "ABase.h"
+#include "ASimpleExpr.h"
 
 namespace OL
 {
-class ATypeIdentity : public ABase
+
+
+class ANilableUnwrap : public ASimpleExpr
 {
     DECLEAR_RTTI()
 public:
-    ATypeIdentity();
-    virtual ~ATypeIdentity();
+    ANilableUnwrap();
+    virtual ~ANilableUnwrap();
 
     virtual EVisitStatus Accept(Visitor* Vis);
     virtual EVisitStatus Accept(RecursiveVisitor * Vis);
+    virtual bool IsConstant();
+    
 
-    bool IsNilable;
-
-
+    SPtr<ASimpleExpr> TargetExpr;
 };
 
 }

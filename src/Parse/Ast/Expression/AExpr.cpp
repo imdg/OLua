@@ -6,11 +6,12 @@ namespace OL
 
 RTTI_BEGIN_INHERITED(AExpr, ABase)
     RTTI_MEMBER(ExprType, MF_External)
+    RTTI_MEMBER(IsNilable)
 RTTI_END(AExpr)
 
 
 AExpr::AExpr()
-    : ABase()
+    : IsNilable(false), ABase()
 {
 }
 

@@ -115,10 +115,6 @@ ETypeValidation IntrinsicType::ValidateConvert(SPtr<TypeDescBase> Target, bool I
         if(Type == IT_int)
             return IsExplict ? TCR_OK : TCR_Unsafe;
     }
-    // else if(IsNil() && Target->IsNilable())
-    // {
-    //     return TCR_OK;
-    // }
 
     return TCR_NoWay;
 }
@@ -130,7 +126,7 @@ bool IntrinsicType::EqualsTo(SPtr<TypeDescBase> Target)
     return false;
 }
 
-OLString IntrinsicType::ToString()
+OLString InstrinsicTypeName(EIntrinsicType Type)
 {
     switch (Type)
     {
@@ -149,6 +145,11 @@ OLString IntrinsicType::ToString()
     }
     return T("unknown");
 }
+
+OLString IntrinsicType::ToString(bool IsNilable)
+{
+    return InstrinsicTypeName(Type) + ((IsNilable && (Type != IT_nil)) ? T("?"):T(""));
+}
 bool IntrinsicType::IsInt() { return Type == IT_int; }
 bool IntrinsicType::IsFloat() { return Type == IT_float; }
 bool IntrinsicType::IsString() { return Type == IT_string; }
@@ -157,10 +158,7 @@ bool IntrinsicType::IsBool() { return Type == IT_bool; }
 bool IntrinsicType::IsNil() { return Type == IT_nil; }
 
 bool IntrinsicType::IsImplicitAny() { return (Type == IT_any) && IsImplicitAnyType;}
-bool IntrinsicType::IsNilable()
-{
-    return false;
-}
+
 struct IntrinsicOperation
 {
     EIntrinsicType Op1;
@@ -279,8 +277,7 @@ SPtr<TypeDescBase> AccecpBinOpWithIntrinsic(EIntrinsicType From, EIntrinsicType 
     return nullptr;
 }
 
-
-SPtr<TypeDescBase> IntrinsicType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
+OperatorResult IntrinsicType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
     if(Target->Is<IntrinsicType>() || Target->Is<EnumType>())
     {
@@ -291,7 +288,7 @@ SPtr<TypeDescBase> IntrinsicType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Targ
         {
             TargetType = Target->As<IntrinsicType>()->Type;
         }
-
+        bool IsResultNilable = TargetNilable;
         switch (Op)
         {
         case BO_Add: case BO_Sub: case BO_Mul: case BO_Power:
@@ -313,6 +310,7 @@ SPtr<TypeDescBase> IntrinsicType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Targ
         case BO_And: case BO_Or:
             ConvertTable = Op_Logic;
             TableSize = sizeof(Op_Logic) / sizeof(IntrinsicOperation);
+            IsResultNilable = false;  // Logic operator returns non-nilable bool type,
             break;
         case BO_ShiftL: case BO_ShiftR:
             ConvertTable = Op_Shift;
@@ -321,10 +319,12 @@ SPtr<TypeDescBase> IntrinsicType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Targ
         case BO_Greater: case BO_Less: case BO_GreaterEqual: case BO_LessEqual:
             ConvertTable = Op_AmountCompare;
             TableSize = sizeof(Op_AmountCompare) / sizeof(IntrinsicOperation);
+            IsResultNilable = false;  // Logic operator returns non-nilable bool type,
             break;
         case BO_Equal: case BO_NotEqual:
             ConvertTable = Op_Eq;
             TableSize = sizeof(Op_Eq) / sizeof(IntrinsicOperation);
+            IsResultNilable = false;  // Logic operator returns non-nilable bool type,
             break;
         default:
             break;
@@ -332,20 +332,20 @@ SPtr<TypeDescBase> IntrinsicType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Targ
 
         if(ConvertTable != nullptr)
         {
-            return AccecpBinOpWithIntrinsic(Type, TargetType,  ConvertTable, TableSize);
+            SPtr<TypeDescBase> ResultType = AccecpBinOpWithIntrinsic(Type, TargetType,  ConvertTable, TableSize);
+            return OperatorResult{ResultType, IsResultNilable};
         }
 
-        return nullptr;
+        return OperatorResult{nullptr, false};
     }
     
     if(Type == IT_nil)
     {
-        //if(Target->IsNilable())
         {
-            return Target->AcceptBinOp(Op, SThis);
+            return Target->AcceptBinOp(Op, SThis, TargetNilable);
         }
     }
-    return nullptr;
+    return OperatorResult{nullptr, false};;
 
 
 }

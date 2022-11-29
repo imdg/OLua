@@ -92,16 +92,16 @@ bool TypeAlias::EqualsTo(SPtr<TypeDescBase> Target)
     return ActualType->EqualsTo(Target);
 }
 
-OLString TypeAlias::ToString()
+OLString TypeAlias::ToString(bool IsNilable)
 {
     OLString RetString;
     if(ActualType == nullptr)
     {
-        RetString.Printf(T("alias:%s:(unresolved)"), Name.CStr());
+        RetString.Printf(T("alias%s:%s:(unresolved)"), Name.CStr(), (IsNilable?T("?"):T("")));
     }
     else
     {
-        RetString.Printf(T("alias:%s:(%s)"), Name.CStr(), ActualType->ToString().CStr());
+        RetString.Printf(T("alias%s:%s:(%s)"), Name.CStr(), (IsNilable?T("?"):T("")), ActualType->ToString(IsNilable).CStr());
     }
     return RetString;
 }
@@ -170,16 +170,6 @@ bool TypeAlias::IsImplicitAny()
     return ActualType->IsImplicitAny();
 }
 
-
-bool TypeAlias::IsNilable() 
-{
-    if(ActualType == nullptr)
-    {
-        return false;
-    }
-    return ActualType->IsNilable();
-}
-
 bool TypeAlias::IsRefType()
 {
     if(ActualType == nullptr)
@@ -189,14 +179,13 @@ bool TypeAlias::IsRefType()
     return ActualType->IsRefType();
 }
 
-
-SPtr<TypeDescBase> TypeAlias::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
+OperatorResult TypeAlias::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
     if(ActualType == nullptr)
     {
-        return nullptr;
+        return OperatorResult{nullptr, false};
     }
-    return ActualType->AcceptBinOp(Op, Target);
+    return ActualType->AcceptBinOp(Op, Target, TargetNilable);
 }
 
 SPtr<TypeDescBase> TypeAlias::AcceptUniOp(EUniOp Op)

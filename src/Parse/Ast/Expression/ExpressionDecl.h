@@ -28,4 +28,5 @@ class AFuncType;
 class AArrayType;
 class AMapType;
 class AVariableParamRef;
+class ANilableUnwrap;
 }

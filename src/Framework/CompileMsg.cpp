@@ -211,8 +211,6 @@ MsgDetailInfo MsgDetails[] = {
     {CMT_ConstRestrictCall,        DEFAULT_LEVEL_ERROR,    T("Cannot pass constant variable to param %d, which is a non-constant params of a reference type") },
     {CMT_ConstRestrictOwner,        DEFAULT_LEVEL_ERROR,    T("Cannot call non-constant member function on a constant owner") },
 
-
-
     {CMT_IterTupleNum,        DEFAULT_LEVEL_ERROR,    T("Iterator must return 3 element for iterator function, target and first index") },
     {CMT_IterEntryType,        DEFAULT_LEVEL_ERROR,    T("Require a iterator function for the first item of iterator") },
     {CMT_IterFuncType,        DEFAULT_LEVEL_ERROR,    T("Iterator function must have 2 params for the target and index") },
@@ -224,6 +222,25 @@ MsgDetailInfo MsgDetails[] = {
 
 
     {CMT_SymbolRedefinition,        DEFAULT_LEVEL_ERROR,    T("Symbol '%s' redefinition with: %s(%d,%d)") },
+
+    
+    {CMT_NilableAsIndex,        DEFAULT_LEVEL_ERROR,    T("Cannot use nilable expression as array index or map key") },
+    {CMT_NonnilableNotInit,     DEFAULT_LEVEL_ERROR,    T("Non-nilable variant '%s' is not initialized") },
+    
+    {CMT_NilableIter,           DEFAULT_LEVEL_ERROR,    T("Cannot use nilable expression as iterator") },
+    {CMT_NilableConvert,        DEFAULT_LEVEL_ERROR,    T("Cannot assign nilable expression to non-nilable, use '!' or '??' to unwrap") },
+    {CMT_AssignNilToNonnilable, DEFAULT_LEVEL_ERROR,    T("Cannot assign 'nil' to non-nilable expression") },
+    {CMT_UnwrapNonnilable,      DEFAULT_LEVEL_WARNING,    T("Unwrapping is not nessesary because the expression is already non-nilable") },
+
+    {CMT_NonnilableCoalescing,      DEFAULT_LEVEL_WARNING,    T("Coalescing non-nilable expression is unnessesary.") },
+    {CMT_NilableCoalescingNilable,      DEFAULT_LEVEL_ERROR,    T("Expression to be coalesced is still nilable") },
+    {CMT_NonnilableMember,      DEFAULT_LEVEL_MSG,    T("Non-nilable member '%s' is not initialized. Remember to initialize it in all constructors") },
+
+    {CMT_NotAcceptedNilable,      DEFAULT_LEVEL_WARNING,    T("This type identity does not accept nilable mark '?'. Processing as non-nilable") },
+    {CMT_DerefNilable,      DEFAULT_LEVEL_ERROR,    T("Attempt to dereference a nilable expression. Use '!' or '??' to unwrap") },
+   {CMT_CallNilable,      DEFAULT_LEVEL_ERROR,    T("Attempt to call a nilable function. Use '!' or '??' to unwrap") },
+    
+
 };
 
 CompileMsg::CompileMsg()

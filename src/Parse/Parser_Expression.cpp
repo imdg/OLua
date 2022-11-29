@@ -259,11 +259,20 @@ AExpr*     Parser::Parse_TypeExp()
 
     
     Curr = Lex.GetCurrent();
+    if(Curr.Tk == TKS_exclamation)
+    {
+        ANilableUnwrap* Unwrap = AstPool::New<ANilableUnwrap>(Curr.LineInfo);
+        Unwrap->TargetExpr = MainExpr;
+        MainExpr = Unwrap;
+        Curr = Lex.Next();
+    }
+
     if(Curr.Tk == TKK_as)
     {
         Curr = Lex.Next();
 
-        ATypeIdentity* TargetType = Parse_TypeIdentity();
+        // Type cast keeps original nilable state, so it does not accept any other nilable mark
+        ATypeIdentity* TargetType = Parse_TypeIdentity(false);
         if(TargetType == nullptr)
         {
             //CM.Log(CMT_ExpectTypeIdentity, Curr.LineInfo);
@@ -688,12 +697,15 @@ AConstructor*  Parser::Parse_Constructor()
 }
 
 // Type -> (intrinsics) | Name | FuncType | '(' Type ')' | MapType  { [] }
-ATypeIdentity*  Parser::Parse_TypeIdentity()
+ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
 {
     Token Curr = Lex.GetCurrent();
     ATypeIdentity* TypeIdn = nullptr;
+    bool NeedToParseNilable = true;
+    
     bool HasParenthess = false;
     CodeLineInfo ParenthessBegin;
+
     if(Curr.Tk == TKS_lparenthese)
     {
         ParenthessBegin = Curr.LineInfo;
@@ -761,7 +773,9 @@ ATypeIdentity*  Parser::Parse_TypeIdentity()
         }
         case TKK_function:
         {
-            TypeIdn = Parse_FuncType();
+            TypeIdn = Parse_FuncType(AcceptNilable);
+            NeedToParseNilable = false; // Nilable parse is done in Parse_FuncType
+
             break;
         }
         case TKS_lbracket:
@@ -807,6 +821,24 @@ ATypeIdentity*  Parser::Parse_TypeIdentity()
         Lex.Next();
     }
 
+    
+    if(NeedToParseNilable)
+    {
+        if(Lex.GetCurrent().Tk == TKS_question)
+        {
+            // Type alias, type cast does not accept nilable state
+            if(AcceptNilable == false)
+            {
+                CM.Log(CMT_NotAcceptedNilable, Lex.GetCurrent().LineInfo);
+                TypeIdn->IsNilable = false;
+            }
+            else
+            {
+                TypeIdn->IsNilable = true;
+            }
+            Lex.Next();
+        }
+    }
     return TypeIdn;
 }
 
@@ -820,7 +852,8 @@ AMapType* Parser::Parse_MapType()
 
     Lex.Next();
 
-    ATypeIdentity* First = Parse_TypeIdentity();
+    // Map key should not be defined as nilable
+    ATypeIdentity* First = Parse_TypeIdentity(false);
     if(First == nullptr)
     {
         return nullptr;
@@ -830,7 +863,7 @@ AMapType* Parser::Parse_MapType()
     if(Lex.GetCurrent().Tk == TKS_comma)
     {
         Lex.Next();
-        Second = Parse_TypeIdentity();
+        Second = Parse_TypeIdentity(true);
         if(Second == nullptr)
         {
             AstPool::Delete(First);

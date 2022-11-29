@@ -1,11 +1,14 @@
 # Introduction
-OLua is a front end of Lua with a serial of new language features. A type system is incorprated including class, interface, enum and explict intrinsic types. Then type validation is more strict as well. The code is compiled into original Lua and runs in Lua virtual machine. It works similar to TypeScript.
+OLua is a front end of Lua with a serial of new language features. A type system is incorprated including class, interface, enum and explict intrinsic types. Then type validation is more strict as well. The code is compiled into original Lua and runs in Lua virtual machine. It works similar to TypeScript. But one thing to know is that OLua is **not** a super collection of Lua. Although best effort is made to keep the similiar style, their codes are not compatible.
 
 Note that OLua is not a real-time interpreted language. It cannot load real-time string as source code to run. Anyway, it still works when the string is in original Lua. Also compiling takes time during development. OLua trades off flexiblity and agility for code safety. It should be used on the nessesity of purpose.
 
 # Quick Start
 ## Build from source
-1. It is recommanded MSVC version to be not less than 1930, or Clang 9.0 and above
+1. Compiler recommand: 
+    * Windows: MSVC 1925 or above (Visual Studio 2019 version 16.5),  support for option '/Zc:preprocessor' is required
+    * macOS: Tested in XCode 14, minimal required version is not comfirmed
+    * Linux: Tested in GCC 9.4, minimal required version is not comfirmed
 2. Download source or clone this repository
 3. Enter the source directory and build directly by cmake with command:
 ```
@@ -356,6 +359,17 @@ global the_type = actor_type.player
 
 Enums are converted to integer when compiled, meaning that no Lua code like table, variant, or meta will be generated.
 
+## Type alias
+Alias name can be defined for any types, including intricsic types, in order to shorten long type identities. Alias name is equvalent to original type identity. Use keyword '**alias**' to define.
+```
+
+alias callback_type as func(id as int) as string     -- define alias name 'callback_type' for a function type
+local callback as callback_type                      -- use the alias name like other type identity
+
+local ret as string = callback(10)                   -- equvalent to original function type
+
+```
+
 # Work with Lua
 ## External class and function
 As the program is running in a Lua virtual machine, there are many symbols defined from other raw Lua source or native C layer. In OLua it is free to refer these undefined symbol if massive warnings are not bothering. A better way is to write an external definition for them so that more validation of code safety could be enabled.
@@ -397,3 +411,78 @@ Lua API is defined as a bunch of extern classes and functions in the API directo
 * **math.maxi()**, **math.maxf()**, **math.mini()**, **math.minf()**, **math.absi()**, **math.absf()** are new functions added to the library to work with integer and float respectively. Original **math.max()**, **math.min()**, **math.abs()** are still avaliable, but their return type are all "any". Use the new version to prevent possible type warning.
 * **math.randomi()** is added to handle randam integer, while **math.random()** only generates random float now.
 * **table** functions works with both array and map
+
+# Nil-Safety
+An optional nil-safety system is included in OLua. It helps to write safe code where as many  protential nil errors can be checked up staticly. Some extra syntex is needed to write nil-safety code.
+
+## Compile with nil-safety
+Adding paremeter to '**compile**' command controls nil-safety check
+* **--nilsafety true** or **--nilsafety yes** or **--nilsafety 1** : Enable nil-safety check in strict mode, in which serious problems will be promoted as errors.
+* **--nilsafety warning** : Enable nil-safety check, but all problems will be promoted as warnings, meaning that the compilation will still go successfully. **This is the default mode**.
+* **--nilsafety false** or **--nilsafety no** or **--nilsafety 0** : Disable nil-safety check. No messages will be promoted.
+
+
+
+## Define nilable and non-nilable variant
+In nil-safety mode, variants are divided into nilable and non-nilable. Non-nilable variants are garenteed not to be nil by various restrictions. Normal definations are seen as non-nilable, unless a '?' is added to the type identity.
+
+```
+local a as int?        -- nilable
+local b as MyClass?    -- nilable
+local c as func? ()    -- '?' should be added after keyword 'func' or 'function' for function type
+
+```
+Nilable mark can be use at the definition of local variant, global variant, class variant, function paremeter and function return. But type alias and type cast do not accept nilable mark. In OLua, nilable is a state of an expression rather than an implicit type, so it is pointless in these statements. Type cast always keeps the nilable state of the original expression.
+
+All non-nilable variant should be given an non-nilable expression as initialization, otherwise a problem will be promoted.
+
+```
+local x as int        -- Non-nilable variant without initialization. Problem promoted
+local y as int = 10   -- Correct
+```
+When defining variants without type but an initializing expression, the nilable state will be derived from the expression as well as the type.
+
+## Convert between nilable and non-nilable
+First of all, nilable variants are always compatible to any non-nilable expression. Directly passing the value is all right, including assignment, function parameter, etc.
+
+```
+local a as int?
+local b as int = 10
+a = b       -- OK
+a = 10      -- OK
+```
+Non-nilable variants do not accept any nilable expression or nil. Passing them to non-nilable will promote a problem. There are 2 ways of giving nilables to non-nilables.
+* **Nil assertion by '!'** : Using '!' can convert a nilable expression to non-nilable. Nil check is strongly recommanded before doing this
+```
+local a as int?
+local b as int
+if(a ~= nil) then
+    b = a!  -- Convert nilable expression 'a' to non-nilable
+end
+```
+* **Nil coalescing by '??'** : Binary operator '??' gives a nilable expression and a default non-nilable expression if it is nil, resulting a non-nilable expression.
+```
+local a as int?
+local b as int
+b = a ?? 10   -- Equvalent to : if( a ~= nil ) then b = a else b = 10 end
+```
+
+## Function call and dereference
+Nilable variants of function type are not eligible to call. Converting to non-nilable is nessorary. Same thing is needed while dereferencing a custom class, accessing elements of arrays and maps.
+```
+local a as [string, int]?
+local b as MyClass?
+local c as func? ()
+
+x = a["key1"]  -- problem
+y = b.member1  -- problem
+c()            -- problem
+
+x = a!["key1"]  -- OK
+y = b!.member1  -- OK
+c!()            -- OK
+```
+
+## Notes and future works
+* Non-nilable class member can be left uninitialized because in many cases this can only be done in constructors. A reminder will be promoted during compilation. There are some plans to make this look better in the future.
+* Mechanism like "method chain" or "optional chainning" is not supported currently, because this cannot map to any lua syntex directly. But it is still in the plan.

@@ -228,9 +228,9 @@ bool InterfaceType::EqualsTo(SPtr<TypeDescBase> Target)
     return false;
 }
 
-OLString InterfaceType::ToString()
+OLString InterfaceType::ToString(bool IsNilable)
 {
-    return Name;
+    return Name + (IsNilable?T("?"):T(""));
 }
 
 InterfaceMember* InterfaceType::FindMember(OLString Name, bool IncludeBase)
@@ -279,10 +279,6 @@ InterfaceMember* InterfaceType::FindMemberByDeclNode(SPtr<ABase> Node, bool Incl
     return nullptr;
 }
 
-bool InterfaceType::IsNilable()
-{
-    return true;
-}
 
 SPtr<TypeDescBase> InterfaceType::AcceptBinOpOverride(EBinOp Op, SPtr<TypeDescBase> Target)
 {
@@ -322,15 +318,15 @@ SPtr<TypeDescBase> InterfaceType::AcceptBinOpOverride(EBinOp Op, SPtr<TypeDescBa
     return nullptr;
 }
 
-SPtr<TypeDescBase> InterfaceType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
+OperatorResult InterfaceType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
     if( (Op == BO_And || Op == BO_Or || Op == BO_Equal || Op == BO_NotEqual)
         && (Target->Is<ClassType>() || Target->Is<InterfaceType>() || Target->IsAny() || Target->IsNil()))
     {
-        return IntrinsicType::CreateFromRaw(IT_bool);
+        return OperatorResult{IntrinsicType::CreateFromRaw(IT_bool), false};
     }
 
-    return nullptr;
+    return OperatorResult{nullptr, false};
 
      
 }

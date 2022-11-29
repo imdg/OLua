@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21.0)
+cmake_minimum_required(VERSION 3.18.0)
 project(OLua VERSION 0.1.0)
 
 
@@ -67,10 +67,10 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	message("CMAKE_GENERATOR:${CMAKE_GENERATOR}")
 	message("CMAKE_VS_PLATFORM_TOOLSET_VERSION:${CMAKE_VS_PLATFORM_TOOLSET_VERSION}")
 	add_definitions(-DENABLE_RTTI=1)
-	if (${MSVC_VERSION} LESS 1930)
-		message("MSVC_VERSION(${MSVC_VERSION}) is less than 1930, ENUM TEXT will not be enabled")
+	if (${MSVC_VERSION} LESS 1925)
+		message("MSVC_VERSION(${MSVC_VERSION}) is less than 1925, ENUM TEXT will not be enabled")
 	else()
-		message("MSVC_VERSION(${MSVC_VERSION}) is greater equal to 1930, ENUM TEXT enabled")
+		message("MSVC_VERSION(${MSVC_VERSION}) is greater equal to 1925, ENUM TEXT enabled")
 		add_definitions(-DENABLE_ENUM_TEXT=1)
 	endif()
 

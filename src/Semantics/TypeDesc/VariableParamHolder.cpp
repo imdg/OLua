@@ -17,6 +17,8 @@ namespace OL
 RTTI_BEGIN_INHERITED(VariableParamHolder, TypeDescBase)
     RTTI_MEMBER(UnresolvedTypeName)
     RTTI_MEMBER(ParamType, MF_External)
+    RTTI_MEMBER(IsResolved)
+    RTTI_MEMBER(IsNilable)
 RTTI_END(VariableParamHolder)
 
 VariableParamHolder::VariableParamHolder(SPtr<ABase> Node, SPtr<TypeDescBase> InParamType)
@@ -54,22 +56,16 @@ bool VariableParamHolder::EqualsTo(SPtr<TypeDescBase> Target)
 
 }
 
-OLString VariableParamHolder::ToString()
+OLString VariableParamHolder::ToString(bool IsNilable)
 {
     OLString Ret;
     Ret.Append(T("... as "));
-    Ret.Append(ParamType->ToString().CStr());
+    Ret.Append(ParamType->ToString(IsNilable).CStr());
     return Ret;
 }
-
-bool VariableParamHolder::IsNilable()
+OperatorResult VariableParamHolder::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
-    return true;
-}
-
-SPtr<TypeDescBase> VariableParamHolder::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
-{
-    return nullptr;   
+    return OperatorResult{nullptr, false};   
 }
 
 SPtr<TypeDescBase> VariableParamHolder::AcceptUniOp(EUniOp Op)

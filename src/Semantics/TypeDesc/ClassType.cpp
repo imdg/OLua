@@ -34,6 +34,7 @@ STRUCT_RTTI_BEGIN(ClassMemberDesc)
     RTTI_MEMBER(DeclTypeDesc, MF_External)
     RTTI_MEMBER(RawTypeInfo, MF_External)
     RTTI_MEMBER(Flags)
+    RTTI_MEMBER(IsNilable)
     RTTI_MEMBER(Init, MF_External)
     RTTI_STRUCT_MEMBER(Decl, Declearation,  MF_External)
     RTTI_STRUCT_MEMBER(MemberAttrib, DeclearAttributes)
@@ -168,6 +169,7 @@ void ClassType::AddClassVar(OLString Name, SPtr<AModifier> Modifier, SPtr<ATypeI
     }
     NewMember.Owner = SThis;
     NewMember.Decl = Decl;
+    NewMember.IsNilable = Decl->IsNilable;
     ValidateMember(NewMember, CM);
 }
 
@@ -371,9 +373,9 @@ bool ClassType::EqualsTo(SPtr<TypeDescBase> Target)
     return false;
 }
 
-OLString ClassType::ToString()
+OLString ClassType::ToString(bool IsNilable)
 {
-    return Name;
+    return Name + (IsNilable?T("?"):T(""));
 }
 
 FindMemberResult ClassType::FindMember(OLString Name, bool IncludeBase)
@@ -489,10 +491,6 @@ bool ClassType::IsMethod(SPtr<FuncSigniture> Func)
     return false;
 }
 
-bool ClassType::IsNilable()
-{
-    return true;
-}
 
 SPtr<TypeDescBase> ClassType::AcceptBinOpOverride(EBinOp Op, SPtr<TypeDescBase> Target)
 {
@@ -540,19 +538,19 @@ SPtr<TypeDescBase> ClassType::AcceptBinOpOverride(EBinOp Op, SPtr<TypeDescBase> 
     return nullptr;
 }
 
-SPtr<TypeDescBase> ClassType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
+ OperatorResult ClassType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
     SPtr<TypeDescBase> Override = AcceptBinOpOverride(Op, Target);
     if(Override != nullptr)
-        return Override;
+        return OperatorResult{Override, TargetNilable};
 
     if( (Op == BO_And || Op == BO_Or || Op == BO_Equal || Op == BO_NotEqual)
         && (Target->ActuallyIs<ClassType>() || Target->ActuallyIs<InterfaceType>() || Target->IsAny() || Target->IsNil()))
     {
-        return IntrinsicType::CreateFromRaw(IT_bool);
+        return OperatorResult{IntrinsicType::CreateFromRaw(IT_bool), false};
     }
 
-    return nullptr;
+    return OperatorResult{nullptr, false};
 
      
 }

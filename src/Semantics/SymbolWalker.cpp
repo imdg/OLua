@@ -76,6 +76,7 @@ EVisitStatus SymbolWalker::BeginVisit(SPtr<AFuncDef> Node)
         NewDecl->IsExternal = true;
     }
     NewDecl->IsConst = false;
+    NewDecl->IsNilable = false;
     WalkingStack.Top()->AddDecl(NewDecl, CM);
     OwnerStack.Add(Node);
     return VS_Continue;
@@ -121,6 +122,7 @@ EVisitStatus SymbolWalker::BeginVisit(SPtr<AMethod> Node)
     NewDecl->DeclType = DT_Function;
     NewDecl->IsExternal = false;
     NewDecl->IsConst = Node->Modifier->IsConst;
+    NewDecl->IsNilable = false;
     WalkingStack.Top()->AddDecl(NewDecl, CM);
 
     OwnerStack.Add(Node);
@@ -156,6 +158,7 @@ EVisitStatus SymbolWalker::BeginVisit(SPtr<AClass> Node)
     NewDecl->ValueTypeNode = nullptr;
     NewDecl->IsExternal = false;
     NewDecl->IsConst = false;
+    NewDecl->IsNilable = false;
     if(Node->Attrib != nullptr)
     {
         NewDecl->Attrib = new DeclearAttributes();
@@ -217,6 +220,7 @@ EVisitStatus SymbolWalker::BeginVisit(SPtr<AInterface> Node)
     NewDecl->ValueTypeNode = nullptr;
     NewDecl->IsExternal = false;
     NewDecl->IsConst = false;
+    NewDecl->IsNilable = false;
     if(Node->Attrib != nullptr)
     {
         NewDecl->Attrib = new DeclearAttributes();
@@ -262,6 +266,7 @@ EVisitStatus SymbolWalker::BeginVisit(SPtr<AEnum> Node)
     NewDecl->ValueTypeNode = nullptr;
     NewDecl->IsExternal = false;
     NewDecl->IsConst = false;
+    NewDecl->IsNilable = false;
     WalkingStack.Top()->AddDecl(NewDecl, CM);
     return VS_Continue;
 }
@@ -303,7 +308,7 @@ void SymbolWalker::AddVarDecl(SPtr<AVarDecl> DeclNode)
     NewDecl->IsExternal = false;
     NewDecl->IsConst = DeclNode->IsConst;
     NewDecl->IsVariableParam = DeclNode->IsVariableParam;
-
+    NewDecl->IsNilable = DeclNode->VarType->IsNilable;
     WalkingStack.Top()->AddDecl(NewDecl, CM);
 
 }
@@ -439,6 +444,7 @@ EVisitStatus SymbolWalker::BeginVisit(SPtr<AAlias> Node)
     NewDecl->IsExternal = false;
     NewDecl->IsConst = false;
     NewDecl->IsVariableParam = false;
+    NewDecl->IsNilable = false;
 
     WalkingStack.Top()->AddDecl(NewDecl, CM);
     return VS_Continue;

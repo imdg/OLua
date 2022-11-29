@@ -32,6 +32,7 @@ void FileStream::WriteText(const TCHAR* InBuffer)
 
 void FileStream::OpenWrite(OLString FileName)
 {
+    Env::MakeDir(FileName.ParentPath());
     FilePtr = t_fopen(FileName, "wb");
 }
 void FileStream::Close()

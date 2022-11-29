@@ -46,7 +46,11 @@ RTTI_ENUM(ETypeValidation,
 );
 
 
-
+struct OperatorResult
+{
+    SPtr<TypeDescBase> Type;
+    bool               IsNilable;
+};
 
 class CompileMsg;
 class TypeDescBase : public SThisOwner<TypeDescBase>
@@ -61,7 +65,7 @@ public:
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict) = 0;
     virtual bool EqualsTo(SPtr<TypeDescBase> Target) = 0;
-    virtual OLString ToString() = 0;
+    virtual OLString ToString(bool IsNilable) = 0;
 
     virtual bool IsInt();
     virtual bool IsFloat();
@@ -71,10 +75,11 @@ public:
     virtual bool IsNil();
     virtual bool IsImplicitAny();
 
-    virtual bool IsNilable() = 0;
     virtual bool IsRefType();
 
-    virtual SPtr<TypeDescBase> AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target);
+    //OperatorResult AcceptNilCoalesing(SPtr<TypeDescBase> Target, bool TargetNilable);
+
+    virtual OperatorResult AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable);
     virtual SPtr<TypeDescBase> AcceptUniOp(EUniOp Op);
 
     virtual SPtr<TypeDescBase> DeduceLValueType(SPtr<SymbolScope> Scope);

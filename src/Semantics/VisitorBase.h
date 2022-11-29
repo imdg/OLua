@@ -29,6 +29,7 @@ public:
     virtual EVisitStatus Visit(SPtr<AConstExpr> Node);
     virtual EVisitStatus Visit(SPtr<AConstructor> Node);
     virtual EVisitStatus Visit(SPtr<AFuncExpr> Node);
+    virtual EVisitStatus Visit(SPtr<ANilableUnwrap> Node);
     virtual EVisitStatus Visit(SPtr<ASuffixedExpr> Node);
     virtual EVisitStatus Visit(SPtr<ACall> Node);
     virtual EVisitStatus Visit(SPtr<AColonCall> Node);
@@ -130,6 +131,10 @@ public:
     virtual EVisitStatus Visit(SPtr<AFuncExpr> Node);
     virtual EVisitStatus BeginVisit(SPtr<AFuncExpr> Node);
     virtual EVisitStatus EndVisit(SPtr<AFuncExpr> Node);
+
+    virtual EVisitStatus Visit(SPtr<ANilableUnwrap> Node);
+    virtual EVisitStatus BeginVisit(SPtr<ANilableUnwrap> Node);
+    virtual EVisitStatus EndVisit(SPtr<ANilableUnwrap> Node);
 
     virtual EVisitStatus Visit(SPtr<ASuffixedExpr> Node);
     virtual EVisitStatus BeginVisit(SPtr<ASuffixedExpr> Node);
@@ -386,6 +391,10 @@ public:
     virtual EVisitStatus Visit(SPtr<AFuncExpr> Node);
     virtual EVisitStatus BeginVisit(SPtr<AFuncExpr> Node);
     virtual EVisitStatus EndVisit(SPtr<AFuncExpr> Node);
+
+    virtual EVisitStatus Visit(SPtr<ANilableUnwrap> Node);
+    virtual EVisitStatus BeginVisit(SPtr<ANilableUnwrap> Node);
+    virtual EVisitStatus EndVisit(SPtr<ANilableUnwrap> Node);
 
     virtual EVisitStatus Visit(SPtr<ASuffixedExpr> Node);
     virtual EVisitStatus BeginVisit(SPtr<ASuffixedExpr> Node);

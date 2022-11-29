@@ -17,6 +17,8 @@ void BuildSetting::InitDefaultDefaultBuildSetting()
 {
     DefaultBuildSetting.AllowImplicitAny = true;
     DefaultBuildSetting.AllowUnresolvedType = true;
+    DefaultBuildSetting.DumpDebugFile = false;
+    DefaultBuildSetting.NilSafety = VL_Warning;
 
 }
 }

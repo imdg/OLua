@@ -65,20 +65,14 @@ bool EnumType::EqualsTo(SPtr<TypeDescBase> Target)
         return true;
     return false;
 }
-OLString EnumType::ToString()
+OLString EnumType::ToString(bool IsNilable)
 {
-    return Name;
+    return Name + (IsNilable?T("?"):T(""));
 }
 
-
-bool EnumType::IsNilable()
+OperatorResult EnumType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
-    return false;
-}
-
-SPtr<TypeDescBase> EnumType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
-{
-    return IntrinsicType::CreateFromRaw(IT_int)->AcceptBinOp(Op, Target);
+    return IntrinsicType::CreateFromRaw(IT_int)->AcceptBinOp(Op, Target, TargetNilable);
 }
 
 SPtr<TypeDescBase> EnumType::AcceptUniOp(EUniOp Op)

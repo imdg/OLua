@@ -66,6 +66,11 @@ EVisitStatus Visitor::Visit(SPtr<AFuncExpr> Node)
     return Visit(Node.PtrAs<ASimpleExpr>());
 }
 
+EVisitStatus Visitor::Visit(SPtr<ANilableUnwrap> Node)
+{
+    return Visit(Node.PtrAs<ASimpleExpr>());
+}
+
 EVisitStatus Visitor::Visit(SPtr<ASuffixedExpr> Node)
 {
     return Visit(Node.PtrAs<ASimpleExpr>());
@@ -487,6 +492,21 @@ EVisitStatus RecursiveVisitor::BeginVisit(SPtr<AFuncExpr> Node)
 }
 
 EVisitStatus RecursiveVisitor::EndVisit(SPtr<AFuncExpr> Node)
+{
+    return EndVisit(Node.PtrAs<ASimpleExpr>());
+}
+
+EVisitStatus RecursiveVisitor::Visit(SPtr<ANilableUnwrap> Node)
+{
+    return Visit(Node.PtrAs<ASimpleExpr>());
+}
+
+EVisitStatus RecursiveVisitor::BeginVisit(SPtr<ANilableUnwrap> Node)
+{
+    return BeginVisit(Node.PtrAs<ASimpleExpr>());
+}
+
+EVisitStatus RecursiveVisitor::EndVisit(SPtr<ANilableUnwrap> Node)
 {
     return EndVisit(Node.PtrAs<ASimpleExpr>());
 }
@@ -1514,6 +1534,30 @@ EVisitStatus VisitorWrapper::BeginVisit(SPtr<AFuncExpr> Node)
 }
 
 EVisitStatus VisitorWrapper::EndVisit(SPtr<AFuncExpr> Node)
+{
+    OnEndVisit(Node);
+    EVisitStatus Ret = WrappedVisitor->EndVisit(Node);
+    OnEndVisitFinish(Node, Ret);
+    return Ret;
+}
+
+EVisitStatus VisitorWrapper::Visit(SPtr<ANilableUnwrap> Node)
+{
+    OnVisit(Node);
+    EVisitStatus Ret = WrappedVisitor->Visit(Node);
+    OnVisitFinish(Node, Ret);
+    return Ret;
+}
+
+EVisitStatus VisitorWrapper::BeginVisit(SPtr<ANilableUnwrap> Node)
+{
+    OnBeginVisit(Node);
+    EVisitStatus Ret = WrappedVisitor->BeginVisit(Node);
+    OnBeginVisitFinish(Node, Ret);
+    return Ret;
+}
+
+EVisitStatus VisitorWrapper::EndVisit(SPtr<ANilableUnwrap> Node)
 {
     OnEndVisit(Node);
     EVisitStatus Ret = WrappedVisitor->EndVisit(Node);

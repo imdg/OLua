@@ -75,6 +75,9 @@ public:
     virtual EVisitStatus BeginVisit(SPtr<AParentheses> Node);
     virtual EVisitStatus EndVisit(SPtr<AParentheses> Node);
 
+    virtual EVisitStatus BeginVisit(SPtr<ANilableUnwrap> Node);
+    virtual EVisitStatus EndVisit(SPtr<ANilableUnwrap> Node);
+
     virtual EVisitStatus Visit(SPtr<ASelf> Node);
 
     virtual EVisitStatus Visit(SPtr<ASuper> Node);

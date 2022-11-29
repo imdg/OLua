@@ -217,6 +217,28 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AParentheses> Node)
     return VS_Continue;
 }
 
+EVisitStatus LuaPlainInterp::BeginVisit(SPtr<ANilableUnwrap> Node)
+{
+    ContentStack.Add(NodeGen(Node, OutText.NewParagraph()));
+    IndexStack.Add(ContentStack.Count() - 1);
+    return VS_Continue;
+}
+
+
+
+EVisitStatus LuaPlainInterp::EndVisit(SPtr<ANilableUnwrap> Node)
+{
+    int Index = IndexStack.PickPop();
+    ASSERT_CHILD_NUM(Index, 1);
+
+    ContentStack[Index].CurrText->Merge(ContentStack.Top().CurrText);
+
+
+    ContentStack.PopTo(Index);
+
+    return VS_Continue;
+}
+
 EVisitStatus LuaPlainInterp::Visit(SPtr<ASelf> Node)
 {
     SPtr<TextParagraph> Text = OutText.NewParagraph();
@@ -683,7 +705,19 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ASubexpr> Node)
     int Index = IndexStack.PickPop();
     ASSERT_CHILD_NUM(Index, Node->OperandList.Count());
 
+    // NilCoalesc uses 'or' in Lua, which has very low priority, while NilCoalesc is defined to have very high priority
+    // So '(' and ')' is needed
+    bool ForceParenthese = false; 
+    for(int i = 0; i < Node->OperandList.Count(); i++)
+    {
+        if(Node->OperandList[i].Op == BO_NilCoalesc)
+            ForceParenthese = true;
+    }
+
     SPtr<TextParagraph> Text = ContentStack[Index].CurrText;
+    
+    if(ForceParenthese)
+        Text->Append(T("("));
     if(Node->FirstUniOp != UO_None)
     {
         TCHAR const *  UniOpText = T("");
@@ -721,13 +755,20 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ASubexpr> Node)
             case BO_Power:      OpText = T(" ^ ");  break;
             case BO_NotEqual:   OpText = T(" ~= ");  break;
             case BO_Equal:      OpText = T(" == ");  break;
+            case BO_NilCoalesc: OpText = T(" or "); break;
             }
 
             Text->Append(OpText);
         }
 
+        if(ForceParenthese)
+            Text->Append(T("("));
         Text->Merge(FromTop(Index, i));
+        if(ForceParenthese)
+            Text->Append(T(")"));
     }
+    if(ForceParenthese)
+        Text->Append(T(")"));
 
     ContentStack.PopTo(Index);
     return VS_Continue;

@@ -19,7 +19,10 @@ class ATypeIdentity;
 struct TupleSubtype
 {
     WPtr<TypeDescBase> Type;
+    bool IsNilable;
 };
+DECLEAR_STRUCT_RTTI(TupleSubtype)
+
 
 class TupleType : public TypeDescBase
 {
@@ -28,12 +31,12 @@ public:
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
-    virtual OLString ToString();
-    virtual bool IsNilable();
-    virtual SPtr<TypeDescBase> AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target);
+    virtual OLString ToString(bool IsNilable);
+
+    virtual OperatorResult AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable);
     virtual SPtr<TypeDescBase> AcceptUniOp(EUniOp Op);
 
-    void AddSubtype(SPtr<TypeDescBase> NewSubtype);
+    void AddSubtype(SPtr<TypeDescBase> NewSubtype, bool IsNilable);
 
     OLList<TupleSubtype> Subtypes;
 

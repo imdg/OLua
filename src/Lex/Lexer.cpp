@@ -852,6 +852,21 @@ void Lexer::ReadSingleToken(Token& tk, bool ForMacro, bool NoKeywords)
         Reader.NextChar();
         tk.Tk = TKS_dollor;
         break;
+    case C('?'):
+        Reader.NextChar();
+        if(Reader.NextCharIfCurr(C('?')))
+        {
+            tk.Tk = TKS_question2;
+        }
+        else
+        {
+            tk.Tk = TKS_question;
+        }
+        break;
+    case C('!'):
+        Reader.NextChar();
+        tk.Tk = TKS_exclamation;
+        break;
     default:
         if (IsDigit(Ch))
         {

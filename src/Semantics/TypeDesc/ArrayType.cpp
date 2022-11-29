@@ -19,6 +19,7 @@ namespace OL
 RTTI_BEGIN_INHERITED(ArrayType, TypeDescBase)
     RTTI_MEMBER(ElemType, MF_External)
     RTTI_MEMBER(UnresolvedElemType)
+    RTTI_MEMBER(IsElemNilable)
 RTTI_END(ArrayType)
 
 ArrayType::~ArrayType()
@@ -47,15 +48,17 @@ void ArrayType::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolR
     }
 }
 
-void ArrayType::SetElemType(SPtr<TypeDescBase> InElemType)
+void ArrayType::SetElemType(SPtr<TypeDescBase> InElemType, bool IsNilable)
 {
     ElemType = InElemType;
     UnresolvedElemType = T("");
+    IsNilable = IsNilable;
 }
-void ArrayType::SetElemType(OLString UnresolvedName)
+void ArrayType::SetElemType(OLString UnresolvedName, bool IsNilable)
 {
     ElemType = nullptr;
     UnresolvedElemType = UnresolvedName;
+    IsNilable = IsNilable;
 }
 
 bool ArrayType::IsElemTypeDecl(ATypeIdentity* Node)
@@ -83,6 +86,9 @@ bool ArrayType::EqualsTo(SPtr<TypeDescBase> Target)
     if(Target->ActuallyIs<ArrayType>() == false)
         return false;
 
+    if(IsElemNilable !=  Target->ActuallyAs<ArrayType>()->IsElemNilable)
+        return false;
+
     if(ElemType.Lock()->EqualsTo(Target->ActuallyAs<ArrayType>()->ElemType.Lock()))
     {
         return true;
@@ -92,27 +98,23 @@ bool ArrayType::EqualsTo(SPtr<TypeDescBase> Target)
 
 }
 
-OLString ArrayType::ToString()
+OLString ArrayType::ToString(bool IsNilable)
 {
     OLString Ret;
-    Ret.AppendF(T("%s[]"), ElemType->ToString().CStr());
+    Ret.AppendF(T("%s[]%s"), ElemType->ToString(IsElemNilable).CStr(), IsNilable?T("?"):T(""));
     return Ret;
 }
 
-bool ArrayType::IsNilable()
-{
-    return true;
-}
 
-SPtr<TypeDescBase> ArrayType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target)
+OperatorResult ArrayType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable)
 {
     if( (Op == BO_And || Op == BO_Or || Op == BO_Equal || Op == BO_NotEqual)
         && (Target->Is<ArrayType>() || Target->IsAny() || Target->IsNil()))
     {
-        return IntrinsicType::CreateFromRaw(IT_bool);
+        return OperatorResult{IntrinsicType::CreateFromRaw(IT_bool), false};
     }
 
-    return nullptr;
+    return OperatorResult{nullptr, false};
 
      
 }

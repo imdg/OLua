@@ -46,6 +46,7 @@ struct ClassMemberDesc
     WPtr<ClassType> Owner;
     WPtr<Declearation> Decl;
     WPtr<DeclearAttributes> MemberAttrib;
+    bool IsNilable;
 
 };
 DECLEAR_STRUCT_RTTI(ClassMemberDesc)
@@ -85,7 +86,7 @@ public:
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
-    virtual OLString ToString();
+    virtual OLString ToString(bool IsNilable);
 
     static bool ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM);
     
@@ -104,10 +105,7 @@ public:
     
     SPtr<ClassType> GetSuperClass();
 
-    
-
-    virtual bool IsNilable();
-    virtual SPtr<TypeDescBase> AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target);
+    virtual OperatorResult AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable);
     virtual SPtr<TypeDescBase> AcceptUniOp(EUniOp Op);
 
     SPtr<TypeDescBase> AcceptBinOpOverride(EBinOp Op, SPtr<TypeDescBase> Target);

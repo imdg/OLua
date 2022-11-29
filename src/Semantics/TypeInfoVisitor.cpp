@@ -152,21 +152,22 @@ void TypeInfoVisitor::TryReceiveComplexSubType(SPtr<TypeDescBase> Owner, SPtr<Ty
     {
         SPtr<FuncSigniture> Func = Owner.PtrAs<FuncSigniture>();
         if(Func->IsReturnDecl(Node.Get()))
-            Func->AddReturn(SubType, Node->Line);
+            Func->AddReturn(SubType, Node->IsNilable, Node->Line);
     }
     else if(Owner->Is<ArrayType>())
     {
         SPtr<ArrayType> Arr = Owner.PtrAs<ArrayType>();
         if(Arr->IsElemTypeDecl(Node.Get()))
-            Arr->SetElemType(SubType);
+            Arr->SetElemType(SubType, Node->IsNilable);
     }
     else if(Owner->Is<MapType>())
     {
         SPtr<MapType> Map = Owner.PtrAs<MapType>();
         if(Map->IsKeyTypeDecl(Node.Get()))
+            // non-nilable warning
             Map->SetKeyType(SubType);
         else if(Map->IsValueTypeDecl(Node.Get()))
-            Map->SetValueType(SubType);
+            Map->SetValueType(SubType, Node->IsNilable);
     }
     else if(Owner->Is<TypeAlias>())
     {
@@ -260,21 +261,22 @@ EVisitStatus TypeInfoVisitor::Visit(SPtr<ANamedType> Node)
     {
         SPtr<FuncSigniture> Func = Top.PtrAs<FuncSigniture>();
         if(Func->IsReturnDecl(Node.Get()))
-            Func->AddReturn(Node->TypeName, Node->Line);
+            Func->AddReturn(Node->TypeName, Node->IsNilable, Node->Line);
     }
     else if(Top->Is<ArrayType>())
     {
         SPtr<ArrayType> Arr = Top.PtrAs<ArrayType>();
         if(Arr->IsElemTypeDecl(Node.Get()))
-            Arr->SetElemType(Node->TypeName);
+            Arr->SetElemType(Node->TypeName, Node->IsNilable);
     }
     else if(Top->Is<MapType>())
     {
         SPtr<MapType> Map = Top.PtrAs<MapType>();
         if(Map->IsKeyTypeDecl(Node.Get()))
+            // non-nilable warning
             Map->SetKeyType(Node->TypeName);
         else if(Map->IsValueTypeDecl(Node.Get()))
-            Map->SetValueType(Node->TypeName);
+            Map->SetValueType(Node->TypeName, Node->IsNilable);
     }
     else if(Top->Is<TypeAlias>())
     {
@@ -295,21 +297,27 @@ EVisitStatus TypeInfoVisitor::Visit(SPtr<AIntrinsicType> Node)
     {
         SPtr<FuncSigniture> Func = Top.PtrAs<FuncSigniture>();
         if(Func->IsReturnDecl(Node.Get()))
-            Func->AddReturn(Node->Type, Node->Line);
+            Func->AddReturn(Node->Type, Node->IsNilable, Node->Line);
     }
     else if(Top->Is<ArrayType>())
     {
         SPtr<ArrayType> Arr = Top.PtrAs<ArrayType>();
         if(Arr->IsElemTypeDecl(Node.Get()))
-            Arr->SetElemType(IntrinsicType::CreateFromRaw(Node->Type));
+            Arr->SetElemType(IntrinsicType::CreateFromRaw(Node->Type), Node->IsNilable);
     }
     else if(Top->Is<MapType>())
     {
         SPtr<MapType> Map = Top.PtrAs<MapType>();
         if(Map->IsKeyTypeDecl(Node.Get()))
+            // non-nilable warning
             Map->SetKeyType(IntrinsicType::CreateFromRaw(Node->Type));
         else if(Map->IsValueTypeDecl(Node.Get()))
-            Map->SetValueType(IntrinsicType::CreateFromRaw(Node->Type));
+            Map->SetValueType(IntrinsicType::CreateFromRaw(Node->Type), Node->IsNilable);
+    }
+    else if(Top->Is<TypeAlias>())
+    {
+        SPtr<TypeAlias> Alias = Top.PtrAs<TypeAlias>();
+        Alias->SetActualType(IntrinsicType::CreateFromRaw(Node->Type));
     }
 
     return VS_Continue;
@@ -427,11 +435,11 @@ EVisitStatus TypeInfoVisitor::VisitAsFuncParam(SPtr<AVarDecl> Node, SPtr<FuncSig
         {
             SPtr<VariableParamHolder> VariableParam = new VariableParamHolder(Node, Node->VarType->As<ANamedType>()->TypeName);
             CurrScope->TypeDefs.Add(VariableParam);
-            FuncSig->AddParam(VariableParam, Node->IsConst, Node->IsVariableParam,  Node->IsOptionalParam, Node->Line);
+            FuncSig->AddParam(VariableParam, Node->IsConst, Node->IsVariableParam,  Node->IsOptionalParam, Node->VarType->IsNilable, Node->Line);
         }   
         else
         {
-            FuncSig->AddParam(Node->VarType->As<ANamedType>()->TypeName, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->Line);
+            FuncSig->AddParam(Node->VarType->As<ANamedType>()->TypeName, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable,  Node->Line);
         }
     }
     else if(Node->VarType->Is<AIntrinsicType>())
@@ -440,10 +448,10 @@ EVisitStatus TypeInfoVisitor::VisitAsFuncParam(SPtr<AVarDecl> Node, SPtr<FuncSig
         {
             SPtr<VariableParamHolder> VariableParam = new VariableParamHolder(Node, IntrinsicType::CreateFromRaw(Node->VarType->As<AIntrinsicType>()->Type ));
             CurrScope->TypeDefs.Add(VariableParam);
-            FuncSig->AddParam(VariableParam, Node->IsConst, Node->IsVariableParam,  Node->IsOptionalParam, Node->Line);
+            FuncSig->AddParam(VariableParam, Node->IsConst, Node->IsVariableParam,  Node->IsOptionalParam, Node->VarType->IsNilable,  Node->Line);
         }
         else
-            FuncSig->AddParam(Node->VarType->As<AIntrinsicType>()->Type, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->Line);
+            FuncSig->AddParam(Node->VarType->As<AIntrinsicType>()->Type, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable, Node->Line);
     }
     else
     {
@@ -460,7 +468,7 @@ EVisitStatus TypeInfoVisitor::VisitAsFuncParam(SPtr<AVarDecl> Node, SPtr<FuncSig
                 CurrScope->TypeDefs.Add(VariableParam);
                 ParamType = VariableParam;
             }
-            FuncSig->AddParam(ParamType, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->Line);
+            FuncSig->AddParam(ParamType, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable, Node->Line);
         }
     }
 

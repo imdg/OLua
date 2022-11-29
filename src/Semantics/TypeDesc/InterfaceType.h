@@ -45,10 +45,9 @@ public:
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     bool IsBaseType(SPtr<TypeDescBase> Base);
 
-    virtual OLString ToString();
-    virtual bool IsNilable();
+    virtual OLString ToString(bool IsNilable);
 
-    virtual SPtr<TypeDescBase> AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target);
+    virtual OperatorResult AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, bool TargetNilable);
     virtual SPtr<TypeDescBase> AcceptUniOp(EUniOp Op);
 
     SPtr<TypeDescBase> AcceptBinOpOverride(EBinOp Op, SPtr<TypeDescBase> Target);

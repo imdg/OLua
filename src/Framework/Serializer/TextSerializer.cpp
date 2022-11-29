@@ -44,7 +44,7 @@ void TextSerializer::WriteShortRTTI(void* Data, TypeInfo* Type)
     if(Type->IsKindOf(TypeDescBase::RTTI))
     {
         TypeDescBase* Obj = (TypeDescBase*)Data;
-        Output->WriteText(Obj->ToString().CStr());
+        Output->WriteText(Obj->ToString(false).CStr());
     }
     else if(Type->IsKindOf(ABase::RTTI))
     {

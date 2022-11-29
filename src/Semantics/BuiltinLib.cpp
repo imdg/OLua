@@ -94,13 +94,13 @@ public:
     //template< >
     void ParamImpl(EIntrinsicType Arg, bool IsConst, bool IsVariableParam, bool IsOptional)
     {
-        FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, CodeLineInfo::Zero );
+        FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, false, CodeLineInfo::Zero );
     };
 
     //template< >
     void ParamImpl(SPtr<TypeDescBase> Arg, bool IsConst, bool IsVariableParam, bool IsOptional)
     {
-        FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, CodeLineInfo::Zero );
+        FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, false, CodeLineInfo::Zero );
     };
 
     template<typename Ty >
@@ -146,13 +146,13 @@ public:
     //template< >
     void ReturnImpl(EIntrinsicType Arg)
     {
-        FuncSig->AddReturn(Arg, CodeLineInfo::Zero );
+        FuncSig->AddReturn(Arg, false, CodeLineInfo::Zero );
     };
 
     //template< >
     void ReturnImpl(SPtr<TypeDescBase> Arg)
     {
-        FuncSig->AddReturn(Arg, CodeLineInfo::Zero );
+        FuncSig->AddReturn(Arg, false, CodeLineInfo::Zero );
     };
 
 };

@@ -199,6 +199,20 @@ RTTI_ENUM(ECompileMsgType,
 
     CMT_SymbolRedefinition, //%s name, %s file, %d %d Line Col
 
+
+    //Nilable
+    CMT_NilableAsIndex,
+    CMT_NonnilableNotInit,
+    CMT_NilableIter,
+    CMT_NilableConvert,
+    CMT_AssignNilToNonnilable,
+    CMT_UnwrapNonnilable,
+    CMT_NonnilableCoalescing,
+    CMT_NilableCoalescingNilable,
+    CMT_NonnilableMember,
+    CMT_NotAcceptedNilable,
+    CMT_DerefNilable,
+    CMT_CallNilable,
     CMT_MaxMsg
 )
 struct CodeLineInfo;

@@ -23,9 +23,8 @@ public:
 
     virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
-    virtual OLString ToString();
+    virtual OLString ToString(bool IsNilable);
 
-    virtual bool IsNilable();
 
     ETypeValidation ValidateIterator(SPtr<TypeDescBase> Type1, SPtr<TypeDescBase> Type2);
     virtual SPtr<TypeDescBase> DeduceLValueType(SPtr<SymbolScope> Scope);

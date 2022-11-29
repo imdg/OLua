@@ -74,6 +74,43 @@ void SourceFile::ApplyBuildSetting(BuildSetting& Setting)
 {
     if(Setting.AllowUnresolvedType)
         CM.SetAsWarning(CMT_UnresolvedVar);
+    
+    static ECompileMsgType NilSafetyMsg[] = 
+    {
+        CMT_UnwrapNonnilable,
+        CMT_NonnilableCoalescing,
+        CMT_NonnilableMember,
+        CMT_NotAcceptedNilable
+    };
+    static ECompileMsgType NilSafetyErrors[] = 
+    {
+        CMT_NilableAsIndex,
+        CMT_NonnilableNotInit,
+        CMT_NilableIter,
+        CMT_NilableConvert,
+        CMT_AssignNilToNonnilable,
+        CMT_NilableCoalescingNilable,
+        CMT_DerefNilable
+    };
+
+    if(Setting.NilSafety == VL_None)
+    {
+        for(int i = 0; i < sizeof(NilSafetyMsg) / sizeof(ECompileMsgType); i++)
+        {
+            CM.SetAsMute(NilSafetyMsg[i]);
+        }
+        for(int i = 0; i < sizeof(NilSafetyErrors) / sizeof(ECompileMsgType); i++)
+        {
+            CM.SetAsMute(NilSafetyErrors[i]);
+        }
+    }
+    else if(Setting.NilSafety == VL_Warning)
+    {
+        for(int i = 0; i < sizeof(NilSafetyErrors) / sizeof(ECompileMsgType); i++)
+        {
+            CM.SetAsWarning(NilSafetyErrors[i]);
+        }
+    }
 
 }
 
@@ -157,7 +194,7 @@ bool SourceFile::DoLocalCompile()
         else
             ExportInfo.IsType = false;
 
-        VERBOSE(LogMisc, T("    Export %s: %s from: %s"), ExportInfo.IsType? T("Type"):T("Variant"), RootScope->Decls[i]->Name.CStr(), FileName.CStr());
+        //VERBOSE(LogMisc, T("    Export %s: %s from: %s"), ExportInfo.IsType? T("Type"):T("Variant"), RootScope->Decls[i]->Name.CStr(), FileName.CStr());
         Exports.Add(RootScope->Decls[i]->Name, ExportInfo);
     }
 
@@ -179,7 +216,7 @@ bool SourceFile::DoLocalCompile()
                 ImportInfo.Name = CurrRef->Name;
 
                 ImportTypes.Add(CurrRef->Name, ImportInfo);
-                VERBOSE(LogMisc, T("    Import Type: %s from: %s"), CurrRef->Name.CStr(), FileName.CStr());
+                //VERBOSE(LogMisc, T("    Import Type: %s from: %s"), CurrRef->Name.CStr(), FileName.CStr());
             }
         }
     }
@@ -211,7 +248,7 @@ bool SourceFile::DoTypeResolve()
 
                 ImportVars.Add(CurrRef->Name, ImportInfo);
 
-                VERBOSE(LogMisc, T("    Import Variant: %s from: %s"), CurrRef->Name.CStr(), FileName.CStr());
+                //VERBOSE(LogMisc, T("    Import Variant: %s from: %s"), CurrRef->Name.CStr(), FileName.CStr());
             }
         }
     }

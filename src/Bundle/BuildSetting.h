@@ -12,6 +12,12 @@ https://opensource.org/licenses/MIT.
 
 namespace OL
 {
+enum EValiLevel
+{
+    VL_None,
+    VL_Warning,
+    VL_Error
+};
 
 class BuildSetting
 {
@@ -23,7 +29,10 @@ public:
     OLString MainFunc;
     bool AllowImplicitAny;
     bool AllowUnresolvedType;
-    
+    EValiLevel NilSafety;
+
+    bool DumpDebugFile;
+
     static BuildSetting DefaultBuildSetting;
     static void InitDefaultDefaultBuildSetting();
 };

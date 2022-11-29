@@ -4,12 +4,12 @@ namespace OL
 {
 
 RTTI_BEGIN_INHERITED(ATypeIdentity, ABase)
-
+    RTTI_MEMBER(IsNilable)
 RTTI_END(ATypeIdentity)
 
 
 ATypeIdentity::ATypeIdentity()
-    : ABase()
+    : IsNilable(false), ABase()
 {
 }
 

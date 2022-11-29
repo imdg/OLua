@@ -339,6 +339,11 @@ void BundleBuilder::Run()
         PrintFailedMsg();
     else
         PrintSuccessMsg();
+
+    if(Settings.DumpDebugFile)
+    {
+        DumpDebugFiles();
+    }
 }
 void BundleBuilder::DumpSingleDebugFile(SPtr<SourceFile> File)
 {

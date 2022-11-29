@@ -25,6 +25,7 @@ RTTI_ENUM(EBinOp,
     BO_Power,
     BO_NotEqual,
     BO_Equal,
+    BO_NilCoalesc,
     BO_None
 );
 
