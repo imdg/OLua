@@ -485,4 +485,4 @@ c!()            -- OK
 
 ## Notes and future works
 * Non-nilable class member can be left uninitialized because in many cases this can only be done in constructors. A reminder will be promoted during compilation. There are some plans to make this look better in the future.
-* Mechanism like "method chain" or "optional chainning" is not supported currently, because this cannot map to any lua syntex directly. But it is still in the plan.
+* Mechanism like "method chain" or "optional chainning" is not supported currently, because this cannot map to any lua syntex directly. But it is still in the plan to support.
