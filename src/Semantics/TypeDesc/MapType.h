@@ -40,7 +40,7 @@ public:
     bool IsKeyTypeDecl(ATypeIdentity* Node);
     bool IsValueTypeDecl(ATypeIdentity* Node);
 
-    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
+    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     virtual OLString ToString(bool IsNilable);
 

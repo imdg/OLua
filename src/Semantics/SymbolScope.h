@@ -38,8 +38,8 @@ public:
     EIntrinsicType GetType(OLString Name);
 
     OLString GetString(OLString Name);
-    int GetInt(OLString Name);
-    float GetFloat(OLString Name);
+    int64 GetInt(OLString Name);
+    double GetFloat(OLString Name);
     bool GetBool(OLString Name);
 
 

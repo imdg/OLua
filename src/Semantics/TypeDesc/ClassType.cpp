@@ -95,6 +95,7 @@ bool ClassType::ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM)
         || NewMember.Name == T("__eq")
         || NewMember.Name == T("__le")
         || NewMember.Name == T("__lt")
+        || NewMember.Name == T("__mod")
         || NewMember.Name == T("__tostring")
         )
     {
@@ -328,7 +329,7 @@ bool ClassType::IsBaseType(SPtr<TypeDescBase> Base)
     return false;
 }
 
-ETypeValidation ClassType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation ClassType::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(Target->ActuallyIs<IntrinsicType>())
     {
@@ -347,7 +348,7 @@ ETypeValidation ClassType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExp
             return TCR_OK;
 
         if(Class->IsBaseType(SThis))
-            return IsExplict ? TCR_OK : TCR_Unsafe;
+            return TCR_Unsafe;
     }
     else if(Target->ActuallyIs<InterfaceType>())
     {
@@ -356,7 +357,7 @@ ETypeValidation ClassType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExp
             return TCR_OK;
 
         if(Interface->IsBaseType(SThis))
-            return IsExplict ? TCR_OK : TCR_Unsafe;
+            return TCR_Unsafe;
     }
 
     return TCR_NoWay;
@@ -502,6 +503,7 @@ SPtr<TypeDescBase> ClassType::AcceptBinOpOverride(EBinOp Op, SPtr<TypeDescBase> 
     case BO_Mul:   MetaName = T("__mul");     break;
     case BO_Div:   MetaName = T("__div");     break;
     case BO_Cat:   MetaName = T("__concat");     break;
+    case BO_Mod:   MetaName = T("__mod");     break;
     case BO_Equal:      case BO_NotEqual:       MetaName = T("__eq");     break;
     case BO_Less:       case BO_Greater:        MetaName = T("__lt");     break;
     case BO_LessEqual:  case BO_GreaterEqual:   MetaName = T("__le");     break;
@@ -529,7 +531,7 @@ SPtr<TypeDescBase> ClassType::AcceptBinOpOverride(EBinOp Op, SPtr<TypeDescBase> 
     if(Func->Params.Count() != 1)
         return nullptr;
 
-    if(Target->ValidateConvert( Func->Params[0].Type.Lock(), false) == TCR_NoWay)
+    if(Target->ValidateConvert( Func->Params[0].Type.Lock()) == TCR_NoWay)
         return nullptr;
 
     if(Func->Returns.Count() > 0)

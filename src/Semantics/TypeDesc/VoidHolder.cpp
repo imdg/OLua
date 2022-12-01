@@ -26,7 +26,7 @@ SPtr<VoidHolder> VoidHolder::Get()
     return VoidHolderInst;
 }
 
-ETypeValidation VoidHolder::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation VoidHolder::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(Target->Is<VoidHolder>())
         return TCR_OK;

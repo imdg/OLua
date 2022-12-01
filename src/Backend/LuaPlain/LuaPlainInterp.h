@@ -72,6 +72,9 @@ public:
     void                MergeStaticBlock();
     SPtr<TextParagraph> MakeStandaloneStaticBlock();
 
+
+    SPtr<TextParagraph> ExprTypeWrap(SPtr<TextParagraph> ExprText, SPtr<AExpr> Node);
+
     virtual EVisitStatus BeginVisit(SPtr<AParentheses> Node);
     virtual EVisitStatus EndVisit(SPtr<AParentheses> Node);
 

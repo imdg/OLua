@@ -13,7 +13,7 @@ RTTI_ENUM(EIntrinsicType,
     IT_max
 );
 
-class Token;
+struct Token;
 RTTI_ENUM(ETypeCat,
     TC_IntrinsicType,
     TC_Class,

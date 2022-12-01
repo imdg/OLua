@@ -429,6 +429,7 @@ EVisitStatus TypeInfoVisitor::EndVisit(SPtr<AVarDecl> Node)
 
 EVisitStatus TypeInfoVisitor::VisitAsFuncParam(SPtr<AVarDecl> Node, SPtr<FuncSigniture> FuncSig)
 {
+    // For named type, only save the name to be resolved in future steps
     if(Node->VarType->Is<ANamedType>())
     {
         if(Node->IsVariableParam)
@@ -442,6 +443,7 @@ EVisitStatus TypeInfoVisitor::VisitAsFuncParam(SPtr<AVarDecl> Node, SPtr<FuncSig
             FuncSig->AddParam(Node->VarType->As<ANamedType>()->TypeName, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable,  Node->Line);
         }
     }
+    // For intrinsic type, create directly
     else if(Node->VarType->Is<AIntrinsicType>())
     {
         if(Node->IsVariableParam)
@@ -453,9 +455,11 @@ EVisitStatus TypeInfoVisitor::VisitAsFuncParam(SPtr<AVarDecl> Node, SPtr<FuncSig
         else
             FuncSig->AddParam(Node->VarType->As<AIntrinsicType>()->Type, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable, Node->Line);
     }
+    // For other complex types, they are defined together with the variant, like FuncType, Array, Map
+    // So TypeDescBase should be ready after visiting this AVarDecl
     else
     {
-        SPtr<TypeDescBase> ParamType = CurrScope->FindTypeByNode(Node->VarType->As<AFuncType>(), false);
+        SPtr<TypeDescBase> ParamType = CurrScope->FindTypeByNode(Node->VarType.Get(), false);
         if(ParamType == nullptr)
         {
             OL_ASSERT(0 && "Function param type should be ready here");

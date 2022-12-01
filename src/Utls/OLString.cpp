@@ -245,15 +245,15 @@ namespace OL
 
     OLString& OLString::Replace(const TCHAR* From, const TCHAR* To)
     {
-        int FromLen = t_strlen(From);
-        int ToLen = t_strlen(To);
+        size_t FromLen = t_strlen(From);
+        size_t ToLen = t_strlen(To);
         StdStringType Str(From);
         size_t pos = 0;
         size_t next_begin = 0;
         int SrcLen = Len();
 
         OLList<TCHAR> Out;
-        int SrcPos = 0;
+        size_t SrcPos = 0;
         const TCHAR* SrcBuf = CStr();
         while(SrcPos < SrcLen && SrcBuf[SrcPos] != 0)
         {
@@ -284,11 +284,11 @@ namespace OL
 
     OLString OLString::NameFromPath()
     {
-        for(int i = InnerStr.length() - 1; i >= 0; i--)
+        for(int i = (int)InnerStr.length() - 1; i >= 0; i--)
         {
             if(InnerStr[i] == '/' || InnerStr[i] == '\\')
             {
-                return Sub(i + 1, InnerStr.length() - 1 - i );
+                return Sub(i + 1, (int)InnerStr.length() - 1 - i );
             }
         }
         return T("");
@@ -296,7 +296,7 @@ namespace OL
 
     OLString OLString::ParentPath()
     {
-        for(int i = InnerStr.length() - 1; i >= 0; i--)
+        for(int i = (int)InnerStr.length() - 1; i >= 0; i--)
         {
             if(InnerStr[i] == '/' || InnerStr[i] == '\\')
             {
@@ -309,11 +309,11 @@ namespace OL
 
     OLString OLString::ExtFromPath()
     {
-        for(int i = InnerStr.length() - 1; i >= 0; i--)
+        for(int i = (int)InnerStr.length() - 1; i >= 0; i--)
         {
             if(InnerStr[i] == '.')
             {
-                return Sub(i, InnerStr.length() - i );
+                return Sub(i, (int)InnerStr.length() - i );
             }
              if(InnerStr[i] == '/' || InnerStr[i] == '\\')
             {
@@ -329,7 +329,7 @@ namespace OL
         int Start = -1;
         int End = -1;
 
-        for(int i = InnerStr.length() - 1; i >= 0; i--)
+        for(int i = (int)InnerStr.length() - 1; i >= 0; i--)
         {
             if(InnerStr[i] == '.')
             {
@@ -343,7 +343,7 @@ namespace OL
         }
 
         if(End == -1)
-            return Sub(Start + 1, InnerStr.length() - Start - 1);
+            return Sub(Start + 1, (int)InnerStr.length() - Start - 1);
         else
             return Sub(Start + 1, End - Start - 1);
 
@@ -377,7 +377,7 @@ namespace OL
 
     OLString& OLString::ToUpper()
     {
-        int Len = InnerStr.length();
+        int Len = (int)InnerStr.length();
         for(int i = 0; i < Len; i++)
         {
             if(InnerStr[i]>= 'a' && InnerStr[i] <= 'z')
@@ -387,8 +387,8 @@ namespace OL
     }
     OLString& OLString::ToLower()
     {
-        int Len = InnerStr.length();
-        for(int i = 0; i < Len; i++)
+        size_t Len = InnerStr.length();
+        for(size_t i = 0; i < Len; i++)
         {
             if(InnerStr[i]>= 'A' && InnerStr[i] <= 'Z')
                 InnerStr[i] = 'a' + InnerStr[i] - 'A';
@@ -398,9 +398,9 @@ namespace OL
 
     bool OLString::IsRelativePath()
     {
-        int Len = InnerStr.length();
+        size_t Len = InnerStr.length();
 #ifdef PLATFORM_WIN        
-        for(int i = 0; i < Len; i++)
+        for(size_t i = 0; i < Len; i++)
         {
             if(InnerStr[i] >= C('A') && InnerStr[i] <= C('Z'))
                 continue;

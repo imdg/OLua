@@ -30,7 +30,7 @@ public:
     void SetElemType(SPtr<TypeDescBase> InElemType, bool IsNilable);
     void SetElemType(OLString UnresolvedName, bool IsNilable);
     bool IsElemTypeDecl(ATypeIdentity* Node);
-    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
+    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     virtual OLString ToString(bool IsNilable);
 

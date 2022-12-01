@@ -763,6 +763,7 @@ AFuncType*      Parser::Parse_FuncType(bool AcceptNilable)
     }
 
     AFuncType *Ret = AstPool::New<AFuncType>(Lex.GetCurrent().LineInfo);
+    Ret->IsNilable = IsNilable;
     if(false  == Helper_ParseFuncParam(Ret->Params))
     {
         AstPool::Delete(Ret);
@@ -929,13 +930,26 @@ AStat* Parser::Parse_Return()
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_return);
     Lex.Next();
     AReturn* Ret = AstPool::New<AReturn>(Lex.GetCurrent().LineInfo);
+    Token Curr = Lex.GetCurrent();
+    
+    // return stat only exist at the end of a block
+    if(Curr.Tk == TKK_end || Curr.Tk == TKK_until || Curr.Tk == TKK_else || Curr.Tk == TKK_elseif ||  Curr.Tk == TK_eof)
+        return Ret;
+
     if(false == Helper_ParseExprList(Ret->Ret))
     {
         AstPool::Delete(Ret);
         return nullptr;
     }
-
-    return Ret;
+    Curr = Lex.GetCurrent();
+    if(Curr.Tk == TKK_end || Curr.Tk == TKK_until || Curr.Tk == TKK_else || Curr.Tk == TKK_elseif ||  Curr.Tk == TK_eof)
+        return Ret;
+    else
+    {
+        CM.Log(CMT_LastReturn, Curr.LineInfo);
+        AstPool::Delete(Ret);
+        return nullptr;
+    }
 }
 
 

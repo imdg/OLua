@@ -34,7 +34,7 @@ public:
     void AddItem(SPtr<AEnumItem> Node);
     bool HasItem(OLString ItemName);
 
-    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
+    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     virtual OLString ToString(bool IsNilable);
 

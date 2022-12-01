@@ -10,11 +10,19 @@ Note that OLua is not a real-time interpreted language. It cannot load real-time
     * macOS: Tested in XCode 14, minimal required version is not comfirmed
     * Linux: Tested in GCC 9.4, minimal required version is not comfirmed
 2. Download source or clone this repository
-3. Enter the source directory and build directly by cmake with command:
+3. Enter the source directory and build by the following command
+
+Windows:
 ```
-cmake .
+build_project.bat
 ```
-4. Check the build result at bin/Debug or bin/Release
+macOS/Linux
+```
+sh build_project.sh
+```
+Directly using cmake command works well too, as long as "api" directory is noted as illustrated in later parts.
+
+4. Check the build result at "bin"
 
 ## Commandline
 All commands of OLua is in conformity with the format below
@@ -65,13 +73,13 @@ compile ...
     * **--entry** : Optional. Entry file of current project. Default value is a "__entry.lua" file in the first configed directory, or the current working directory if no directory is configed in this project. **NOTE:** Entry file does the static initialization of classes. It must be the first file to load while running the project in a lua virtual machine.
     * **--api** : Optional. Directory of API definitions. Default value is the "api" sub directory of where "OLua" executable is.
     * **--main** : Optional. Add a function call at the end of entry file.
-
+    * **--nilsafety** : Optional. Set nil-safety validation level. Illustrated in later parts.
 An example of a project file:
 ```
 begin
 dir --path ./scripts --out ./bin/debug/scripts --intermediate ./intermediat/scripts
 dir --path ./more_scripts --out ./bin/debug/more_scripts --intermediate ./intermediat/more_scripts
-file --path ./thirdparty/some_lib/some_file.olu --out ./bin/debug/scripts/some_lib/some_file.lua --id some_lib:somefile
+file --path ./thirdparty/some_lib/some_file.olu --out ./bin/debug/scripts/some_lib/some_file.lua --id some_lib.somefile
 compile --entry ./bin/debug/scripts/init_lua.lua
 ```
 
@@ -296,6 +304,7 @@ Like original Lua, OLua supports meta method to change the behavior of an object
 * **__sub**
 * **__mul**
 * **__div**
+* **__mod**
 * **__concat**
 * **__eq**
 * **__lt**
@@ -407,7 +416,7 @@ Lua API is defined as a bunch of extern classes and functions in the API directo
 
 * **string** table is rename to **strlib** due to the conflict with the keyword.
 * **string.char()**, **string.byte()**, **utf8.char()** are renamed to **strlib.tochar()**, **strlib.tobyte()** and **utf8.tochar()** due to the conflict with reserved keywords.
-* **pairs()** and **ipairs()** are removed because they will be automaticly added to the "for-in" statement while iterating an array or a map
+* **pairs()** and **ipairs()** are removed because they will be automaticly added to the "for-in" statement while iterating an array or a map.
 * **math.maxi()**, **math.maxf()**, **math.mini()**, **math.minf()**, **math.absi()**, **math.absf()** are new functions added to the library to work with integer and float respectively. Original **math.max()**, **math.min()**, **math.abs()** are still avaliable, but their return type are all "any". Use the new version to prevent possible type warning.
 * **math.randomi()** is added to handle randam integer, while **math.random()** only generates random float now.
 * **table** functions works with both array and map

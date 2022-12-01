@@ -21,8 +21,8 @@ class AExpr;
 class AClassContructor;
 class ANormalMethod;
 class AVarDecl;
-class ClassMemberDesc;
-class InterfaceMember;
+struct ClassMemberDesc;
+struct InterfaceMember;
 class LPClassHelper
 {
 

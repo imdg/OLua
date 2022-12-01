@@ -25,12 +25,12 @@ RTTI_END(TupleType)
 
 
 
-ETypeValidation TupleType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation TupleType::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(Target->ActuallyIs<TupleType>())
         return EqualsTo(Target) ? TCR_OK : TCR_NoWay;
     else
-        return Subtypes[0].Type->ValidateConvert(Target, IsExplict);
+        return Subtypes[0].Type->ValidateConvert(Target);
     
 }
 

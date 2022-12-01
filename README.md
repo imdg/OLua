@@ -8,4 +8,4 @@ As this is a very preliminary version, there is still much work to complete. Ple
 0.1.0
 
 ## Document
-[Here](/doc/readme.md)
+[Here](/doc/Manual.md)

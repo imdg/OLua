@@ -14,7 +14,7 @@ https://opensource.org/licenses/MIT.
 #include "SymbolTable.h"
 #include "ScopeVistorBase.h"
 #include "BuildSetting.h"
-
+#include "TypeDescBase.h"
 namespace OL
 {
 
@@ -42,6 +42,11 @@ struct TypeDeriContex
     bool                IsVariableParamRef;
     bool                IsNilable;
 };
+
+// enum ETypeConvResult
+// {
+//     TCR
+// }
 
 class TypeDerivationVisitor : public ScopeVisitorBase
 {
@@ -130,7 +135,7 @@ public:
     
     virtual EVisitStatus Visit(SPtr<AVariableParamRef> Node);
 
-    bool CheckType(SPtr<TypeDescBase> From, bool IsFromNilable, SPtr<TypeDescBase> To, bool IsToNilable, ABase* Node, bool IsExplicit);
+    ETypeValidation MatchType(SPtr<TypeDescBase> From, bool IsFromNilable, SPtr<TypeDescBase> To, bool IsToNilable, SPtr<ABase> Node, bool IsExplicit, bool SaveConvertInfo = true);
 
     //bool PopAndCheckType(SPtr<TypeDescBase> To, ABase* Node, bool IsExplicit = false);
     

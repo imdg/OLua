@@ -73,7 +73,7 @@ SPtr<IntrinsicType> IntrinsicType::CreateFromRaw(EIntrinsicType RawType, bool In
     return nullptr;
 }
 
-ETypeValidation IntrinsicType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation IntrinsicType::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(Type == IT_any)
         return TCR_OK;
@@ -94,12 +94,11 @@ ETypeValidation IntrinsicType::ValidateConvert(SPtr<TypeDescBase> Target, bool I
         
         // int -> float
         if(Type == IT_int && TargetIntri->Type == IT_float)
-            //return IsExplict ? TCR_OK : TCR_DataLose;
             return TCR_OK;
 
         // float -> int
         if(Type == IT_float && TargetIntri->Type == IT_int)
-            return IsExplict ? TCR_OK : TCR_DataLose;
+            return TCR_DataLose;
 
         // int -> bool
         if(Type == IT_int && TargetIntri->Type == IT_bool)
@@ -113,7 +112,7 @@ ETypeValidation IntrinsicType::ValidateConvert(SPtr<TypeDescBase> Target, bool I
     else if(Target->Is<EnumType>())
     {
         if(Type == IT_int)
-            return IsExplict ? TCR_OK : TCR_Unsafe;
+            return TCR_Unsafe;
     }
 
     return TCR_NoWay;
@@ -184,6 +183,16 @@ IntrinsicOperation Op_Div[] ={
      {IT_float,   IT_float,   IT_float, true},
      {IT_float,   IT_any,     IT_float, true},
      {IT_any,   IT_any,     IT_any, true},
+};
+
+IntrinsicOperation Op_Mod[] ={
+     {IT_int,   IT_int,     IT_int, false},
+     {IT_any,   IT_any,     IT_int, false},
+};
+
+IntrinsicOperation Op_BitAndOr[] ={
+     {IT_int,   IT_int,     IT_int, false},
+     {IT_any,   IT_any,     IT_int, false},
 };
 
 IntrinsicOperation Op_IDiv[] ={
@@ -303,6 +312,15 @@ OperatorResult IntrinsicType::AcceptBinOp(EBinOp Op, SPtr<TypeDescBase> Target, 
             ConvertTable = Op_IDiv;
             TableSize = sizeof(Op_IDiv) / sizeof(IntrinsicOperation);
             break;
+        case BO_Mod:
+            ConvertTable = Op_Mod;
+            TableSize = sizeof(Op_Mod) / sizeof(IntrinsicOperation);
+            break;
+        case BO_Band: case BO_Bor:
+            ConvertTable = Op_BitAndOr;
+            TableSize = sizeof(Op_BitAndOr) / sizeof(IntrinsicOperation);
+            break;
+
         case BO_Cat:
             ConvertTable = Op_Cat;
             TableSize = sizeof(Op_Cat) / sizeof(IntrinsicOperation);

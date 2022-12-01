@@ -40,41 +40,6 @@ LuaPlainInterp::LuaPlainInterp(SymbolTable& InSymbolTable, TextBuilder& InOutTex
 
 
 
-// OLString LuaPlainInterp::MakeMemberName(SPtr<ClassType> Class, OLString MemberName, OLString Suffix)
-// {
-//     OLString Ret;
-//     Ret.Printf(T("__CM_%s_%s_%s"), Class->UniqueName.CStr(), MemberName.CStr(), Suffix.CStr());
-//     return Ret;
-// }
-
-// OLString LuaPlainInterp::MakeConstructorName(SPtr<ClassType> Class, OLString MemberName, OLString Suffix)
-// {
-//     OLString Ret;
-//     Ret.Printf(T("__CM_%s_ctor_%s_%s"), Class->UniqueName.CStr(), MemberName.CStr(), Suffix.CStr());
-//     return Ret;
-// }
-
-// OLString LuaPlainInterp::MakeVTableName(SPtr<ClassType> Class, OLString Suffix)
-// {
-//     OLString Ret;
-//     Ret.Printf(T("__CV_%s_%s"), Class->UniqueName.CStr(),  Suffix.CStr());
-//     return Ret;
-// }
-
-// OLString LuaPlainInterp::MakeStaticTableName(SPtr<ClassType> Class, OLString Suffix)
-// {
-//     OLString Ret;
-//     Ret.Printf(T("__CS_%s_%s"), Class->UniqueName.CStr(),  Suffix.CStr());
-//     return Ret;
-// }
-
-// OLString LuaPlainInterp::MakeSelfName(SPtr<ClassType> Class)
-// {
-//     OLString Ret;
-//     Ret.Printf(T("%s%d"), SELF_OBJ_NAME, Class->NestLevel );
-//     return Ret;
-// }
-
 SPtr<TextParagraph> LuaPlainInterp::FromTop(int CurrIndex, int TopIndex)
 {
     return ContentStack[CurrIndex + TopIndex + 1].CurrText;
@@ -146,6 +111,22 @@ SPtr<TextParagraph> LuaPlainInterp::MakeStandaloneStaticBlock()
     return StaticBlock;
 }
 
+
+SPtr<TextParagraph> LuaPlainInterp::ExprTypeWrap(SPtr<TextParagraph> ExprText, SPtr<AExpr> Node)
+{
+    if(Node->UsedAsType == nullptr)
+        return ExprText;
+
+    if(Node->ExprType->IsFloat() && Node->UsedAsType->IsInt() )
+    {
+        SPtr<TextParagraph> Wrap = OutText.NewParagraph();
+        Wrap->Append(T("math.floor(")).Merge(ExprText).Append(T(")"));
+        return Wrap;
+    }
+
+    return ExprText;
+}
+
 EVisitStatus LuaPlainInterp::BeginVisit(SPtr<ABlock> Node)
 {
     ContentStack.Add(NodeGen(Node, OutText.NewParagraph()));
@@ -171,11 +152,6 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ABlock> Node)
 
     SPtr<TextParagraph> CurrText = ContentStack[Index].CurrText;
     CurrText->IndentInc();
-
-    // if(IsClassConstructor)
-    // {
-    //     CurrText->Hold(T("__hidden_define")).Hold(T("__hidden_ctor_call"));
-    // }
 
     int Count = StackCount(Index);
     for(int i = 0; i < Count; i++)
@@ -212,6 +188,8 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AParentheses> Node)
         .Merge(ContentStack.Top().CurrText)
         .Append(T(")"));
 
+    ContentStack[Index].CurrText = ExprTypeWrap(ContentStack[Index].CurrText, Node);
+
     ContentStack.PopTo(Index);
 
     return VS_Continue;
@@ -232,7 +210,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ANilableUnwrap> Node)
     ASSERT_CHILD_NUM(Index, 1);
 
     ContentStack[Index].CurrText->Merge(ContentStack.Top().CurrText);
-
+    ContentStack[Index].CurrText = ExprTypeWrap(ContentStack[Index].CurrText, Node);
 
     ContentStack.PopTo(Index);
 
@@ -243,6 +221,7 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<ASelf> Node)
 {
     SPtr<TextParagraph> Text = OutText.NewParagraph();
     Text->Append(CurrSelfName);
+    Text = ExprTypeWrap(Text, Node);
     ContentStack.Add(NodeGen(Node, Text));
     return VS_Continue;
 }
@@ -251,6 +230,7 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<ASuper> Node)
 {
     SPtr<TextParagraph> Text = OutText.NewParagraph();
     Text->Append(CurrSelfName);
+    Text = ExprTypeWrap(Text, Node);
     ContentStack.Add(NodeGen(Node, Text));
     return VS_Continue;
 }
@@ -279,7 +259,7 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<AConstExpr> Node)
         Text->AppendF(T("nil"));
         break;    
     }
-
+    Text = ExprTypeWrap(Text, Node);
     ContentStack.Add(NodeGen(Node, Text));
 
     return VS_Continue;
@@ -457,7 +437,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AColonCall> Node)
     }
     Text->Append(T(")"));
     
-
+    ContentStack[Index].CurrText = ExprTypeWrap(Text, Node);
     ContentStack.PopTo(Index);
     return VS_Continue;
 }    
@@ -581,6 +561,8 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ANormalCall> Node)
         Text->Merge(FromTop(Index, i + 1));
     }
     Text->Append(T(")"));
+
+    ContentStack[Index].CurrText = ExprTypeWrap(Text, Node);
     ContentStack.PopTo(Index);
     return VS_Continue;
 }
@@ -603,6 +585,8 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ABracketMember> Node)
         .Append(T("["))
         .Merge(FromTop(Index, 1))
         .Append(T("]"));
+
+    ContentStack[Index].CurrText = ExprTypeWrap(Text, Node);
 
     ContentStack.PopTo(Index);
 
@@ -679,17 +663,30 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ADotMember> Node)
     {
         Text->Merge(FromTop(Index, 0)).Append(T(".")).Append(Node->Field);
     }
+
+    ContentStack[Index].CurrText = ExprTypeWrap(Text, Node);
     ContentStack.PopTo(Index);
     return VS_Continue;
 }
 
+
 EVisitStatus LuaPlainInterp::BeginVisit(SPtr<ATypeCast> Node)
 {
+    ContentStack.Add(NodeGen(Node, OutText.NewParagraph()));
+    IndexStack.Add(ContentStack.Count() - 1);
     return VS_Continue;
 }
 
 EVisitStatus LuaPlainInterp::EndVisit(SPtr<ATypeCast> Node)
 {
+    int Index = IndexStack.PickPop();
+    ASSERT_CHILD_NUM(Index, 1);
+
+    ContentStack[Index].CurrText->Merge(ContentStack.Top().CurrText);
+    ContentStack[Index].CurrText = ExprTypeWrap(ContentStack[Index].CurrText, Node);
+
+    ContentStack.PopTo(Index);
+
     return VS_Continue;
 }
 
@@ -756,6 +753,9 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ASubexpr> Node)
             case BO_NotEqual:   OpText = T(" ~= ");  break;
             case BO_Equal:      OpText = T(" == ");  break;
             case BO_NilCoalesc: OpText = T(" or "); break;
+            case BO_Mod:        OpText = T(" % "); break;
+            case BO_Band:       OpText = T(" & "); break;
+            case BO_Bor:        OpText = T(" | "); break;
             }
 
             Text->Append(OpText);
@@ -770,6 +770,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ASubexpr> Node)
     if(ForceParenthese)
         Text->Append(T(")"));
 
+    ContentStack[Index].CurrText = ExprTypeWrap(Text, Node);
     ContentStack.PopTo(Index);
     return VS_Continue;
 }
@@ -1308,7 +1309,7 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<AVarRef> Node)
         CurrText->Append(InCodeName.CStr());
     }
 
-
+    CurrText = ExprTypeWrap(CurrText, Node);
     ContentStack.Add(NodeGen(Node, CurrText));
     return VS_Continue;
 }

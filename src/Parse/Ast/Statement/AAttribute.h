@@ -28,8 +28,8 @@ public:
     virtual EVisitStatus Accept(RecursiveVisitor * Vis);
 
     void AddString(OLString Name, OLString Val);
-    void AddInt(OLString Name, int Val);
-    void AddFloat(OLString Name, float Val);
+    void AddInt(OLString Name, int64 Val);
+    void AddFloat(OLString Name, double Val);
     void AddBool(OLString Name, bool Val);
     void AddNil(OLString Name);
 

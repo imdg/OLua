@@ -44,7 +44,7 @@ void AAttribute::AddString(OLString Name, OLString Val)
     NewItem.StrVal = Val;
 }
 
-void AAttribute::AddInt(OLString Name, int Val)
+void AAttribute::AddInt(OLString Name, int64 Val)
 {
     AttributeItem& NewItem = Items.AddConstructed();
     NewItem.Name = Name;
@@ -52,7 +52,7 @@ void AAttribute::AddInt(OLString Name, int Val)
     NewItem.IntVal = Val;
 }
 
-void AAttribute::AddFloat(OLString Name, float Val)
+void AAttribute::AddFloat(OLString Name, double Val)
 {
     AttributeItem& NewItem = Items.AddConstructed();
     NewItem.Name = Name;

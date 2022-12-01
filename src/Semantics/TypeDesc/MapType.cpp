@@ -107,7 +107,7 @@ bool MapType::IsValueTypeDecl(ATypeIdentity* Node)
     return false;
 }
 
-ETypeValidation MapType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation MapType::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if (EqualsTo(Target))
         return TCR_OK;
