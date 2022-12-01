@@ -82,6 +82,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ASubexpr> Node)
     for(int i = 1; i < Node->OperandList.Count(); i++)
     {
         SPtr<TypeDescBase> Target = DeriStack[Index + 1 + i].PrimaryType;
+        SPtr<ABase> TargetNode = DeriStack[Index + 1 + i].Node;
         bool TargetIsNilable = DeriStack[Index + 1 + i].IsNilable;
         // BO_NilCoalesc is handled here, rather than CurrType->AcceptBinOp 
         
@@ -96,7 +97,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ASubexpr> Node)
                 CM.Log(CMT_NilableCoalescingNilable, Node->Line);
             }
 
-            if(CheckType(Target, false, CurrType, false, Node.Get(), false) == false)
+            if(MatchType(Target, false, CurrType, false, TargetNode, false) == TCR_NoWay)
             {
                 return VS_Stop;
             }
@@ -153,7 +154,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ATypeCast> Node)
     TypeDeriContex& Top = DeriStack.Top();
     // TypeCast does not change nilable state, so use 'true' to do only type validation itself
     // Result keeps its original nilable state
-    bool Ret = CheckType(Top.PrimaryType, true, TargetType, true, Node.Get(), true);
+    MatchType(Top.PrimaryType, true, TargetType, true, Top.Node, true);
     bool IsConst = Top.IsConst;
     bool IsNilable = Top.IsNilable;
     DeriStack.Pop();
@@ -276,7 +277,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ABracketMember> Node)
         {
             CM.Log(CMT_NilableAsIndex, Node->Line);
         }
-        if(CheckType(Field.PrimaryType, false, IntrinsicType::CreateFromRaw(IT_int), false, Node.Get(), false) == false)
+        if(MatchType(Field.PrimaryType, false, IntrinsicType::CreateFromRaw(IT_int), false, Field.Node, false) == TCR_NoWay)
         {
             CM.Log(CMT_ArrayNeedIntIndex, Node->Line);
         }
@@ -297,7 +298,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ABracketMember> Node)
         {
             CM.Log(CMT_NilableAsIndex, Node->Line);
         }
-        if(CheckType(Field.PrimaryType, false, Target.PrimaryType->ActuallyAs<MapType>()->KeyType.Lock(), false, Node.Get(), false) == false)
+        if(MatchType(Field.PrimaryType, false, Target.PrimaryType->ActuallyAs<MapType>()->KeyType.Lock(), false, Field.Node, false) == TCR_NoWay)
         {
             CM.Log(CMT_MapKeyTypeMismatch, Node->Line);
         }
@@ -745,8 +746,9 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AClassVar> Node)
     {
         SPtr<Declearation> Decl = CurrScope->FindDeclByNode(Node->Decls[i].Get());
         SPtr<TypeDescBase> InitValType = DeriStack[Index + 1 + i].PrimaryType;
+        SPtr<ABase> InitValueNode = DeriStack[Index + 1 + i].Node;
         bool InitValIsNilable = DeriStack[Index + 1 + i].IsNilable;
-        CheckType(InitValType, InitValIsNilable, Decl->ValueTypeDesc.Lock(), Decl->IsNilable, Node->Inits[i].Get(), false );
+        MatchType(InitValType, InitValIsNilable, Decl->ValueTypeDesc.Lock(), Decl->IsNilable, InitValueNode, false );
         
     }
 
@@ -778,7 +780,8 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AEnumItem> Node)
     if(Node->ValueExpr != nullptr)
     {
         ASSERT_CHILD_NUM(Index, 1);
-        CheckType(DeriStack[Index + 1].PrimaryType, DeriStack[Index + 1].IsNilable, IntrinsicType::CreateFromRaw(IT_int), false, Node->ValueExpr.Get(), false);
+        TypeDeriContex InitExpr = DeriStack[Index + 1];
+        MatchType(InitExpr.PrimaryType, InitExpr.IsNilable, IntrinsicType::CreateFromRaw(IT_int), false, InitExpr.Node, false);
     }
     DeriStack.PopTo(Index);
 
@@ -797,15 +800,15 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AAssignment> Node)
 
     for(int i = 0; i < Node->LeftExprs.Count(); i++)
     {
-        SPtr<TypeDescBase> LValueType = DeriStack[Index + 1 + i].PrimaryType;
-        bool LIsNilable = DeriStack[Index + 1 + i].IsNilable;
-        if(DeriStack[Index + 1 + i].IsConst == true)
+        TypeDeriContex LVal = DeriStack[Index + 1 + i];
+        TypeDeriContex RVal = DeriStack[Index + Node->LeftExprs.Count() + 1 + i];
+
+        if(LVal.IsConst == true)
         {
             CM.Log(CMT_ConstRestrictAssign, Node->Line);
         }
-        SPtr<TypeDescBase> RValueType = DeriStack[Index + Node->LeftExprs.Count() + 1 + i].PrimaryType;
-        bool RIsNilable = DeriStack[Index + Node->LeftExprs.Count() + 1 + i].IsNilable;
-        CheckType(RValueType, RIsNilable, LValueType, LIsNilable, Node->LeftExprs[i].Get(), false);
+        
+        MatchType(RVal.PrimaryType, RVal.IsNilable, LVal.PrimaryType, LVal.IsNilable, RVal.Node, false);
     }
     DeriStack.PopTo(Index);
 
@@ -821,8 +824,9 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ADoWhile> Node)
 {
     int Index = IndexStack.PickPop();
     ASSERT_CHILD_NUM(Index, 1);
+    TypeDeriContex Cond = DeriStack[Index + 1];
 
-    CheckType(DeriStack[Index + 1].PrimaryType, DeriStack[Index + 1].IsNilable, IntrinsicType::CreateFromRaw(IT_bool), true, Node->Condition.Get(), false);
+    MatchType(Cond.PrimaryType, Cond.IsNilable, IntrinsicType::CreateFromRaw(IT_bool), true, Cond.Node, false);
     DeriStack.PopTo(Index);
 
     return VS_Continue;
@@ -851,7 +855,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
         else
         {
             SPtr<Declearation> DeclInfo = InsideScope->FindDeclByNode(Node->VarList[0].Get());
-            CheckType(Array->ElemType.Lock(), Array->IsElemNilable,  DeclInfo->ValueTypeDesc.Lock(), DeclInfo->IsNilable, Node->Iterator.Get(), false);
+            MatchType(Array->ElemType.Lock(), Array->IsElemNilable,  DeclInfo->ValueTypeDesc.Lock(), DeclInfo->IsNilable, Node->Iterator, false, false);
         }
     }
     else if(IteratorType->ActuallyIs<MapType>())
@@ -870,8 +874,8 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
             // }
             SPtr<Declearation> ValueDeclInfo = InsideScope->FindDeclByNode(Node->VarList[1].Get());
 
-            CheckType(Map->KeyType.Lock(), false,  KeyDeclInfo->ValueTypeDesc.Lock(), false, Node->VarList[0].Get(), false);
-            CheckType(Map->ValueType.Lock(), Map->IsValueNilable, ValueDeclInfo->ValueTypeDesc.Lock(), ValueDeclInfo->IsNilable, Node->VarList[1].Get(), false);
+            MatchType(Map->KeyType.Lock(), false,  KeyDeclInfo->ValueTypeDesc.Lock(), false, Node->VarList[0], false, false);
+            MatchType(Map->ValueType.Lock(), Map->IsValueNilable, ValueDeclInfo->ValueTypeDesc.Lock(), ValueDeclInfo->IsNilable, Node->VarList[1], false, false);
         }
     }
     else if(IteratorType->ActuallyIs<ConstructorType>())
@@ -918,6 +922,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
                 return false;
             }
 
+
             if(Tuple->Subtypes[0].Type->ActuallyIs<FuncSigniture>() == false)
             {
                 // error
@@ -930,31 +935,37 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
             }
 
             SPtr<FuncSigniture> IterFun = Tuple->Subtypes[0].Type.Lock()->ActuallyAs<FuncSigniture>();
-            if(IterFun->Params.Count() != 2)
+            // if(IterFun->Params.Count() != 2)
+            // {
+            //     // error
+            //     CM.Log(CMT_IterFuncType, Node->Line);
+            //     return false;
+            // }
+            bool Result = false;
+            if(IterFun->Params.Count() >= 1)
             {
-                // error
-                CM.Log(CMT_IterFuncType, Node->Line);
-                return false;
+                // First param must be compatible with the second in tuple
+                SPtr<TypeDescBase> StableVarType = Tuple->Subtypes[1].Type.Lock();
+                Result = MatchType(StableVarType, true, IterFun->Params[0].Type.Lock(), true, Tuple->DeclNode.Lock(), false, false);
+                if(!Result)
+                {
+                    // error
+                    CM.Log(CMT_IterTargetType, Node->Line);
+                    return false;
+                }
             }
 
-            // First param must be compatible with the second in tuple
-            SPtr<TypeDescBase> StableVarType = Tuple->Subtypes[1].Type.Lock();
-            bool Result = CheckType(StableVarType, true, IterFun->Params[0].Type.Lock(), true, Tuple->DeclNode.Lock().Get(), false);
-            if(!Result)
-            {
-                // error
-                CM.Log(CMT_IterTargetType, Node->Line);
-                return false;
-            }
-
-            // Second param must be compatible with indexing value(third in tuple)
             SPtr<TypeDescBase> IndexingVarType = Tuple->Subtypes[2].Type.Lock();
-            Result = CheckType(IndexingVarType, true, IterFun->Params[1].Type.Lock(), true, Tuple->DeclNode.Lock().Get(), false);
-            if(!Result)
+            if(IterFun->Params.Count() >= 2)
             {
-                // error
-                CM.Log(CMT_IterIndexType, Node->Line);
-                return false;
+                // Second param must be compatible with indexing value(third in tuple)
+                Result = MatchType(IndexingVarType, true, IterFun->Params[1].Type.Lock(), true, Tuple->DeclNode.Lock(), false, false);
+                if(!Result)
+                {
+                    // error
+                    CM.Log(CMT_IterIndexType, Node->Line);
+                    return false;
+                }
             }
 
             // Return value contains no less than Node->VarList
@@ -966,7 +977,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
             }
 
             // first return value must be compatible with indexing type
-            Result = CheckType(IndexingVarType, true, IterFun->Returns[0].Type.Lock(), true, Tuple->DeclNode.Lock().Get(), false);
+            Result = MatchType(IndexingVarType, true, IterFun->Returns[0].Type.Lock(), true, Tuple->DeclNode.Lock(), false, false);
             if(!Result)
             {
                 // error
@@ -977,7 +988,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
             for(int i = 0; i < Node->VarList.Count(); i++)
             {
                 SPtr<Declearation> DeclInfo = InsideScope->FindDeclByNode(Node->VarList[i].Get());
-                Result = CheckType(IterFun->Returns[i].Type.Lock(), true, DeclInfo->ValueTypeDesc.Lock(), true, Tuple->DeclNode.Lock().Get(), false);
+                Result = MatchType(IterFun->Returns[i].Type.Lock(), true, DeclInfo->ValueTypeDesc.Lock(), true, Tuple->DeclNode.Lock(), false, false);
                 if(Result == false)
                 {
                     //error
@@ -1016,11 +1027,11 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForNum> Node)
 
     ASSERT_CHILD_NUM(Index, ExpectNum);
     SPtr<IntrinsicType> IntType = IntrinsicType::CreateFromRaw(IT_int);
-    CheckType(DeriStack[Index + 1].PrimaryType, DeriStack[Index + 1].IsNilable, IntType, false, DeriStack[Index + 1].Node.Get(), false);
-    CheckType(DeriStack[Index + 2].PrimaryType, DeriStack[Index + 2].IsNilable, IntType, false, DeriStack[Index + 2].Node.Get(), false);
+    MatchType(DeriStack[Index + 1].PrimaryType, DeriStack[Index + 1].IsNilable, IntType, false, DeriStack[Index + 1].Node, false);
+    MatchType(DeriStack[Index + 2].PrimaryType, DeriStack[Index + 2].IsNilable, IntType, false, DeriStack[Index + 2].Node, false);
     if(ExpectNum == 3)
     {
-        CheckType( DeriStack[Index + 3].PrimaryType, DeriStack[Index + 3].IsNilable, IntType, false, DeriStack[Index + 3].Node.Get(), false);
+        MatchType( DeriStack[Index + 3].PrimaryType, DeriStack[Index + 3].IsNilable, IntType, false, DeriStack[Index + 3].Node, false);
     }
 
     DeriStack.PopTo(Index);
@@ -1053,16 +1064,17 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AGlobal> Node)
     {
         if(i >= Node->Decls.Count())
             break;
-        SPtr<TypeDescBase> ExprType = StackTypes[i].PrimaryType; // DeriStack[Index + 1 + i].PrimaryType;
-        bool IsExprNilable = StackTypes[i].IsNilable;
+        //SPtr<TypeDescBase> ExprType = StackTypes[i].PrimaryType; // DeriStack[Index + 1 + i].PrimaryType;
+        //bool IsExprNilable = StackTypes[i].IsNilable;
+        TypeDeriContex InitExpr =  StackTypes[i];
         SPtr<Declearation> Decl = CurrScope->FindDeclByNode(Node->Decls[i].Get());
-        if(Decl->ValueTypeDesc->IsImplicitAny() && ExprType->ActuallyIs<VariableParamHolder>() == false)
+        if(Decl->ValueTypeDesc->IsImplicitAny() && InitExpr.PrimaryType->ActuallyIs<VariableParamHolder>() == false)
         {
-            Decl->ValueTypeDesc = ExprType->DeduceLValueType(CurrScope);
-            Decl->IsNilable = IsExprNilable;
+            Decl->ValueTypeDesc = InitExpr.PrimaryType->DeduceLValueType(CurrScope);
+            Decl->IsNilable = InitExpr.IsNilable;
         }
         else
-            CheckType(ExprType, IsExprNilable, Decl->ValueTypeDesc.Lock(), Decl->IsNilable, Node->Decls[i].Get(), false);
+            MatchType(InitExpr.PrimaryType, InitExpr.IsNilable, Decl->ValueTypeDesc.Lock(), Decl->IsNilable, InitExpr.Node, false);
     }
 
     // Non-nilables without initialization
@@ -1098,17 +1110,19 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ALocal> Node)
     {
         if(i >= Node->Decls.Count())
             break;
-        SPtr<TypeDescBase> ExprType = StackTypes[i].PrimaryType; // DeriStack[Index + 1 + i].PrimaryType;
-        bool IsExprNilable = StackTypes[i].IsNilable;
+
+        //SPtr<TypeDescBase> ExprType = StackTypes[i].PrimaryType; // DeriStack[Index + 1 + i].PrimaryType;
+        //bool IsExprNilable = StackTypes[i].IsNilable;
+        TypeDeriContex InitExpr =  StackTypes[i];
 
         SPtr<Declearation> Decl = CurrScope->FindDeclByNode(Node->Decls[i].Get());
-        if(Decl->ValueTypeDesc->IsImplicitAny() && ExprType->ActuallyIs<VariableParamHolder>() == false)
+        if(Decl->ValueTypeDesc->IsImplicitAny() && InitExpr.PrimaryType->ActuallyIs<VariableParamHolder>() == false)
         {
-            Decl->ValueTypeDesc = ExprType->DeduceLValueType(CurrScope);
-            Decl->IsNilable = IsExprNilable;
+            Decl->ValueTypeDesc = InitExpr.PrimaryType->DeduceLValueType(CurrScope);
+            Decl->IsNilable = InitExpr.IsNilable;
         }
         else
-            CheckType(ExprType, IsExprNilable, Decl->ValueTypeDesc.Lock(), Decl->IsNilable, Node->Decls[i].Get(), false);
+            MatchType(InitExpr.PrimaryType, InitExpr.IsNilable, Decl->ValueTypeDesc.Lock(), Decl->IsNilable, InitExpr.Node, false);
     }
 
     // Non-nilables without initialization
@@ -1141,12 +1155,13 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AIfStat> Node)
     ASSERT_CHILD_NUM(Index, Node->ElseIfBlocks.Count() + 1);
 
     SPtr<IntrinsicType> BoolType = IntrinsicType::CreateFromRaw(IT_bool);
-    CheckType(DeriStack[Index + 1].PrimaryType, DeriStack[Index + 1].IsNilable, BoolType, true, DeriStack[Index + 1].Node.Get(), false);
+    TypeDeriContex MainCond = DeriStack[Index + 1];
+    MatchType(MainCond.PrimaryType, MainCond.IsNilable, BoolType, true, MainCond.Node, false);
 
     for(int i = 0; i < Node->ElseIfBlocks.Count(); i++)
     {
-        SPtr<TypeDescBase> CondType = DeriStack[Index + 2 + i].PrimaryType;
-        CheckType( DeriStack[Index + 2 + i].PrimaryType, DeriStack[Index + 2].IsNilable, BoolType, true, DeriStack[Index + 2 + i].Node.Get(), false);
+        TypeDeriContex ElifCond = DeriStack[Index + 2 + i];
+        MatchType( ElifCond.PrimaryType, ElifCond.IsNilable, BoolType, true, ElifCond.Node, false);
     }
 
     DeriStack.PopTo(Index);
@@ -1165,7 +1180,9 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ARepeat> Node)
     int Index = IndexStack.PickPop();
     ASSERT_CHILD_NUM(Index, 1);
 
-    CheckType(DeriStack[Index + 1].PrimaryType, DeriStack[Index + 1].IsNilable, IntrinsicType::CreateFromRaw(IT_bool), true, DeriStack[Index + 1].Node.Get(), false );
+    TypeDeriContex Cond = DeriStack[Index + 1];
+    MatchType(Cond.PrimaryType, Cond.IsNilable, IntrinsicType::CreateFromRaw(IT_bool), true, Cond.Node, false );
+
     DeriStack.PopTo(Index);
     return VS_Continue;
 }
@@ -1192,9 +1209,8 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AReturn> Node)
             SPtr<TypeDescBase> DeclType = Func->Returns[i].Type.Lock();
             bool DeclIsNilable = Func->Returns[i].IsNilable;
 
-            SPtr<TypeDescBase> StatType = DeriStack[Index + 1 + i].PrimaryType;
-            bool StatIsNilable = DeriStack[Index + 1 + i].IsNilable;
-            CheckType(StatType, StatIsNilable, DeclType, DeclIsNilable, DeriStack[Index + 1 + i].Node.Get(), false);
+            TypeDeriContex StatVal = DeriStack[Index + 1 + i];
+            MatchType(StatVal.PrimaryType, StatVal.IsNilable, DeclType, DeclIsNilable, StatVal.Node, false);
         }
     }
     DeriStack.PopTo(Index);
@@ -1210,8 +1226,9 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AWhile> Node)
 {
     int Index = IndexStack.PickPop();
     ASSERT_CHILD_NUM(Index, 1);
+    TypeDeriContex Condi = DeriStack[Index + 1];
 
-    CheckType(DeriStack[Index + 1].PrimaryType, DeriStack[Index + 1].IsNilable, IntrinsicType::CreateFromRaw(IT_bool), true, DeriStack[Index + 1].Node.Get(), false );
+    MatchType(Condi.PrimaryType, Condi.IsNilable, IntrinsicType::CreateFromRaw(IT_bool), true, Condi.Node, false );
     DeriStack.PopTo(Index);
     return VS_Continue;
 }
@@ -1234,7 +1251,7 @@ EVisitStatus TypeDerivationVisitor::Visit(SPtr<AVariableParamRef> Node)
     return VS_Continue;
 }
 
-bool TypeDerivationVisitor::CheckType(SPtr<TypeDescBase> From, bool IsFromNilable, SPtr<TypeDescBase> To, bool IsToNilable, ABase* Node, bool IsExplicit)
+ETypeValidation TypeDerivationVisitor::MatchType(SPtr<TypeDescBase> From, bool IsFromNilable, SPtr<TypeDescBase> To, bool IsToNilable, SPtr<ABase> Node, bool IsExplicit, bool SaveConvertInfo )
 {
     if(IsFromNilable && IsToNilable == false && Setting.NilSafety != VL_None)
     {
@@ -1246,25 +1263,35 @@ bool TypeDerivationVisitor::CheckType(SPtr<TypeDescBase> From, bool IsFromNilabl
         CM.Log(CMT_AssignNilToNonnilable, Node->Line);
     }
 
-    ETypeValidation Result = From->ValidateConvert(To, IsExplicit);
+    ETypeValidation Result = From->ValidateConvert(To);
     switch (Result)
     {
-    case TCR_OK:
-        return true;
     case TCR_DataLose:
-        CM.Log(CMT_TypeConvDataLose, Node->Line, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
-        return true;
+        if(!IsExplicit)
+            CM.Log(CMT_TypeConvDataLose, Node->Line, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
+        break;
     case TCR_Unsafe:
-        CM.Log(CMT_TypeConvUnSafe, Node->Line, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
-        return true;
+        if(!IsExplicit)
+            CM.Log(CMT_TypeConvUnSafe, Node->Line, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
+        break;
     case TCR_NoWay:
         CM.Log(CMT_TypeConvNoWay, Node->Line, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
-        return false;
+        break;
     default:
         break;
     }
 
-    return false;
+    if(SaveConvertInfo != false && Node->Is<AExpr>())
+    {
+        SPtr<AExpr> ExprNode = Node.PtrAs<AExpr>();
+        if(Result == TCR_DataLose || Result == TCR_Unsafe)
+        {
+            ExprNode->UsedAsType = To;
+            ExprNode->IsUsedAsNilable = IsToNilable;
+        }
+    }
+
+    return Result;
 
 }
 
@@ -1456,7 +1483,7 @@ bool TypeDerivationVisitor::MatchFuncCall(SPtr<FuncSigniture> Func, int RetIndex
                 p++;
             }
             
-            if(CheckType(CurrCtx.PrimaryType, CurrCtx.IsNilable, ParamType, ParamIsNilable, Node.Get(), false) == false)
+            if(MatchType(CurrCtx.PrimaryType, CurrCtx.IsNilable, ParamType, ParamIsNilable, CurrCtx.Node, false) == TCR_NoWay)
             {
                 CM.Log(CMT_ParamTypeError, Node->Line, (p+1));
                 OK = false;

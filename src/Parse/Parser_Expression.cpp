@@ -49,14 +49,17 @@ AExpr* Parser::Parse_BinOpSubexpr()
         if (First->Is<ASubexpr>())
         {
             int SrcPrio = First->As<ASubexpr>()->GetBinOpPrio();
-            int CurrPrio = ASubexpr::GetBinOpInfo(Op).Priority;
-            
-            OL_ASSERT(CurrPrio <= SrcPrio);
-
-            if(CurrPrio == SrcPrio)
+            if(SrcPrio != -1)  // -1 is a single uni op subexpr, do not merge
             {
-                First->As<ASubexpr>()->AddOperand(Op, Second);
-                return First;
+                int CurrPrio = ASubexpr::GetBinOpInfo(Op).Priority;
+                
+                OL_ASSERT(CurrPrio <= SrcPrio );
+
+                if(CurrPrio == SrcPrio)
+                {
+                    First->As<ASubexpr>()->AddOperand(Op, Second);
+                    return First;
+                }
             }
         }
         ASubexpr *Subexp = AstPool::New<ASubexpr>(LineInfo);
@@ -897,7 +900,7 @@ AMapType* Parser::Parse_MapType()
 bool Parser::Helper_ParseExprList(OLList<SPtr<AExpr>>& OutList)
 {
     Token Curr = Lex.GetCurrent();
-
+    bool First = true;
     while(true)
     {
         AExpr* Expr = Parse_Expr();

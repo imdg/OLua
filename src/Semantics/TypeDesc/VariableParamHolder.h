@@ -21,7 +21,7 @@ class VariableParamHolder : public TypeDescBase
 public:
     VariableParamHolder(SPtr<ABase> Node, SPtr<TypeDescBase> InParamType);
     VariableParamHolder(SPtr<ABase> Node, OLString ParamTypeName);
-    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
+    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     virtual OLString ToString(bool IsNilable);
 

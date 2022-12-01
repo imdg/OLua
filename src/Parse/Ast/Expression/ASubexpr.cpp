@@ -97,6 +97,9 @@ EBinOp ASubexpr::ConvertBinOp(ETokenType Tk)
         case TKS_ne:       return BO_NotEqual;
         case TKS_eq:       return BO_Equal;
         case TKS_question2: return BO_NilCoalesc;
+        case TKS_mod:       return BO_Mod;
+        case TKS_band:      return BO_Band;
+        case TKS_bor:       return BO_Bor;
     }
     return BO_None;
 }
@@ -124,6 +127,9 @@ BinOpInfo GBinOpData[] =
     {BO_NotEqual, 3, true, T("~=")},
     {BO_Equal, 3, true, T("==")},
     {BO_NilCoalesc, 15, true, T("??")},
+    {BO_Mod, 11, true, T("%")},
+    {BO_Band, 6, true, T("&")},
+    {BO_Bor, 4, true, T("|")},
     { BO_None, 0, false, T("")}
 };
 

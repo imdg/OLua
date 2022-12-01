@@ -40,7 +40,7 @@ void EnumType::AddItem(SPtr<AEnumItem> Node)
     Items.Add(NewItem);
 }   
 
-ETypeValidation EnumType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation EnumType::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(EqualsTo(Target))
         return TCR_OK;
@@ -54,7 +54,7 @@ ETypeValidation EnumType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExpl
     }
     if(Target->ActuallyIs<EnumType>()) // Not the same enum
     {
-        return IsExplict ? TCR_OK : TCR_Unsafe;
+        return TCR_Unsafe;
     }
     return TCR_NoWay;
 }

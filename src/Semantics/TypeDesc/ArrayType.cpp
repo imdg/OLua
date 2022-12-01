@@ -68,7 +68,7 @@ bool ArrayType::IsElemTypeDecl(ATypeIdentity* Node)
     return false;
 }
 
-ETypeValidation ArrayType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation ArrayType::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(EqualsTo(Target))
         return TCR_OK;

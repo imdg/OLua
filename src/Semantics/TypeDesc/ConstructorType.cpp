@@ -39,7 +39,7 @@ ETypeValidation ConstructorType::ValidateIterator(SPtr<TypeDescBase> Type1, SPtr
             if(Ctor->Elems[i].Value.Get()->ExprType == nullptr)
                 continue;
             
-            ETypeValidation Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Type1, false);
+            ETypeValidation Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Type1);
             if(Curr == TCR_NoWay)
                 return TCR_NoWay;
             if(Curr == TCR_DataLose || Curr == TCR_Unsafe)
@@ -59,7 +59,7 @@ ETypeValidation ConstructorType::ValidateIterator(SPtr<TypeDescBase> Type1, SPtr
             ETypeValidation Curr = TCR_OK;
             if (Ctor->Elems[i].Key.Get()->ExprType != nullptr)
             {
-                Curr = Ctor->Elems[i].Key.Get()->ExprType->ValidateConvert(Type1, false);
+                Curr = Ctor->Elems[i].Key.Get()->ExprType->ValidateConvert(Type1);
                 if (Curr == TCR_NoWay)
                     return TCR_NoWay;
                 if (Curr == TCR_DataLose || Curr == TCR_Unsafe)
@@ -68,7 +68,7 @@ ETypeValidation ConstructorType::ValidateIterator(SPtr<TypeDescBase> Type1, SPtr
 
             if (Ctor->Elems[i].Value.Get()->ExprType != nullptr)
             {
-                Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Type2, false);
+                Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Type2);
                 if (Curr == TCR_NoWay)
                     return TCR_NoWay;
                 if (Curr == TCR_DataLose || Curr == TCR_Unsafe)
@@ -83,7 +83,7 @@ ETypeValidation ConstructorType::ValidateIterator(SPtr<TypeDescBase> Type1, SPtr
 }
 
 
-ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     SPtr<AConstructor> Ctor = DeclNode.Lock().PtrAs<AConstructor>();
     if(Ctor->HasKey == false)
@@ -96,7 +96,7 @@ ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target, bool
             if(Ctor->Elems[i].Value.Get()->ExprType == nullptr)
                 continue;
             
-            ETypeValidation Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Target->ActuallyAs<ArrayType>()->ElemType.Lock(), IsExplict);
+            ETypeValidation Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Target->ActuallyAs<ArrayType>()->ElemType.Lock());
             if(Curr == TCR_NoWay)
                 return TCR_NoWay;
             if(Curr == TCR_DataLose || Curr == TCR_Unsafe)
@@ -116,7 +116,7 @@ ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target, bool
             ETypeValidation Curr = TCR_OK;
             if (Ctor->Elems[i].Key.Get()->ExprType != nullptr)
             {
-                Curr = Ctor->Elems[i].Key.Get()->ExprType->ValidateConvert(Target->ActuallyAs<MapType>()->KeyType.Lock(), IsExplict);
+                Curr = Ctor->Elems[i].Key.Get()->ExprType->ValidateConvert(Target->ActuallyAs<MapType>()->KeyType.Lock());
                 if (Curr == TCR_NoWay)
                     return TCR_NoWay;
                 if (Curr == TCR_DataLose || Curr == TCR_Unsafe)
@@ -125,7 +125,7 @@ ETypeValidation ConstructorType::ValidateConvert(SPtr<TypeDescBase> Target, bool
 
             if (Ctor->Elems[i].Value.Get()->ExprType != nullptr)
             {
-                Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Target->ActuallyAs<MapType>()->ValueType.Lock(), IsExplict);
+                Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Target->ActuallyAs<MapType>()->ValueType.Lock());
                 if (Curr == TCR_NoWay)
                     return TCR_NoWay;
                 if (Curr == TCR_DataLose || Curr == TCR_Unsafe)
@@ -167,7 +167,7 @@ SPtr<TypeDescBase> ConstructorType::DeduceLValueType(SPtr<SymbolScope> Scope)
             }
             else
             {
-                ETypeValidation Curr = CurrElemType->ValidateConvert(Array->ElemType.Lock(), false);
+                ETypeValidation Curr = CurrElemType->ValidateConvert(Array->ElemType.Lock());
                 if(Curr != TCR_OK)
                 {
                     Array->SetElemType(IntrinsicType::CreateFromRaw(IT_any), false); // Set nilable false temperaryly, update it when finished
@@ -200,7 +200,7 @@ SPtr<TypeDescBase> ConstructorType::DeduceLValueType(SPtr<SymbolScope> Scope)
             }
             else 
             {
-                ETypeValidation Curr = Ctor->Elems[i].Key.Get()->ExprType->ValidateConvert(Map->KeyType.Lock(), false);
+                ETypeValidation Curr = Ctor->Elems[i].Key.Get()->ExprType->ValidateConvert(Map->KeyType.Lock());
                 if(Curr != TCR_OK)
                      Map->SetKeyType(IntrinsicType::CreateFromRaw(IT_any));
             }
@@ -216,7 +216,7 @@ SPtr<TypeDescBase> ConstructorType::DeduceLValueType(SPtr<SymbolScope> Scope)
             }
             else
             {
-                ETypeValidation Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Map->ValueType.Lock(), false);
+                ETypeValidation Curr = Ctor->Elems[i].Value.Get()->ExprType->ValidateConvert(Map->ValueType.Lock());
                 if(Curr != TCR_OK)
                      Map->SetValueType(IntrinsicType::CreateFromRaw(IT_any), false);
             }

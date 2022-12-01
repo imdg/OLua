@@ -114,7 +114,7 @@ int Wtoi(const wchar_t* Start)
     int Idx = 0;
     for(Idx = 0; Idx < 63; Idx++)
     {
-        Tmp[Idx] = Start[Idx];
+        Tmp[Idx] = (char)Start[Idx];
         if(Start[Idx] == 0)
             break;
     }
@@ -137,7 +137,7 @@ int OL_vswprintf(wchar_t* const DstBuffer, size_t const DstBufferSize, wchar_t c
 		return 0;
 	}
 
-	int FmtLen = wcslen(Fmt);
+	int FmtLen = (int)wcslen(Fmt);
 	const TCHAR *Src = Fmt;
 
 	TCHAR *Dst = DstBuffer;
@@ -363,7 +363,7 @@ int OL_vswprintf(wchar_t* const DstBuffer, size_t const DstBufferSize, wchar_t c
 		case ('I'):
 		case ('h'):
 		{
-			int RemainingSize = wcslen(Src);
+			int RemainingSize = (int)wcslen(Src);
 
 			// treat %ld as %d. Also shorts for %h will be promoted to ints
 			if (RemainingSize >= 2 && ((Src[0] == C('l') && Src[1] == C('d')) || Src[0] == C('h')))
@@ -523,7 +523,7 @@ int OL_vswprintf(wchar_t* const DstBuffer, size_t const DstBufferSize, wchar_t c
 				Val = Null;
 			}
 
-			int RetCnt = wcslen(Val);
+			int RetCnt = (int)wcslen(Val);
 			//int Spaces = FPlatformMath::Max(FPlatformMath::Abs(FieldLen) - RetCnt, 0);
 
             int Spaces = (FieldLen < 0 ? -FieldLen : FieldLen) - RetCnt;
@@ -574,7 +574,7 @@ int OL_vswprintf(wchar_t* const DstBuffer, size_t const DstBufferSize, wchar_t c
 	}
 
 	*Dst = 0;  // null terminate the new string.
-	return Dst - DstBuffer;
+	return (int)(Dst - DstBuffer);
 }
 
 

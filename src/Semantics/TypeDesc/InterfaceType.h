@@ -41,7 +41,7 @@ public:
     void SetInsideScope(SPtr<SymbolScope> Scope);
     virtual void ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolResolvePhase Phase);
     
-    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
+    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     bool IsBaseType(SPtr<TypeDescBase> Base);
 

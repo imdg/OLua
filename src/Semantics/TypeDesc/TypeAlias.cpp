@@ -73,14 +73,14 @@ void TypeAlias::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolR
 
 }
 
-ETypeValidation TypeAlias::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation TypeAlias::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(ActualType == nullptr)
     {
         return TCR_NoWay;
     }
 
-    return ActualType->ValidateConvert(Target, IsExplict);
+    return ActualType->ValidateConvert(Target);
 }
 
 bool TypeAlias::EqualsTo(SPtr<TypeDescBase> Target)

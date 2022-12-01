@@ -66,11 +66,12 @@ RTTI_ENUM(ETestEnum,
 )
 
 
-
+#ifdef USE_MSVC
 #if !defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL
 #pragma message("Traditional preprocessor")
 #else
 #pragma message("Crossplatform preprocessor")
+#endif
 #endif
 
 class TestOne : public Action

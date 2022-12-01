@@ -397,8 +397,9 @@ EVisitStatus SymbolWalker::BeginVisit(SPtr<AVarDecl> Node)
 {
     // Ignore var declearation in 'for' statement title and function param
     // They are handled in later ABlock visit, as local vars of sub scope
+    // For AFuncType, the declearation should be ignored because they are not a real symbol
     SPtr<ABase> NodeParent = Node->Parent.Lock();
-    if(NodeParent->Is<AForList>() || NodeParent->Is<AForNum>() || NodeParent->Is<AFuncBody>())
+    if(NodeParent->Is<AForList>() || NodeParent->Is<AForNum>() || NodeParent->Is<AFuncBody>() || NodeParent->Is<AFuncType>())
         return VS_Continue;
 
     AddVarDecl(Node);

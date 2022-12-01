@@ -102,12 +102,12 @@ OLString DeclearAttributes::GetString(OLString Name)
     return Items[Name].StrVal;
 }
 
-int DeclearAttributes::GetInt(OLString Name)
+int64 DeclearAttributes::GetInt(OLString Name)
 {
     return Items[Name].IntVal;
 }
 
-float DeclearAttributes::GetFloat(OLString Name)
+double DeclearAttributes::GetFloat(OLString Name)
 {
     return Items[Name].FltVal;
 }

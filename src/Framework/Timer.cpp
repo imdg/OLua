@@ -43,8 +43,8 @@ void Timer::Init()
     QueryPerformanceCounter(&StartCounter);
     QueryPerformanceFrequency(&Frenquency);
 
-    struct timeval tv;
-    time_t t;
+    // struct timeval tv;
+    // time_t t;
     
 #elif defined(PLATFORM_MAC)
     time(&StartRealTime);

@@ -88,7 +88,7 @@ public:
     bool IsParamDecl(AVarDecl* Node);
     bool IsReturnDecl(ATypeIdentity* Node);
 
-    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict);
+    virtual ETypeValidation ValidateConvert(SPtr<TypeDescBase> Target);
     virtual bool EqualsTo(SPtr<TypeDescBase> Target);
     virtual OLString ToString(bool IsNilable);
 

@@ -844,10 +844,18 @@ void Lexer::ReadSingleToken(Token& tk, bool ForMacro, bool NoKeywords)
             tk.Tk = TK_error;
         break;
     case C('%'):
-        VERBOSE(LogMisc, T("Break point symbol hit\n"));
         Reader.NextChar();
-        BreakOnNextToken = true;
+        tk.Tk = TKS_mod;
         break;
+    case C('&'):
+        Reader.NextChar();
+        tk.Tk = TKS_band;
+        break;
+    case C('|'):
+        Reader.NextChar();
+        tk.Tk = TKS_bor;
+        break;
+
     case C('$'):
         Reader.NextChar();
         tk.Tk = TKS_dollor;

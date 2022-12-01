@@ -8,7 +8,8 @@
 !CMakeLists.txt
 !api/**
 !doc/**
-
+!build_project.bat
+!build_project.sh
 src/.DS_Store
 src/Framework/.DS_Store
 

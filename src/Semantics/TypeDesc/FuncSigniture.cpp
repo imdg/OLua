@@ -327,7 +327,7 @@ void FuncSigniture::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESym
     }
 }
 
-ETypeValidation FuncSigniture::ValidateConvert(SPtr<TypeDescBase> Target, bool IsExplict)
+ETypeValidation FuncSigniture::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(EqualsTo(Target))
         return TCR_OK;
