@@ -243,6 +243,8 @@ MsgDetailInfo MsgDetails[] = {
 
 };
 
+CompileMsg CompileMsg::Default;
+
 CompileMsg::CompileMsg()
 {
     ErrorCount = 0;

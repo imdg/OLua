@@ -63,7 +63,7 @@ RTTI_END(SourceFile)
     
 
 SourceFile::SourceFile(OLString InFileName) 
-    : FileName(InFileName), UnbindVarCount(0), UnbindTypeCount(0)
+    : FileName(InFileName), UnbindVarCount(0), UnbindTypeCount(0), Settings(nullptr)
 {
     CM.SetFile(InFileName.CStr());
 
@@ -111,6 +111,8 @@ void SourceFile::ApplyBuildSetting(BuildSetting& Setting)
             CM.SetAsWarning(NilSafetyErrors[i]);
         }
     }
+    Settings = &Setting;
+
 
 }
 
@@ -142,6 +144,9 @@ void SourceFile::AddAPISource(SPtr<SourceFile> APIFile)
 
 bool SourceFile::DoLocalCompile()
 {
+    BuildSetting* CurrSetting = Settings;
+    if(Settings == nullptr)
+        CurrSetting = &BuildSetting::DefaultBuildSetting;
     TokenReader Tr;
     Tr.LoadFromFile(FileName.CStr());
 
@@ -161,7 +166,7 @@ bool SourceFile::DoLocalCompile()
     if(CM.ErrorCount > 0)
         return false;
 
-    TypeInfoVisitor VisTypeInfo(*Symbols, CM);
+    TypeInfoVisitor VisTypeInfo(*Symbols, *CurrSetting, CM);
     RunVisitor(AstRoot, VisTypeInfo, false);
     if(CM.ErrorCount > 0)
         return false;

@@ -77,6 +77,17 @@ bool TypeDescBase::IsRefType()
     return true;
 }
 
+ETypeValidation TypeDescBase::MergeMulityValidation(ETypeValidation Vali1, ETypeValidation Vali2 )
+{
+    if(Vali1 == TCR_NoWay || Vali2 == TCR_NoWay)
+        return TCR_NoWay;
+    if(Vali1 == TCR_Unsafe || Vali2 == TCR_Unsafe)
+        return TCR_Unsafe;
+    if(Vali1 == TCR_DataLose || Vali2 == TCR_DataLose)
+        return TCR_DataLose;
+    return TCR_OK;
+
+}
 // OperatorResult TypeDescBase::AcceptNilCoalesing(SPtr<TypeDescBase> Target, bool TargetNilable)
 // {
 //     if(TargetNilable)

@@ -19,6 +19,7 @@ void BuildSetting::InitDefaultDefaultBuildSetting()
     DefaultBuildSetting.AllowUnresolvedType = true;
     DefaultBuildSetting.DumpDebugFile = false;
     DefaultBuildSetting.NilSafety = VL_Warning;
+    DefaultBuildSetting.EnableReflection = CS_NotSet;
 
 }
 }

@@ -25,6 +25,7 @@ https://opensource.org/licenses/MIT.
 #include "InterfaceType.h"
 #include "IntrinsicType.h"
 #include "SymbolScope.h"
+#include "BuiltinLib.h"
 
 namespace OL
 {
@@ -49,6 +50,7 @@ RTTI_BEGIN_INHERITED(ClassType, TypeDescBase)
     RTTI_MEMBER(BaseTypes, MF_External)
     RTTI_MEMBER(IsExternal)
     RTTI_MEMBER(NestLevel)
+    RTTI_MEMBER(IsReflection)
     RTTI_STRUCT_MEMBER(UnresolvedBase, UnresolvedBaseTypeInfo)
     RTTI_STRUCT_MEMBER(Members, ClassMemberDesc)
     RTTI_MEMBER(InsideScope, MF_External)
@@ -56,7 +58,7 @@ RTTI_END(ClassType)
 
 
 ClassType::ClassType()
-    : NestLevel(0)
+    : NestLevel(0), IsReflection(false), IsExternal(false)
 {
 
 }
@@ -189,6 +191,23 @@ void ClassType::AddNormalMethod(SPtr<ANormalMethod> Node, SPtr<FuncSigniture> Fu
     ValidateMember(NewMember, CM);
 }
 
+void ClassType::AddExtraNormalMethod(OLString Name, SPtr<FuncSigniture> FuncSig, bool IsConst, bool IsStatic, EAccessType Access)
+{
+    ClassMemberDesc& NewMember = Members.AddConstructed();
+    NewMember.Name = Name;
+    NewMember.Flags = 0;
+    NewMember.Type = Member_Function;
+    NewMember.DeclTypeDesc = FuncSig;
+    NewMember.Init = nullptr;
+    NewMember.RawTypeInfo = nullptr;
+    NewMember.Owner = SThis;
+    
+    if(IsConst)  NewMember.Flags |= CMF_Const;
+    if(IsStatic)  NewMember.Flags |= CMF_Static;
+    if(Access == EAccessType::AT_Public)  NewMember.Flags |= CMF_Public;
+    if(Access == EAccessType::AT_Protected)  NewMember.Flags |= CMF_Protected;
+}
+
 void ClassType::AddConstructor(SPtr<AClassContructor> Node, SPtr<FuncSigniture> FuncSig, SPtr<Declearation> Decl, CompileMsg& CM)
 {
     if(IsExternal == true)
@@ -221,7 +240,7 @@ void ClassType::TryAddDefaultContructor()
 
     ClassMemberDesc& NewMember = Members.AddConstructed();
     NewMember.Name = T("new");
-    NewMember.Flags = CMF_Constructor;
+    NewMember.Flags = CMF_Constructor | CMF_Public;
     NewMember.Type = Member_Function;
     NewMember.DeclTypeDesc = FuncSig;
     NewMember.Init = nullptr;
@@ -653,6 +672,39 @@ void ClassType::ForAllMembers(bool IncludeBase, OLFunc<bool(ClassMemberDesc&)> C
             BaseTypes[i]->ActuallyAs<ClassType>()->ForAllMembers(IncludeBase, Callback);
         }
     }
+}
+
+void ClassType::EnableReflection()
+{
+    if(IsReflection == true)
+        return;
+
+    IsReflection = true;
+    
+    // add static member "__type" and virtual function "__gettype()"
+    
+    ClassMemberDesc& StaticType = Members.AddConstructed();
+    StaticType.Name = T("__type");
+    StaticType.Flags = CMF_Const | CMF_Static;
+    StaticType.Type = Member_Variant;
+    StaticType.Owner = SThis;
+    StaticType.IsNilable = false;
+    StaticType.DeclTypeDesc = BuiltinLib::GetInst().GetTypeInfoClass();
+
+    //InsideScope->Re
+
+    SPtr<FuncSigniture> GetTypeFunc = new FuncSigniture();
+    GetTypeFunc->AddReturn(BuiltinLib::GetInst().GetTypeInfoClass(), false, CodeLineInfo::Zero);
+    GetTypeFunc->SetThis(SThis);
+    InsideScope->TypeDefs.Add(GetTypeFunc);
+
+    ClassMemberDesc& InstTypeGet = Members.AddConstructed();
+    StaticType.Name = T("__gettype");
+    StaticType.Flags = CMF_Const | CMF_Virtual;
+    StaticType.Type = Member_Variant;
+    StaticType.Owner = SThis;
+    StaticType.IsNilable = false;
+    StaticType.DeclTypeDesc = GetTypeFunc;
 }
 
 }

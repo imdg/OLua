@@ -696,6 +696,7 @@ void Lexer::ReadSingleToken(Token& tk, bool ForMacro, bool NoKeywords)
                     do
                     {
                         Reader.NextCharUntil(C(']'));
+                        Reader.NextChar();
                         if(Reader.NextCharIfCurr(C(']')))
                             break;
                     } 

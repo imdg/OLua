@@ -89,6 +89,7 @@ void VariableParamHolder::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM
     else
     {
         IsResolved = true;
+        ParamType = Found;
     }
 }
 

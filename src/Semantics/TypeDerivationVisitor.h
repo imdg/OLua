@@ -30,6 +30,7 @@ class ClassType;
 class MapType;
 class InterfaceType;
 class EnumType;
+class IntrinsicType;
 
 struct TypeDeriContex
 {
@@ -150,8 +151,9 @@ public:
     DerefResult DerefClass(SPtr<ClassType> Class, OLString Name, ABase* Node, bool UseTypeName, bool UseColon);
     SPtr<TypeDescBase> DerefMap(SPtr<MapType> Map, OLString Name, ABase* Node);
     DerefResult DerefInterface(SPtr<InterfaceType> Interface, OLString Name, ABase* Node);
+    DerefResult DerefIntrinsic(SPtr<IntrinsicType> Intrinsic, OLString Name, ABase* Node);
 
-    bool DerefEnum(SPtr<EnumType> Enum, OLString Name, ABase* Node);
+    DerefResult DerefEnum(SPtr<EnumType> Enum, OLString Name, ABase* Node, bool ByTypeName);
     
     bool MatchFuncCall(SPtr<FuncSigniture> Func, int RetIndex, SPtr<AExpr>  Node);
     

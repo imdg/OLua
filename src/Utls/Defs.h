@@ -11,7 +11,7 @@ https://opensource.org/licenses/MIT.
 namespace OL
 {
 
-typedef char byte;
+typedef unsigned char byte;
 typedef unsigned int uint;
 typedef long long int64;
 typedef unsigned long long uint64;

@@ -111,6 +111,14 @@ ETypeValidation MapType::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if (EqualsTo(Target))
         return TCR_OK;
+    
+    if(Target->ActuallyIs<MapType>())
+    {
+        SPtr<MapType> TargetMap = Target->ActuallyAs<MapType>();
+        ETypeValidation KeyVali = KeyType->ValidateConvert(TargetMap->KeyType.Lock());
+        ETypeValidation ValueVali = ValueType->ValidateConvert(TargetMap->ValueType.Lock());
+        return MergeMulityValidation(KeyVali, ValueVali);
+    }
 
     if (Target->ActuallyIs<IntrinsicType>() && Target->ActuallyAs<IntrinsicType>()->Type == IT_any)
         return TCR_OK;

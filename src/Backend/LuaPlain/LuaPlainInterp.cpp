@@ -20,6 +20,7 @@ https://opensource.org/licenses/MIT.
 #include "ConstructorType.h"
 #include "TupleType.h"
 #include "LPClassLib.h"
+#include "LPBuiltInFuncInterp.h"
 namespace OL
 {
 #define ASSERT_CHILD_NUM(index, count) OL_ASSERT((count) == (ContentStack.Count() - 1 - (index)))
@@ -39,6 +40,21 @@ LuaPlainInterp::LuaPlainInterp(SymbolTable& InSymbolTable, TextBuilder& InOutTex
 }
 
 
+OLString LuaPlainInterp::MakeEnumStaticTableName(SPtr<EnumType> Enum)
+{
+    OLString Ret;
+    Ret.Printf(T("__ES_%s_static"), Enum->UniqueName.CStr());
+    return Ret;
+}
+
+
+OLString LuaPlainInterp::NewTempVarName()
+{
+    int NextTempIndex = ++(TempNameStack.Top().Counter);
+    OLString Ret;
+    Ret.Printf(T("__olua_temp_%d"), NextTempIndex);
+    return Ret;
+}
 
 SPtr<TextParagraph> LuaPlainInterp::FromTop(int CurrIndex, int TopIndex)
 {
@@ -111,7 +127,10 @@ SPtr<TextParagraph> LuaPlainInterp::MakeStandaloneStaticBlock()
     return StaticBlock;
 }
 
-
+// Add wrapping text if the type of expr itself does not math the type that the exper is used as
+// This happens when implict type conversion is legal but some operation is needed to ensure the operation in Lua matchs the intention
+// Like int <-> float convertion
+//
 SPtr<TextParagraph> LuaPlainInterp::ExprTypeWrap(SPtr<TextParagraph> ExprText, SPtr<AExpr> Node)
 {
     if(Node->UsedAsType == nullptr)
@@ -121,6 +140,12 @@ SPtr<TextParagraph> LuaPlainInterp::ExprTypeWrap(SPtr<TextParagraph> ExprText, S
     {
         SPtr<TextParagraph> Wrap = OutText.NewParagraph();
         Wrap->Append(T("math.floor(")).Merge(ExprText).Append(T(")"));
+        return Wrap;
+    }
+    else if(Node->ExprType->IsInt() && Node->UsedAsType->IsFloat() )
+    {
+        SPtr<TextParagraph> Wrap = OutText.NewParagraph();
+        Wrap->Append(T("(")).Merge(ExprText).Append(T("+ 0.0)"));
         return Wrap;
     }
 
@@ -332,6 +357,29 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AColonCall> Node)
     bool IsVirtual = false;
     bool IsRawStyle = false;
 
+    // Check the function
+    // If there is an override generator, then do it
+    if(Node->ColonMemberType != nullptr)
+    {
+        if(Node->ColonMemberType->Is<FuncSigniture>())
+        {
+            SPtr<FuncSigniture> Func = Node->ColonMemberType.Lock().PtrAs<FuncSigniture>();
+            if(Func->OverrideGenerater != nullptr)
+            {
+                if(Func->OverrideGenerater->Is<LPBuiltinFuncGen>())
+                {
+                    Func->OverrideGenerater.PtrAs<LPBuiltinFuncGen>()->DoCodeGen(
+                        *this, ContentStack[Index], Index, Node
+                    );
+
+                    ContentStack[Index].CurrText = ExprTypeWrap(ContentStack[Index].CurrText, Node);
+                    ContentStack.PopTo(Index);
+                    return VS_Continue;
+                }
+            }
+        }
+    }
+
     if(Target->ExprType.Lock()->ActuallyIs<ClassType>())
     {
         SPtr<ClassType> Class = Target->ExprType->ActuallyAs<ClassType>();
@@ -360,7 +408,8 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AColonCall> Node)
                 {   
                     // When using 'super' to call a virtual function. It is not really a virtual function call
                     // Because we are clear which function should be called
-                    // So just directly call
+                    // So just directly call it
+                    // Note: 'self' is not safe to do it in the same way, because it may implies virtual members of sub classes
                     if(Node->Func->Is<ASuper>())
                     {
                         Text->Append(LPClassHelper::MakeMemberName(Found.FromClass->Owner.Lock(), Found.FromClass, T("")));
@@ -455,6 +504,28 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ANormalCall> Node)
     //ASSERT_CHILD_NUM(Index, Node->Params.Count() + 1);
 
     SPtr<TextParagraph> Text = ContentStack[Index].CurrText;
+
+    if(Node->Func->ExprType != nullptr)
+    {
+        if(Node->Func->ExprType->Is<FuncSigniture>())
+        {
+            SPtr<FuncSigniture> Func = Node->Func->ExprType.Lock().PtrAs<FuncSigniture>();
+            if(Func->OverrideGenerater != nullptr)
+            {
+                if(Func->OverrideGenerater->Is<LPBuiltinFuncGen>())
+                {
+                    Func->OverrideGenerater.PtrAs<LPBuiltinFuncGen>()->DoCodeGen(
+                        *this, ContentStack[Index], Index, Node
+                    );
+
+                    ContentStack[Index].CurrText = ExprTypeWrap(ContentStack[Index].CurrText, Node);
+                    ContentStack.PopTo(Index);
+                    return VS_Continue;
+                }
+            }
+        }
+    }
+
 
     // a normal call in a member function should be check to see if it is calling another member function
     bool ConvertToMemberFunc = false;
@@ -702,7 +773,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ASubexpr> Node)
     int Index = IndexStack.PickPop();
     ASSERT_CHILD_NUM(Index, Node->OperandList.Count());
 
-    // NilCoalesc uses 'or' in Lua, which has very low priority, while NilCoalesc is defined to have very high priority
+    // NilCoalesc uses 'or' in Lua, which has very low priority, but NilCoalesc is defined to have very high priority
     // So '(' and ')' is needed
     bool ForceParenthese = false; 
     for(int i = 0; i < Node->OperandList.Count(); i++)
@@ -999,6 +1070,8 @@ EVisitStatus LuaPlainInterp::BeginVisit(SPtr<AFuncBody> Node)
 {
     ContentStack.Add(NodeGen(Node, OutText.NewParagraph()));
     IndexStack.Add(ContentStack.Count() - 1);
+
+    TempNameStack.Add(TempNameState());
     return VS_Continue;
 }
 
@@ -1054,6 +1127,8 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AFuncBody> Node)
     CurrText->Append(T(")")).NewLine().Merge(FromTop(Index, Node->Params.Count())).Indent().Append(T("end")).NewLine();
 
     ContentStack.PopTo(Index);
+
+    TempNameStack.Pop();
     return VS_Continue;
 
 }
@@ -1345,6 +1420,14 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AForList> Node)
     SPtr<TextParagraph> CurrText = ContentStack[Index].CurrText;
 
     CurrText->Indent().Append(T("for "));
+    
+    // Only one var decleared for array, add an temp var to receive index
+    SPtr<TypeDescBase> IterType = Node->Iterator->ExprType.Lock();
+    if(IterType->ActuallyIs<ArrayType>() && Node->VarList.Count() == 1)
+    {
+        CurrText->AppendF(T("%s, "), NewTempVarName().CStr());
+    }
+
     for(int i = 0; i < Node->VarList.Count(); i++)
     {
         if(i != 0)
@@ -1353,14 +1436,14 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AForList> Node)
     }
 
     SPtr<TextParagraph> IterText = OutText.NewParagraph();
-    SPtr<TypeDescBase> IterType = Node->Iterator->ExprType.Lock();
+
     if(IterType->ActuallyIs<TupleType>())
     {
         IterText->Merge(FromTop(Index, Node->VarList.Count()));
     }
-    else
+    else 
     {
-        IterText->Append(T("ipairs(")).Merge(FromTop(Index, Node->VarList.Count())).Append(T(")"));
+        IterText->Append(T("pairs(")).Merge(FromTop(Index, Node->VarList.Count())).Append(T(")"));
     }
 
     CurrText->Append(T(" in ")).Merge(IterText).Append(T(" do")).NewLine()
@@ -1533,6 +1616,62 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<AVariableParamRef> Node)
     SPtr<TextParagraph> CurrText = OutText.NewParagraph();
     CurrText->Append(T("..."));
     ContentStack.Add(NodeGen(Node, CurrText));
+    return VS_Continue;
+}
+
+EVisitStatus LuaPlainInterp::BeginVisit(SPtr<AEnum> Node)
+{
+    ContentStack.Add(NodeGen(Node, OutText.NewParagraph()));
+    IndexStack.Add(ContentStack.Count() - 1);
+    return VS_Continue;
+}
+
+EVisitStatus LuaPlainInterp::EndVisit(SPtr<AEnum> Node)
+{
+    int Index = IndexStack.PickPop();
+
+    SPtr<TypeDescBase> Type = CurrScope->FindTypeByNode(Node.Get(), false);
+    OL_ASSERT(Type->ActuallyIs<EnumType>());
+    SPtr<EnumType> Enum = Type->ActuallyAs<EnumType>();
+
+    SPtr<TextParagraph> CurrText = ContentStack[Index].CurrText;
+
+    SPtr<TextParagraph> StaticText = OutText.NewParagraph();
+    /*
+    __ES_xxxx_static =
+    {
+        ["Item1"] = 1,
+        ...
+    }
+    */
+
+    bool SeperateStaticBlock =  false;
+    SPtr<FuncSigniture> OuterFunc = GetOuterFunc();
+    if(OuterFunc == nullptr)
+        SeperateStaticBlock = true;
+
+    StaticText->Indent().AppendF(T("%s = {"), MakeEnumStaticTableName(Enum).CStr() ).IndentInc();
+    for(int i = 0; i < Enum->Items.Count(); i++)
+    {
+        if(i != 0)
+            StaticText->Append(T(",")).NewLine();
+        else
+            StaticText->NewLine();
+        StaticText->Indent().AppendF(T("[\"%s\"] = %d"), Enum->Items[i].ItemName.CStr(), Enum->Items[i].ItemValue);
+
+    }
+    StaticText->NewLine().IndentDec().Indent().Append(T("}")).NewLine();
+
+
+    if (SeperateStaticBlock == false)
+    {
+        ContentStack[Index].CurrText->Merge(StaticText);
+    }
+    else
+    {
+        PendingStaticTable.Add(StaticTableInfo{StaticText, Enum});
+    }
+
     return VS_Continue;
 }
 

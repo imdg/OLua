@@ -46,7 +46,7 @@ public:
         root->Accept(&debugSymbolWalker);
 
 
-        TypeInfoVisitor typeInfoVisitor(symboTable, lex.CM);
+        TypeInfoVisitor typeInfoVisitor(symboTable, BuildSetting::DefaultBuildSetting, lex.CM);
         DebugVisitor debugTypeInfo(&typeInfoVisitor, false);
         root->Accept(&debugTypeInfo);
 

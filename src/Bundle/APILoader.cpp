@@ -10,6 +10,7 @@ https://opensource.org/licenses/MIT.
 #include "CmdConfig.h"
 #include "Env.h"
 #include "BuildSetting.h"
+#include "ClassType.h"
 
 namespace OL
 {
@@ -19,16 +20,34 @@ bool APILoader::LoadAPI(OLString APIPath, BuildSetting& Setting)
 
     Env::IterateFileInDir(APIPath, true, [this](OLString Path, bool IsDir)
     {
+
         if(IsDir)
             return;
         OLString Ext = Path.ExtFromPath();
         Ext.ToUpper();
-        if(Ext != T(".OLU"))
-            return;
+        if(Ext == T(".OLU"))
+        {    
+            SPtr<SourceFile> APISource = new SourceFile(Path);
+            APIFiles.Add(APISource);
+        }
+        else if(Ext == T(".LUA"))
+        {
+            FILE* RawLuaFile = t_fopen(Path, "rb");
+            fseek(RawLuaFile, 0, SEEK_END);
+            long Len = ftell(RawLuaFile);
+            fseek(RawLuaFile, 0, SEEK_SET);
 
-        SPtr<SourceFile> APISource = new SourceFile(Path);
-        
-        APIFiles.Add(APISource);
+            byte* Content = new byte[Len + 1];
+            fread(Content, 1, Len, RawLuaFile);
+            Content[Len] = 0;
+
+            RawLuaAPIInfo* NewInfo = new RawLuaAPIInfo();
+            NewInfo->FileName = Path.NameFromPath();
+            NewInfo->Content = OLString::FromUTF8((const char*) Content);
+
+            LuaAPIFiles.Add(NewInfo);
+            delete[] Content;
+        }
     });
 
 
@@ -39,6 +58,8 @@ bool APILoader::LoadAPI(OLString APIPath, BuildSetting& Setting)
         APIFiles[i]->DoTypeResolve();
         APIFiles[i]->DoResolveAsAPI();
     }
+
+
 
     if(APIFiles.Count() == 0)
         return false;
@@ -65,6 +86,19 @@ void APILoader::ApplyAPIToSource(SPtr<SourceFile> Source)
     {
         Source->AddAPISource(APIFiles[i]);
     }
+}
+
+SPtr<ClassType> APILoader::FindAPIClass(OLString Name)
+{
+    for(int i = 0; i < APIFiles.Count(); i++)
+    {
+        SPtr<TypeDescBase> Found = APIFiles[i]->Symbols->Scopes[0]->FindNamedType(Name, false);
+        if(Found != nullptr && Found->Is<ClassType>())
+        {
+            return Found.PtrAs<ClassType>();
+        }
+    }
+    return nullptr;
 }
 
 }

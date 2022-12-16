@@ -747,11 +747,26 @@ AFuncBody* Parser::Parse_FuncBody(bool IsAbstract)
     return Ret;
 }
 
-AFuncType*      Parser::Parse_FuncType(bool AcceptNilable)
+ATypeIdentity*      Parser::Parse_FuncType(bool AcceptNilable)
 {
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_function);
     Lex.Next();
     CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+
+    bool IsArray = false;
+    if(Lex.GetCurrent().Tk == TKS_lbracket)
+    {
+        Lex.Next();
+        if(Lex.GetCurrent().Tk != TKS_rbracket)
+        {
+            CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().LineInfo);
+            return nullptr;
+        }
+        Lex.Next();
+        IsArray = true;
+    }
+
+
     bool IsNilable = false;
     if(Lex.GetCurrent().Tk == TKS_question)
     {
@@ -783,7 +798,16 @@ AFuncType*      Parser::Parse_FuncType(bool AcceptNilable)
 
     };
 
-    return Ret;
+    if(IsArray)
+    {
+        AArrayType* Arr = AstPool::New<AArrayType>(BeginLine);
+        Arr->ElemType = Ret;
+        return Arr;
+    }
+    else
+    {
+        return Ret;
+    }
 }
 
 

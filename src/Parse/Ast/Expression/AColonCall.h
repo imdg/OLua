@@ -5,6 +5,8 @@
 
 namespace OL
 {
+
+class TypeDescBase;
 class AColonCall : public ACall
 {
     DECLEAR_RTTI()
@@ -16,6 +18,8 @@ public:
     virtual EVisitStatus Accept(RecursiveVisitor * Vis);
 
     OLString NameAfter;
+
+    WPtr<TypeDescBase> ColonMemberType;
 };
 
 }

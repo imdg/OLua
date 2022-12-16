@@ -240,6 +240,9 @@ public:
     int ErrorCount;
     int WarningCount;
 
+
+    static CompileMsg Default;
+
 private:
     OLString FileName;
     OLMap<ECompileMsgType, int> LevelOverride;

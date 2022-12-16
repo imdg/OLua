@@ -262,13 +262,13 @@ AExpr*     Parser::Parse_TypeExp()
 
     
     Curr = Lex.GetCurrent();
-    if(Curr.Tk == TKS_exclamation)
-    {
-        ANilableUnwrap* Unwrap = AstPool::New<ANilableUnwrap>(Curr.LineInfo);
-        Unwrap->TargetExpr = MainExpr;
-        MainExpr = Unwrap;
-        Curr = Lex.Next();
-    }
+    // if(Curr.Tk == TKS_exclamation)
+    // {
+    //     ANilableUnwrap* Unwrap = AstPool::New<ANilableUnwrap>(Curr.LineInfo);
+    //     Unwrap->TargetExpr = MainExpr;
+    //     MainExpr = Unwrap;
+    //     Curr = Lex.Next();
+    // }
 
     if(Curr.Tk == TKK_as)
     {
@@ -410,6 +410,13 @@ AExpr* Parser::Parse_SuffixedExpr()
             Ret = NewNode;
 
             Lex.Next();
+        }
+        else if(Curr.Tk == TKS_exclamation)
+        {
+            ANilableUnwrap* Unwrap = AstPool::New<ANilableUnwrap>(Curr.LineInfo);
+            Unwrap->TargetExpr = Ret;
+            Ret = Unwrap;
+            Curr = Lex.Next();
         }
 
         // Member function call using ':' to dereference as VarName:Func(a, b, c)

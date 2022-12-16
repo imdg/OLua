@@ -22,6 +22,7 @@ https://opensource.org/licenses/MIT.
 #include "TupleType.h"
 #include "Logger.h"
 #include "VariableParamHolder.h"
+#include "BuiltinLib.h"
 
 #define ASSERT_CHILD_NUM(index, count) OL_ASSERT((count) == (DeriStack.Count() - 1 - (index)))
 
@@ -221,11 +222,13 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ADotMember> Node)
     }
     else if(DotTarget.PrimaryType->ActuallyIs<EnumType>() && DotTarget.IsType == true)
     {
-        if(DerefEnum(DotTarget.PrimaryType->ActuallyAs<EnumType>(), Node->Field, Node.Get()) == true)
+        DerefResult Deref = DerefEnum(DotTarget.PrimaryType->ActuallyAs<EnumType>(), Node->Field, Node.Get(), true);
+        if(Deref.Type != nullptr)
         {
-            MemberType = DotTarget.PrimaryType;
+            MemberType = Deref.Type;
         }
     }
+
 
     if(MemberType != nullptr)
     {
@@ -382,6 +385,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
     
     SPtr<TypeDescBase> FuncOwner = DeriStack[Index + 1].PrimaryType;
     bool IsOwnerConst = DeriStack[Index + 1].IsConst;
+    bool IsType = DeriStack[Index + 1].IsType;
 
     SPtr<TypeDescBase> MemberType = nullptr;
     bool IsConst = false;
@@ -426,6 +430,23 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
         DeriStack.PopTo(Index);
         return VS_Continue;
     }
+    else if(FuncOwner->ActuallyIs<IntrinsicType>() && IsType == false)
+    {
+        DerefResult Deref = DerefIntrinsic(FuncOwner->ActuallyAs<IntrinsicType>(), Node->NameAfter, Node.Get());
+        MemberType = Deref.Type;
+        IsConst = Deref.IsConst;
+        if(Deref.IsNilable)
+            IsNilable = true;
+    }
+    else if(FuncOwner->ActuallyIs<EnumType>() && IsType == false)
+    {
+        DerefResult Deref = DerefEnum(FuncOwner->ActuallyAs<EnumType>(), Node->NameAfter, Node.Get(), false);
+        MemberType = Deref.Type;
+        IsConst = Deref.IsConst;
+        if(Deref.IsNilable)
+            IsNilable = true;
+    }
+
     if(MemberType == nullptr)
     {
         ERROR(LogCompile, T("Internal error while dereferencing member %s (%d,%d)"), Node->NameAfter.CStr(), Node->Line.Line, Node->Line.Col);
@@ -449,7 +470,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
 
             Node->ExprType = DeriStack[Index].PrimaryType ;
             Node->IsNilable = true;
-
+            Node->ColonMemberType = IntrinsicType::CreateFromRaw(IT_any);
             DeriStack.PopTo(Index);
             return VS_Continue;
         }
@@ -458,6 +479,10 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
             CM.Log(CMT_RequirFunc, Node->Line);
             return VS_Stop;
         }
+    }
+    else
+    {
+        Node->ColonMemberType = MemberType;
     }
 
     if(!IsConst && IsOwnerConst)
@@ -848,15 +873,25 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
     if(IteratorType->ActuallyIs<ArrayType>())
     {
         SPtr<ArrayType> Array = IteratorType->ActuallyAs<ArrayType>();
-        if(Node->VarList.Count() != 1)
+        if(Node->VarList.Count() == 1)
         {
-            CM.Log(CMT_ArrayIterMismatch, Node->Iterator->Line);
+            // One var decleared, see it as array element
+            SPtr<Declearation> DeclInfoValue = InsideScope->FindDeclByNode(Node->VarList[0].Get());
+            MatchType(Array->ElemType.Lock(), Array->IsElemNilable,  DeclInfoValue->ValueTypeDesc.Lock(), DeclInfoValue->IsNilable, Node->Iterator, false, false);
+        }
+        else if(Node->VarList.Count() == 2)
+        {
+            // Two var decleared, see them as index and element
+            SPtr<Declearation> DeclInfoIndex = InsideScope->FindDeclByNode(Node->VarList[0].Get());
+            SPtr<Declearation> DeclInfoValue = InsideScope->FindDeclByNode(Node->VarList[1].Get());
+            MatchType(IntrinsicType::CreateFromRaw(IT_int), false, DeclInfoIndex->ValueTypeDesc.Lock(), DeclInfoIndex->IsNilable, Node->Iterator, false, false);
+            MatchType(Array->ElemType.Lock(), Array->IsElemNilable,  DeclInfoValue->ValueTypeDesc.Lock(), DeclInfoValue->IsNilable, Node->Iterator, false, false);
         }
         else
         {
-            SPtr<Declearation> DeclInfo = InsideScope->FindDeclByNode(Node->VarList[0].Get());
-            MatchType(Array->ElemType.Lock(), Array->IsElemNilable,  DeclInfo->ValueTypeDesc.Lock(), DeclInfo->IsNilable, Node->Iterator, false, false);
+            CM.Log(CMT_ArrayIterMismatch, Node->Iterator->Line);
         }
+
     }
     else if(IteratorType->ActuallyIs<MapType>())
     {
@@ -915,12 +950,12 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
 
         auto ValidateIteratorFun = [&]() ->bool
         {
-            if(Tuple->Subtypes.Count() != 3)
-            {
-                // error
-                CM.Log(CMT_IterTupleNum, Node->Line);
-                return false;
-            }
+            // if(Tuple->Subtypes.Count() != 3)
+            // {
+            //     // error
+            //     CM.Log(CMT_IterTupleNum, Node->Line);
+            //     return false;
+            // }
 
 
             if(Tuple->Subtypes[0].Type->ActuallyIs<FuncSigniture>() == false)
@@ -941,33 +976,19 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
             //     CM.Log(CMT_IterFuncType, Node->Line);
             //     return false;
             // }
-            bool Result = false;
+            ETypeValidation Result = TCR_NoWay;
             if(IterFun->Params.Count() >= 1)
             {
                 // First param must be compatible with the second in tuple
                 SPtr<TypeDescBase> StableVarType = Tuple->Subtypes[1].Type.Lock();
                 Result = MatchType(StableVarType, true, IterFun->Params[0].Type.Lock(), true, Tuple->DeclNode.Lock(), false, false);
-                if(!Result)
+                if(Result == TCR_NoWay)
                 {
                     // error
                     CM.Log(CMT_IterTargetType, Node->Line);
                     return false;
                 }
             }
-
-            SPtr<TypeDescBase> IndexingVarType = Tuple->Subtypes[2].Type.Lock();
-            if(IterFun->Params.Count() >= 2)
-            {
-                // Second param must be compatible with indexing value(third in tuple)
-                Result = MatchType(IndexingVarType, true, IterFun->Params[1].Type.Lock(), true, Tuple->DeclNode.Lock(), false, false);
-                if(!Result)
-                {
-                    // error
-                    CM.Log(CMT_IterIndexType, Node->Line);
-                    return false;
-                }
-            }
-
             // Return value contains no less than Node->VarList
             if( IterFun->Returns.Count() <  Node->VarList.Count())
             {
@@ -975,21 +996,33 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
                 CM.Log(CMT_IterItemNum, Node->Line);
                 return false;
             }
-
-            // first return value must be compatible with indexing type
-            Result = MatchType(IndexingVarType, true, IterFun->Returns[0].Type.Lock(), true, Tuple->DeclNode.Lock(), false, false);
-            if(!Result)
+            
+            if(IterFun->Params.Count() >= 2 && Tuple->Subtypes.Count() >= 3)
             {
-                // error
-                CM.Log(CMT_IterFuncIndexType, Node->Line);
-                return false;
-            }
+                SPtr<TypeDescBase> IndexingVarType = Tuple->Subtypes[2].Type.Lock();
+                // Second param must be compatible with indexing value(third in tuple)
+                Result = MatchType(IndexingVarType, true, IterFun->Params[1].Type.Lock(), true, Tuple->DeclNode.Lock(), false, false);
+                if(Result == TCR_NoWay)
+                {
+                    // error
+                    CM.Log(CMT_IterIndexType, Node->Line);
+                    return false;
+                }
 
+                // first return value must be compatible with indexing type
+                Result = MatchType(IndexingVarType, true, IterFun->Returns[0].Type.Lock(), true, Tuple->DeclNode.Lock(), false, false);
+                if(Result == TCR_NoWay)
+                {
+                    // error
+                    CM.Log(CMT_IterFuncIndexType, Node->Line);
+                    return false;
+                }
+            }
             for(int i = 0; i < Node->VarList.Count(); i++)
             {
                 SPtr<Declearation> DeclInfo = InsideScope->FindDeclByNode(Node->VarList[i].Get());
                 Result = MatchType(IterFun->Returns[i].Type.Lock(), true, DeclInfo->ValueTypeDesc.Lock(), true, Tuple->DeclNode.Lock(), false, false);
-                if(Result == false)
+                if(Result == TCR_NoWay)
                 {
                     //error
                     CM.Log(CMT_IterValueType, Node->Line, i);
@@ -1258,7 +1291,7 @@ ETypeValidation TypeDerivationVisitor::MatchType(SPtr<TypeDescBase> From, bool I
         CM.Log(CMT_NilableConvert, Node->Line);
     }
 
-    if(IsToNilable == false && From->IsNil())
+    if(IsToNilable == false && From->IsNil()) 
     {
         CM.Log(CMT_AssignNilToNonnilable, Node->Line);
     }
@@ -1317,7 +1350,7 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefClass(SPtr<ClassT
         {
             bool IsCtor = false;
             // private restriction
-            if(Class->DeclNode->IsParentOf(Node) == false)
+            if(Class->DeclNode != nullptr && Class->DeclNode->IsParentOf(Node) == false)
             {
                 if((Member.FromClass->Flags & CMF_Public) == 0)
                 {
@@ -1429,14 +1462,43 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefInterface(SPtr<In
         return DerefResult{Member->Func.Lock(), (Member->Flags & CMF_Const) ? true : false, false};
     }
 }
-
-bool TypeDerivationVisitor::DerefEnum(SPtr<EnumType> Enum, OLString Name, ABase* Node)
+TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefIntrinsic(SPtr<IntrinsicType> Intrinsic, OLString Name, ABase* Node)
 {
-    if(Enum->HasItem(Name))
-        return true;
+    BuiltinLib& Lib = BuiltinLib::GetInst();
+    SPtr<ClassType> BuiltinClass = Lib.GetIntrinsicClass(Intrinsic->Type);
+    if(BuiltinClass == nullptr)
+    {
+        return DerefResult{nullptr, false, false};
+    }
 
-    CM.Log(CMT_NoEnumItem, Node->Line, Name.CStr(), Enum->Name.CStr());
-    return false;
+    return DerefClass(BuiltinClass, Name, Node, false, true);
+    
+}
+
+TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefEnum(SPtr<EnumType> Enum, OLString Name, ABase* Node, bool ByTypeName)
+{
+    BuiltinLib& Lib = BuiltinLib::GetInst();
+    SPtr<ClassType> EnumBaseClass = Lib.EnumBaseClass;
+    if(ByTypeName)
+    {
+        if(Enum->HasItem(Name))
+            return DerefResult{Enum, true, false};
+
+        DerefResult BaseDeref = DerefClass(EnumBaseClass, Name, Node, true, false);
+        if(BaseDeref.Type == nullptr)
+            CM.Log(CMT_NoEnumItem, Node->Line, Name.CStr(), Enum->Name.CStr());
+        else
+            return BaseDeref;
+    }
+    else
+    {
+        DerefResult BaseDeref = DerefClass(EnumBaseClass, Name, Node, false, true);
+        if(BaseDeref.Type == nullptr)
+            CM.Log(CMT_NoEnumItem, Node->Line, Name.CStr(), Enum->Name.CStr());
+        else
+            return BaseDeref;
+    }
+    return DerefResult{nullptr, false, false};;
 }
 
 

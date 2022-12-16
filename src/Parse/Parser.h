@@ -46,7 +46,7 @@ public:
     bool            Helper_ParseExprList(OLList<SPtr<AExpr>>& OutList);
     AExpr*          Parse_FuncExpr();
     ATypeIdentity*  Parse_TypeIdentity(bool AcceptNilable);
-    AFuncType*      Parse_FuncType(bool AcceptNilable);
+    ATypeIdentity*  Parse_FuncType(bool AcceptNilable);
     AMapType*       Parse_MapType();
     
     //bool            Helper_ParseSuffixedExprList(OLList<SPtr<ASuffixedExpr>>& OutList);

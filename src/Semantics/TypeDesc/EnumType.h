@@ -47,5 +47,6 @@ public:
 
     OLList<EnumTypeItem>    Items;
     OLString                Name;
+    OLString                UniqueName;
 };
 }

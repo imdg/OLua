@@ -15,7 +15,7 @@ https://opensource.org/licenses/MIT.
 namespace OL
 {
 
-
+class EnumType;
 class LPClassHelper;
 class LuaPlainInterp : public ScopeVisitorBase
 {
@@ -33,9 +33,14 @@ public:
     struct StaticTableInfo
     {
         SPtr<TextParagraph> StaticTableText;
-        SPtr<ClassType>     OwnerClass;
+        SPtr<TypeDescBase>     Owner;
     };
 
+    struct TempNameState
+    {
+        int Counter;
+    };
+    
 
     
     OLString CurrSelfName;
@@ -45,6 +50,8 @@ public:
 
     OLList<NodeGen> ContentStack;
     OLList<int>     IndexStack;
+
+    OLList<TempNameState>   TempNameStack;
 
     OLList<SPtr<LPClassHelper> > ClassHelper;
 
@@ -61,6 +68,8 @@ public:
     //OLString MakeSelfName(SPtr<ClassType> Class);
     //OLString MakeStaticTableName(SPtr<ClassType> Class, OLString Suffix);
 
+    OLString MakeEnumStaticTableName(SPtr<EnumType> Enum);
+
     SPtr<TextParagraph> FromTop(int CurrIndex, int TopIndex);
     NodeGen&            NodeFromTop(int CurrIndex, int TopIndex);
     int                 StackCount(int CurrIndex);
@@ -71,6 +80,8 @@ public:
 
     void                MergeStaticBlock();
     SPtr<TextParagraph> MakeStandaloneStaticBlock();
+
+    OLString NewTempVarName();
 
 
     SPtr<TextParagraph> ExprTypeWrap(SPtr<TextParagraph> ExprText, SPtr<AExpr> Node);
@@ -127,22 +138,9 @@ public:
     virtual EVisitStatus EndVisit(SPtr<ATypeIdentity> Node);
 
 
-    // virtual EVisitStatus Visit(SPtr<ANamedType> Node);
-    // virtual EVisitStatus BeginVisit(SPtr<ANamedType> Node);
-    // virtual EVisitStatus EndVisit(SPtr<ANamedType> Node);
 
     virtual EVisitStatus BeginVisit(SPtr<AClass> Node);
     virtual EVisitStatus EndVisit(SPtr<AClass> Node);
-
-
-    // virtual EVisitStatus Visit(SPtr<AClassMember> Node);
-    // virtual EVisitStatus BeginVisit(SPtr<AClassMember> Node);
-    // virtual EVisitStatus EndVisit(SPtr<AClassMember> Node);
-
-
-
-
-
 
 
     virtual EVisitStatus BeginVisit(SPtr<AClassVar> Node);
@@ -218,47 +216,13 @@ public:
     virtual EVisitStatus Visit(SPtr<AVariableParamRef> Node);
 
 
+    virtual EVisitStatus BeginVisit(SPtr<AEnum> Node);
+    virtual EVisitStatus EndVisit(SPtr<AEnum> Node);
+
+
     //--------- partially to do ------------------------
     virtual EVisitStatus BeginVisit(SPtr<AInterface> Node);
     virtual EVisitStatus EndVisit(SPtr<AInterface> Node);
-
-
-    //-------------- to do ------------------------
-
-    // virtual EVisitStatus Visit(SPtr<AMethod> Node);
-    // virtual EVisitStatus BeginVisit(SPtr<AMethod> Node);
-    // virtual EVisitStatus EndVisit(SPtr<AMethod> Node);
-
-
-    // virtual EVisitStatus Visit(SPtr<AClassDestructor> Node);
-    // virtual EVisitStatus BeginVisit(SPtr<AClassDestructor> Node);
-    // virtual EVisitStatus EndVisit(SPtr<AClassDestructor> Node);
-
-
-
-    // virtual EVisitStatus Visit(SPtr<AEnumItem> Node);
-    // virtual EVisitStatus BeginVisit(SPtr<AEnumItem> Node);
-    // virtual EVisitStatus EndVisit(SPtr<AEnumItem> Node);
-
-    // virtual EVisitStatus Visit(SPtr<AModifier> Node);
-    // virtual EVisitStatus BeginVisit(SPtr<AModifier> Node);
-    // virtual EVisitStatus EndVisit(SPtr<AModifier> Node);
-
-
-    // virtual EVisitStatus Visit(SPtr<AStat> Node);
-    // virtual EVisitStatus BeginVisit(SPtr<AStat> Node);
-    // virtual EVisitStatus EndVisit(SPtr<AStat> Node);
-
-
-    // virtual EVisitStatus Visit(SPtr<AEnum> Node);
-    // virtual EVisitStatus BeginVisit(SPtr<AEnum> Node);
-    // virtual EVisitStatus EndVisit(SPtr<AEnum> Node);
-
-
-
-    // virtual EVisitStatus Visit(SPtr<ABlockStat> Node);
-    // virtual EVisitStatus BeginVisit(SPtr<ABlockStat> Node);
-    // virtual EVisitStatus EndVisit(SPtr<ABlockStat> Node);
 
 
 

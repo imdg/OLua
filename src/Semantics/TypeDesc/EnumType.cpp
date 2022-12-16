@@ -22,6 +22,7 @@ STRUCT_RTTI_END(EnumTypeItem)
 
 RTTI_BEGIN(EnumType)
     RTTI_MEMBER(Name)
+    RTTI_MEMBER(UniqueName)
     RTTI_STRUCT_MEMBER(Items, EnumTypeItem)
 RTTI_END(EnumType)
 

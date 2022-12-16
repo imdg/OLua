@@ -50,7 +50,7 @@ public:
                 root->Accept(&debugSymbolWalker);
 
 
-            TypeInfoVisitor typeInfoVisitor(symboTable, CM);
+            TypeInfoVisitor typeInfoVisitor(symboTable, BuildSetting::DefaultBuildSetting,  CM);
             DebugVisitor debugTypeInfo(&typeInfoVisitor, false);
             if(CM.ErrorCount == 0)
                 root->Accept(&debugTypeInfo);

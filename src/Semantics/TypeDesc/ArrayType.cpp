@@ -72,6 +72,12 @@ ETypeValidation ArrayType::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(EqualsTo(Target))
         return TCR_OK;
+
+    if(Target->ActuallyIs<ArrayType>())
+    {
+        SPtr<ArrayType> TargetArray = Target->ActuallyAs<ArrayType>();
+        return ElemType->ValidateConvert(TargetArray->ElemType.Lock());
+    }
     if(Target->ActuallyIs<IntrinsicType>())
     {
         SPtr<IntrinsicType> Intri = Target->ActuallyAs<IntrinsicType>();

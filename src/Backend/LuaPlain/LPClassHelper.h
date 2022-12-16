@@ -79,6 +79,8 @@ public:
     SPtr<TextParagraph> BuildHiddenCtor();
     SPtr<TextParagraph> BuildStaticCtor();
 
+    SPtr<TextParagraph> BuildReflectionBlock();
+
     static OLString MakeMemberName(SPtr<ClassType> Class, ClassMemberDesc* Member, OLString Suffix);
     
     static OLString MakeConstructorName(SPtr<ClassType> Class, OLString MemberName, OLString Suffix);

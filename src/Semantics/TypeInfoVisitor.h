@@ -11,6 +11,8 @@ https://opensource.org/licenses/MIT.
 #include "ScopeVistorBase.h"
 #include "AstDecl.h"
 #include "CompileMsg.h"
+#include "BuildSetting.h"
+
 namespace OL
 {
 // TypeInfoVisitor :
@@ -28,7 +30,7 @@ class AFuncType;
 class TypeInfoVisitor : public ScopeVisitorBase
 {
 public:
-    TypeInfoVisitor(SymbolTable& InSymboTable, CompileMsg& InCM);
+    TypeInfoVisitor(SymbolTable& InSymboTable, BuildSetting& InSettings, CompileMsg& InCM);
 
     virtual EVisitStatus BeginVisit(SPtr<AClass> Node);
     virtual EVisitStatus EndVisit(SPtr<AClass> Node);
@@ -87,7 +89,7 @@ public:
     void TryReceiveComplexSubType(SPtr<TypeDescBase> Owner, SPtr<TypeDescBase> SubType, SPtr<ATypeIdentity> Node);
 
     void AddFuncReturn(SPtr<FuncSigniture> Func, SPtr<TypeDescBase> NewRet);
-    OLString MakeClassUniquName(SPtr<ClassType> Class);
+    OLString MakeUniqueName(SPtr<TypeDescBase> Class);
 
 
     // Push new TypeDesc into this stack when beginning parsing a new type
@@ -99,6 +101,8 @@ public:
     OLList<SPtr<TypeDescBase>> TypeStack;
     CompileMsg&     CM;
     int ClassNestLevel;
+
+    BuildSetting& Settings;
 };
 
 }

@@ -43,6 +43,9 @@ public:
     virtual EVisitStatus BeginVisit(SPtr<ABlock> Node);
     virtual EVisitStatus EndVisit(SPtr<ABlock> Node);
 
+        virtual EVisitStatus BeginVisit(SPtr<ABlockStat> Node);
+    virtual EVisitStatus EndVisit(SPtr<ABlockStat> Node);
+
     virtual EVisitStatus BeginVisit(SPtr<AClass> Node);
     virtual EVisitStatus EndVisit(SPtr<AClass> Node);
 

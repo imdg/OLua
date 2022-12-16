@@ -15,7 +15,7 @@ https://opensource.org/licenses/MIT.
 #include "FileStream.h"
 #include "ARoot.h"
 #include "CmdConfig.h"
-
+#include "BuiltinLib.h"
 namespace OL
 {
 
@@ -28,6 +28,9 @@ void BundleBuilder::PrepareBuild()
 {
     OLString APIPath = APIs.FindAPIPath(Settings.APIPath);
     APIs.LoadAPI(APIPath, Settings);
+
+    BuiltinLib::GetInst().LoadAPIClasses(APIs);
+    
 }
 
 void BundleBuilder::AddTotalError(int Count)
@@ -229,6 +232,18 @@ void BundleBuilder::DoGenerateEntry()
     TextBuilder EntryText;
     if(DebugMode)
         EntryText.DebugMode = true;
+
+    EntryText.Root->Indent()
+        .Append(T("----------------------------------------------")).NewLine()
+        .Append(T("----------     API Files          ------------")).NewLine()
+        .Append(T("----------------------------------------------")).NewLine().NewLine();
+
+    for(int i = 0; i < APIs.LuaAPIFiles.Count(); i++)
+    {
+        EntryText.Root->AppendF(T("-- File: %s : "), APIs.LuaAPIFiles[i]->FileName.CStr()).NewLine()
+            .Append(APIs.LuaAPIFiles[i]->Content).NewLine();
+    }
+    EntryText.Root->NewLine();
 
     EntryText.Root->IndentInc()
         .Append(T("----------------------------------------------")).NewLine()
