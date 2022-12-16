@@ -17,7 +17,7 @@ https://opensource.org/licenses/MIT.
 #include "VoidHolder.h"
 #include "ArrayType.h"
 #include "MapType.h"
-
+#include "VariableParamHolder.h"
 namespace OL
 {
 
@@ -86,7 +86,7 @@ void FuncSigniture::AddParam(OLString &UnresolvedName, bool IsConst, bool IsVari
     NewDesc.Line = Line;
     NewDesc.IsVariableParam = IsVariableParam;
     NewDesc.IsOptional = IsOptional;
-    NewDesc.IsNilable = IsNilable;
+    NewDesc.IsNilable = IsNilable || IsOptional;  // Optional param is forced to be nilable
 }
 
 void FuncSigniture::AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line)
@@ -99,7 +99,8 @@ void FuncSigniture::AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableP
     NewDesc.Line = Line;
     NewDesc.IsVariableParam = IsVariableParam;
     NewDesc.IsOptional = IsOptional;
-    NewDesc.IsNilable = IsNilable;
+    NewDesc.IsNilable = IsNilable || IsOptional; // Optional param is forced to be nilable
+
 }
 
 void FuncSigniture::AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line)
@@ -112,7 +113,7 @@ void FuncSigniture::AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVaria
     NewDesc.Line = Line;
     NewDesc.IsVariableParam = IsVariableParam;
     NewDesc.IsOptional = IsOptional;
-    NewDesc.IsNilable = IsNilable;
+    NewDesc.IsNilable = IsNilable || IsOptional; // Optional param is forced to be nilable
 }
 
 void FuncSigniture::AddReturn(SPtr<TypeDescBase> Type, bool IsNilable, CodeLineInfo& Line)
@@ -327,10 +328,197 @@ void FuncSigniture::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESym
     }
 }
 
+bool MatchParamProperty(FuncParamDesc& Src, FuncParamDesc& Dst)
+{
+    // Source properties
+    bool SrcIsOpt = Src.IsOptional;
+    bool SrcIsNilable = Src.IsNilable;
+    bool SrcIsVariable = Src.Type->ActuallyIs<VariableParamHolder>();
+    bool SrcIsNilableVariable = SrcIsNilable && SrcIsVariable;
+    if(SrcIsNilableVariable)
+    {
+        SrcIsNilable = false;
+        SrcIsVariable = false;
+        SrcIsOpt = false;
+    }
+    bool SrcIsNormal = true;
+    if(SrcIsOpt || SrcIsNilable || SrcIsVariable || SrcIsNilableVariable)
+        SrcIsNormal = false;
+
+
+    // Dest properties
+    bool DstIsOpt = Dst.IsOptional;
+    bool DstIsNilable = Dst.IsNilable;
+    bool DstIsVariable = Dst.Type->ActuallyIs<VariableParamHolder>();
+    bool DstIsNilableVariable = DstIsNilable && DstIsVariable;
+    if(DstIsNilableVariable)
+    {
+        DstIsNilable = false;
+        DstIsVariable = false;
+        DstIsOpt = false;
+    }
+    bool DstIsNormal = true;
+    if(DstIsOpt || DstIsNilable || DstIsVariable || DstIsNilableVariable)
+        DstIsNormal = false;
+
+
+/*                                  Dst
+                    opt      nilable   var   nilable var  normal
+ Src    opt             Y         Y        N        N          Y  
+        nilable         N         Y        N        N          Y
+        var             Y         N        Y        N          Y
+        nilable var     Y         Y        Y        Y          Y
+        normal          N         N        N        N          Y
+*/
+    if(SrcIsOpt)
+    {
+        if(DstIsOpt || DstIsNilable || DstIsNormal)
+            return true;
+        return false;
+    }
+
+    if(SrcIsNilable)
+    {
+        if(DstIsNilable || DstIsNormal)
+            return true;
+        return false;
+    }
+
+    if(SrcIsVariable)
+    {
+        if(DstIsOpt || DstIsVariable || DstIsNormal)
+            return true;
+        return false;
+    }
+
+    if(SrcIsNilableVariable)
+    {
+        return true;
+    }
+
+    if(SrcIsNormal)
+    {
+        if(DstIsNormal)
+            return true;
+        return false;
+    }
+
+    return false;
+}
+
 ETypeValidation FuncSigniture::ValidateConvert(SPtr<TypeDescBase> Target)
 {
     if(EqualsTo(Target))
         return TCR_OK;
+
+    ETypeValidation Result = TCR_OK;
+    if(Target->ActuallyIs<FuncSigniture>())
+    {
+        SPtr<FuncSigniture> TargetFunc = Target->ActuallyAs<FuncSigniture>();
+        if(HasThis != TargetFunc->HasThis)
+            return TCR_NoWay;
+        
+        if(HasThis)
+        {
+            Result = MergeMulityValidation(Result,
+                ThisType.Lock()->ValidateConvert(TargetFunc->ThisType.Lock()) );
+            if(Result == TCR_NoWay)
+                return TCR_NoWay;
+        }
+
+        for(int i = 0; i < TargetFunc->Returns.Count(); i++)
+        {
+            if(i >= Returns.Count())
+            {
+                // If target has more return values, they have to be nilable
+                if(TargetFunc->Returns[i].IsNilable == false)
+                    return TCR_NoWay;
+            }
+            else
+            {
+                // Nilable return values cannot convert to  non-nilables
+                // All other cases are legal
+                if(Returns[i].IsNilable == true && TargetFunc->Returns[i].IsNilable == false)
+                    return TCR_NoWay;
+                
+                Result = MergeMulityValidation(Result,
+                    Returns[i].Type->ValidateConvert(TargetFunc->Returns[i].Type.Lock()) );
+                if(Result == TCR_NoWay)
+                    return TCR_NoWay;
+            }
+        }
+
+        int SrcIdx = 0;
+        int TargetIdx = 0;
+        FuncParamDesc* SrcParam = nullptr;
+        FuncParamDesc* TargetParam = nullptr;
+        while(true)
+        {
+            if(SrcIdx < Params.Count())
+                SrcParam = &(Params[SrcIdx]);
+            else
+                SrcParam = nullptr;
+
+            if(TargetIdx < TargetFunc->Params.Count())
+                TargetParam = &(TargetFunc->Params[TargetIdx]);
+            else
+                TargetParam = nullptr;
+
+
+            if(TargetParam == nullptr)
+            {
+                // Target finished all parameters
+                // Validate that the Src parameters are all ignorable
+                if(SrcParam == nullptr)
+                    break;
+                if(SrcParam->IsOptional || SrcParam->Type->ActuallyIs<VariableParamHolder>())
+                    break;
+               
+                return TCR_NoWay;
+            }
+            else if(SrcParam == nullptr)
+            {
+                // if Src has variable param, this pointer will always stay at the last variable parameter, never being nullptr
+                return TCR_NoWay;
+            }
+
+            if(MatchParamProperty(*SrcParam, *TargetParam) == false)
+                return TCR_NoWay;
+            
+            SPtr<TypeDescBase> SrcRealType = SrcParam->Type.Lock();
+            if(SrcRealType->ActuallyIs<VariableParamHolder>())
+                SrcRealType = SrcRealType->ActuallyAs<VariableParamHolder>()->ParamType.Lock();
+
+            SPtr<TypeDescBase> TargetRealType = TargetParam->Type.Lock();
+            if(TargetRealType->ActuallyIs<VariableParamHolder>())
+                TargetRealType = TargetRealType->ActuallyAs<VariableParamHolder>()->ParamType.Lock();
+
+            // For function parameters, validate reversly from target parameter to src
+            // So that the converted target can pass valid parameter to the source when calling
+            Result = MergeMulityValidation(Result,
+                TargetRealType->ValidateConvert(SrcRealType) );
+            if(Result == TCR_NoWay)
+                return TCR_NoWay;
+
+            bool SrcIsVariable = SrcParam->Type->ActuallyIs<VariableParamHolder>();
+            bool TargetIsVariable = TargetParam->Type->ActuallyIs<VariableParamHolder>();
+            
+            if(SrcIsVariable && TargetIsVariable)
+            {
+                break;
+            }
+            if(SrcIsVariable == false)
+                SrcIdx++;
+            if(TargetIsVariable == false)
+                TargetIdx++;
+            
+        }
+
+        return Result;
+    }
+
+
+
     
     if(Target->ActuallyIs<IntrinsicType>() && Target->ActuallyAs<IntrinsicType>()->Type == IT_any)
         return TCR_OK;
@@ -399,10 +587,20 @@ OLString FuncSigniture::ToString(bool IsNilable)
             BeginOptionalParam = true;
             Ret.Append(T("["));
         }
-        if(i != Params.Count() - 1)
-            Ret.AppendF(T("_p%d as %s%s, "), i, (Params[i].Flags & FPF_Const) ? T("const ") : T(""), TypeName.CStr());
+
+        OLString CurrDesc;
+        if(Params[i].IsVariableParam)
+        {
+            CurrDesc = TypeName;
+        }
         else
-            Ret.AppendF(T("_p%d as %s%s"), i, (Params[i].Flags & FPF_Const) ? T("const ") : T(""), TypeName.CStr());
+        {
+            CurrDesc.Printf(T("_p%d as %s%s"), i, (Params[i].Flags & FPF_Const) ? T("const ") : T(""), TypeName.CStr());
+        }
+        if(i != Params.Count() - 1)
+            Ret.AppendF(T("%s, "), CurrDesc.CStr());
+        else
+            Ret.AppendF(T("%s"), CurrDesc.CStr());
     }
     if(BeginOptionalParam)
         Ret.Append(T("]"));

@@ -11,6 +11,8 @@ https://opensource.org/licenses/MIT.
 #include "TypeDescBase.h"
 #include "AstCommon.h"
 #include "CompileCommon.h"
+#include "FuncGenBase.h"
+
 namespace OL
 {
 class AVarDecl;
@@ -63,6 +65,8 @@ public:
     bool                UniqueReturnIsNilable;
 
     WPtr<TypeDescBase>  CtorOwnerType; // This indicates  that the function is a constructor when it is not null
+
+    SPtr<FuncGenBase>   OverrideGenerater;  // Optional, non-null value ignores default code generation and does this one.
 
     bool HasThis;
     OLString UnresolvedThisType;

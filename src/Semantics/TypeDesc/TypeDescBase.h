@@ -97,6 +97,8 @@ public:
     // Sometimes a type will be deduced to another, which is a new TypeDescBase with same DeclNode. 
     // In this case the original TypeDescBase should be 'muted'
     bool IsValid();
+
+    static ETypeValidation MergeMulityValidation(ETypeValidation Vali1, ETypeValidation Vali2 );
     bool Valid;
 };
 

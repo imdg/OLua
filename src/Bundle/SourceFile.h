@@ -70,6 +70,8 @@ public:
     SPtr<TextParagraph>     MainBlock;
     SPtr<TextParagraph>     StaticBlock;
 
+    BuildSetting*           Settings;
+
     int UnbindVarCount;    //Includes UnbindTypeCount
     int UnbindTypeCount;
 

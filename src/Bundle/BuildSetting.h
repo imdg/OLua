@@ -19,6 +19,13 @@ enum EValiLevel
     VL_Error
 };
 
+enum ECompileSwitch
+{
+    CS_On,
+    CS_Off,
+    CS_NotSet
+};
+
 class BuildSetting
 {
 public:
@@ -32,6 +39,8 @@ public:
     EValiLevel NilSafety;
 
     bool DumpDebugFile;
+
+    ECompileSwitch  EnableReflection;
 
     static BuildSetting DefaultBuildSetting;
     static void InitDefaultDefaultBuildSetting();

@@ -40,6 +40,17 @@ EVisitStatus ContextValidator::EndVisit(SPtr<AFuncBody> Node)
     return VS_Continue;
 }
 
+EVisitStatus ContextValidator::BeginVisit(SPtr<ABlockStat> Node)
+{
+    
+    return VS_Continue;
+}
+
+EVisitStatus ContextValidator::EndVisit(SPtr<ABlockStat> Node)
+{
+    VisitStackConsume<CodeBlockInfo> Curr(BlockStack);
+    return VS_Continue;
+}
 
 EVisitStatus ContextValidator::BeginVisit(SPtr<ABlock> Node)
 {
@@ -85,13 +96,14 @@ EVisitStatus ContextValidator::EndVisit(SPtr<AInterface> Node)
 
 EVisitStatus ContextValidator::BeginVisit(SPtr<AReturn> Node)
 {
-    CheckStatAfterReturn(Node);
-    BlockStack.Top().ReturnCalled = true;
+
     return VS_Continue;
 }
 
 EVisitStatus ContextValidator::EndVisit(SPtr<AReturn> Node)
 {
+    CheckStatAfterReturn(Node);
+    BlockStack.Top().ReturnCalled = true;
     return VS_Continue;
 }
 

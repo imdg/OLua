@@ -13,6 +13,12 @@ https://opensource.org/licenses/MIT.
 namespace OL
 {
 class BuildSetting;
+struct RawLuaAPIInfo
+{
+    OLString FileName;
+    OLString Content;
+};
+class ClassType;
 class APILoader
 {
 public:
@@ -21,7 +27,11 @@ public:
 
     void ApplyAPIToSource(SPtr<SourceFile> Source);
 
+    SPtr<ClassType> FindAPIClass(OLString Name);
+
     OLList<SPtr<SourceFile>> APIFiles;
+
+    OLList<SPtr<RawLuaAPIInfo>>  LuaAPIFiles;
 
 };
 

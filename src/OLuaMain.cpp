@@ -18,7 +18,8 @@ https://opensource.org/licenses/MIT.
 #include "Lexer.h"
 #include "Timer.h"
 #include "BuildSetting.h"
-
+#include "BuiltinLib.h"
+#include "LPBuiltInFuncInterp.h"
 int main(int argc, char** argv)
 {
     OL::CmdConfig::GetInst()->ParseCommandline(argc, (const char**)argv);
@@ -27,6 +28,8 @@ int main(int argc, char** argv)
     OL::Logger::Init();
     OL::BuildSetting::InitDefaultDefaultBuildSetting();
     OL::Lexer::InitKeywordsTable();
+    OL::BuiltinLib::GetInst();  // Initialize BuiltinLib;
+    OL::LPBuiltInFuncInterp::GetInst().Init();
 
     OL::ActionMgr::GetInst()->RunAction(OL::CmdConfig::GetInst()->Act.CStr());
 

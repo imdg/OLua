@@ -12,8 +12,33 @@ https://opensource.org/licenses/MIT.
 namespace OL
 {
 
+// A helper to manage stack during visitor running
+// The stack looks like this
+//  (base) x  x  x  x  x  x  x
+//         ~~~~~~~  ^   ~~~~~~~
+//           |      |      |
+//           |   Current   |
+//        Parent          Children returned
+//
+//  A Node pushed a place holder when its visiting begin, turnning the active node to itself
+//  When EndVisit, it has all return values from its children
+//  Usually it uses these values to do its logic, update the "Current" value, 
+//        then move the "Current" cursor to the parent, leaving itself as a return value
+//  (base) x  x  x  x  (x  x  x)
+//         ~~~~~ ^  ^   ~~~~~~~
+//               |  |    Popped
+//      New Current |
+//             Previous "Current", left as return value
+//  Use VisitStackPop to work this way
+//  
+//  Other usage
+//  VisitStackConsume: Only pop child return values, does not move the "Current" cursor to the parent
+//         This is used to do some local analysis
+//  VisitStackClearPop: This pops itself and its children, leaving no return values
 template <typename T>
 class VisitStackHelper;
+
+
 
 
 template <typename T>
@@ -43,7 +68,7 @@ public:
         return Owner.ElementStack[HoldingIndex];
     };
 
-    ~VisitStackItBase()
+    virtual ~VisitStackItBase()
     {
         Owner.ElementStack.PopTo(HoldingIndex);
     };
@@ -68,6 +93,17 @@ public:
         : VisitStackItBase<T>(InOwner)
     {
         this->HoldingIndex = InOwner.IndexStack.Top();
+    };
+};
+
+template <typename T>
+class VisitStackClearPop : public VisitStackItBase<T>
+{
+public:
+    VisitStackClearPop(VisitStackHelper<T>& InOwner )
+        : VisitStackItBase<T>(InOwner)
+    {
+        this->HoldingIndex = InOwner.IndexStack.PickPop() - 1;
     };
 };
 

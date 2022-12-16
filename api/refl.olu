@@ -1,0 +1,84 @@
+enum class_member_access
+    cma_public = 1,
+    cma_protected = 2,
+    cma_private = 3
+end
+
+enum intrinsic_type
+    it_int = 0,
+    it_float = 1,
+    it_string = 2,
+    it_bool = 3,
+    it_any = 4
+end
+
+enum type_info_type
+    tit_intrinsic = 1,
+    tit_array = 2,
+    tit_map = 3,
+    tit_enum = 4,
+    tit_function = 5,
+    tit_class = 6
+end
+
+extern class type_info
+    public func type() as type_info_type
+end
+
+extern class intrinsic_type_info extends type_info
+    public func value_type() as intrinsic_type
+end
+
+extern class array_type_info extends type_info
+    public func element_type() as type_info
+    public func element_nilable() as bool
+end
+
+extern class map_type_info extends type_info
+    public func key_type() as type_info
+    public func key_nilable() as bool
+    public func value_type() as type_info
+    public func value_nilable() as bool
+end
+
+extern class enum_type_info extends type_info
+    public func enum_name() as string
+    public func item_count() as int
+    public func item_name(idx as int) as string
+    public func item_value(idx as int) as int
+end
+
+extern class function_type_info extends type_info
+    public func self_type() as type_info
+    public func param_count() as int
+    public func param_type(idx as int) as type_info
+    public func param_nilable(idx as int) as bool
+    public func param_optional(idx as int) as bool
+    public func param_const(idx as int) as bool
+    public func param_variable(idx as int) as bool
+
+    public func return_count() as int
+    public func return_type(idx as int) as type_info
+    public func return_nilable(idx as int) as bool
+
+end
+
+
+extern class class_type_info extends type_info
+    public func class_name() as string
+    public func base_count() as int
+    public func base_type(idx as int) as type_info
+
+    public func member_count() as int
+    public func member_name(idx as int) as type_info
+    public func member_type(idx as int) as type_info
+    public func member_access(idx as int) as class_member_access
+    public func member_is_static(idx as int) as bool
+    public func member_is_variant(idx as int) as bool
+    public func member_is_constructor(idx as int) as bool
+    public func member_nilable(idx as int) as bool
+
+    public func create_object(ctor_name as string, ... as any?) as any?
+    public func set_member_value(inst as any?, name as string, val as any)
+    public func get_member_value(inst as any?, name as string) as any?
+end

@@ -1,8 +1,10 @@
 extern class table
     public static func concat(list as any, [sep as string, i as int, j as int]) as string
-    public static func insert(list as any, value_or_pos as any, [value_with_pos as any])
+    public static func insert(list as any, pos as int, value as any)
+    public static func[lua_alias="insert"] add(list as any, value as any)
     public static func move(src_tab as any, start as int, finish as int, dst_start as int, [dst_tab as any]) as any
     public static func pack(... as any) as any
     public static func sort(list as any, [comp as any])
     public static func unpack(list as any, [i as int, j as int]) as any
+    public static func remove(list as any, [pos as int])
 end

@@ -17,6 +17,7 @@ https://opensource.org/licenses/MIT.
 #include "ANormalMethod.h"
 #include "SymbolScope.h"
 #include "InterfaceType.h"
+#include "LPReflHelper.h"
 namespace OL
 {
 
@@ -395,11 +396,18 @@ SPtr<TextParagraph> LPClassHelper::BuildStaticDefBlock()
         if(First == false)
             StaticDefText->Append(T(", ")).NewLine();
         StaticDefText->Merge(VTableText);
+        First = false;
     }
     else
     {
         StaticDefText->NewLine();
     }
+
+    if(First == false)
+        StaticDefText->Indent(). Append(T(", ")).NewLine();
+
+    StaticDefText->Merge(BuildReflectionBlock());
+
 
     StaticDefText->IndentDec().Indent().Append(T("}")).NewLine();
     return StaticDefText;
@@ -475,6 +483,20 @@ SPtr<TextParagraph> LPClassHelper::BuildStaticCtor()
 
 }
 
+SPtr<TextParagraph> LPClassHelper::BuildReflectionBlock()
+{
+    SPtr<TextParagraph> ReflText = TextOwner.NewParagraph();
+    OLList< SPtr<TextParagraph> > SubTypeInfoList;
+
+    ReflText->Indent().Append(T("[\"__type_info\"] = "));
+
+    SPtr<TextParagraph> TypeInfoText = LPReflHelper::BuildClassRefl(Class, TextOwner);
+
+    ReflText->Merge(TypeInfoText).NewLine();
+
+    return ReflText;
+}
+
 SPtr<TextParagraph> LPClassHelper::BuildCtorBlock()
 {
     SPtr<TextParagraph> HiddenCtor = BuildHiddenCtor();
@@ -530,6 +552,10 @@ SPtr<TextParagraph> LPClassHelper::BuildCtorBlock()
 
     return AllCtor;
 }
+
+
+
+
 
 void LPClassHelper::Prepare()
 {

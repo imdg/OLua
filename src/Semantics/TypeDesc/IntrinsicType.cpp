@@ -211,6 +211,7 @@ IntrinsicOperation Op_AmountCompare[] ={
     {IT_float,    IT_float,     IT_bool, true},
     {IT_float,    IT_any,     IT_bool, true},
     {IT_int,    IT_any,     IT_bool, true},
+    {IT_any,    IT_any,     IT_bool, true},
 };
 
 // BO_And BO_Or

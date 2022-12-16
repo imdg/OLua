@@ -135,7 +135,7 @@ public:
 
 
 
-        TypeInfoVisitor typeInfoVisitor(symboTable, CM);
+        TypeInfoVisitor typeInfoVisitor(symboTable, BuildSetting::DefaultBuildSetting, CM);
         DebugVisitor debugTypeInfo(&typeInfoVisitor, false);
         root->Accept(&debugTypeInfo);
         if(CM.ErrorCount > 0)

@@ -101,7 +101,7 @@ OLString TypeAlias::ToString(bool IsNilable)
     }
     else
     {
-        RetString.Printf(T("alias%s:%s:(%s)"), Name.CStr(), (IsNilable?T("?"):T("")), ActualType->ToString(IsNilable).CStr());
+        RetString.Printf(T("alias%s:%s:(%s)"), (IsNilable?T("?"):T("")), Name.CStr(), ActualType->ToString(IsNilable).CStr());
     }
     return RetString;
 }

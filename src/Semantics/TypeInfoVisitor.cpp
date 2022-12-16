@@ -25,16 +25,22 @@ namespace OL
 {
 
 
-TypeInfoVisitor::TypeInfoVisitor(SymbolTable& InSymboTable, CompileMsg& InCM) 
-    : CM(InCM), ScopeVisitorBase(InSymboTable), ClassNestLevel(0)
+TypeInfoVisitor::TypeInfoVisitor(SymbolTable& InSymboTable, BuildSetting& InSettings, CompileMsg& InCM) 
+    : CM(InCM), ScopeVisitorBase(InSymboTable), Settings(InSettings), ClassNestLevel(0)
 {
 
 }
 
-OLString TypeInfoVisitor::MakeClassUniquName(SPtr<ClassType> Class)
+OLString TypeInfoVisitor::MakeUniqueName(SPtr<TypeDescBase> CurrType)
 {
     OLList<OLString> ScopeNames;
     SPtr<SymbolScope> Scope = CurrScope;
+    // Enum does not have a scope representing itself, so add its name first
+    if(CurrType->Is<EnumType>())
+    {
+        ScopeNames.Add(CurrType.PtrAs<EnumType>()->Name);
+    }
+
     while(Scope != nullptr)
     {
         SPtr<ABase> ScopeOwner = Scope->Owner.Lock();
@@ -97,10 +103,31 @@ EVisitStatus TypeInfoVisitor::EndVisit(SPtr<AClass> Node)
 {
     SPtr<ClassType> Class = TypeStack.Top().PtrAs<ClassType>();
     Class->SetInsideScope(CurrScope);
-    Class->UniqueName = MakeClassUniquName(Class);
+    Class->UniqueName = MakeUniqueName(Class);
     Class->TryAddDefaultContructor();
-
     CurrScope->OwnerTypeDesc = TypeStack.Top();
+
+    SPtr<DeclearAttributes> Attr = Class->ClassAttrib.Lock();
+    ECompileSwitch ClassReflSetting = CS_NotSet;
+    if(Attr != nullptr)
+    {
+        if(Attr->HasItem(T("refl")))
+        {
+            if(Attr->GetBool(T("refl")))
+                ClassReflSetting = CS_On;
+            else
+                ClassReflSetting = CS_Off;
+        }
+    }
+
+    if(ClassReflSetting == CS_On
+        || (Settings.EnableReflection == CS_On && ClassReflSetting == CS_NotSet) )
+    {
+        Class->EnableReflection();
+    }
+
+
+
     TypeStack.Pop();
     ClassNestLevel --;
     return ScopeVisitorBase::EndVisit(Node);  
@@ -569,7 +596,7 @@ EVisitStatus TypeInfoVisitor::BeginVisit(SPtr<AEnum> Node)
     SPtr<EnumType> NewEnum = new EnumType();
     NewEnum->DeclNode = Node;
     NewEnum->Name = Node->Name;
-
+    NewEnum->UniqueName = MakeUniqueName(NewEnum);
     CurrScope->TypeDefs.Add(NewEnum);
 
     TypeStack.Add(NewEnum);
