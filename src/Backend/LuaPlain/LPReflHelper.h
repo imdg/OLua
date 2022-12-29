@@ -17,18 +17,20 @@ class ArrayType;
 class MapType;
 class TypeDescBase;
 struct ClassMemberDesc;
+class EnumType;
 
 class LPReflHelper
 {
 public:
-    static SPtr<TextParagraph> BuildClassRefl(SPtr<ClassType> Class, TextBuilder& TextOwner);
+    static SPtr<TextParagraph> BuildClassRefl(SPtr<ClassType> Class,  bool NamedTypeByRef, TextBuilder& TextOwner);
 
-    static SPtr<TextParagraph> BuildClassMemberType(ClassMemberDesc& Member, TextBuilder& TextOwner);
-    static SPtr<TextParagraph> BuildFunctionType(SPtr<FuncSigniture> Func, TextBuilder& TextOwner);
-    static SPtr<TextParagraph> BuildArrayType(SPtr<ArrayType> Array, TextBuilder& TextOwner);
-    static SPtr<TextParagraph> BuildMapType(SPtr<MapType> Map, TextBuilder& TextOwner);
+    static SPtr<TextParagraph> BuildClassMemberType(ClassMemberDesc& Member,  bool NamedTypeByRef, TextBuilder& TextOwner);
+    static SPtr<TextParagraph> BuildFunctionType(SPtr<FuncSigniture> Func,  bool NamedTypeByRef, TextBuilder& TextOwner);
+    static SPtr<TextParagraph> BuildArrayType(SPtr<ArrayType> Array,  bool NamedTypeByRef, TextBuilder& TextOwner);
+    static SPtr<TextParagraph> BuildMapType(SPtr<MapType> Map,  bool NamedTypeByRef, TextBuilder& TextOwner);
 
-    static SPtr<TextParagraph> BuildTypeRefl(SPtr<TypeDescBase> Type, TextBuilder& TextOwner);
+    static SPtr<TextParagraph> BuildTypeRefl(SPtr<TypeDescBase> Type,  bool NamedTypeByRef, TextBuilder& TextOwner);
+    static SPtr<TextParagraph> BuildEnumType(SPtr<EnumType> Enum, bool NamedTypeByRef, TextBuilder& TextOwner );
 };
 
 

@@ -597,6 +597,30 @@ EVisitStatus TypeInfoVisitor::BeginVisit(SPtr<AEnum> Node)
     NewEnum->DeclNode = Node;
     NewEnum->Name = Node->Name;
     NewEnum->UniqueName = MakeUniqueName(NewEnum);
+
+    SPtr<Declearation> Decl = CurrScope->FindDeclByNode(Node.Get());
+    SPtr<DeclearAttributes > Attr = Decl->Attrib;
+
+    ECompileSwitch ReflSetting = CS_NotSet;
+    if(Attr != nullptr)
+    {
+        if(Attr->HasItem(T("refl")))
+        {
+            if(Attr->GetBool(T("refl")))
+                ReflSetting = CS_On;
+            else
+                ReflSetting = CS_Off;
+        }
+    }
+
+    if(ReflSetting == CS_On
+        || (Settings.EnableReflection == CS_On && ReflSetting == CS_NotSet) )
+    {
+        NewEnum->IsReflection = true;
+    }
+
+    NewEnum->EnumAttrib = Decl->Attrib;
+
     CurrScope->TypeDefs.Add(NewEnum);
 
     TypeStack.Add(NewEnum);

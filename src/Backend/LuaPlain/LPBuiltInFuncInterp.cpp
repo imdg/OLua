@@ -262,7 +262,7 @@ bool CodeGen_Enum_Items(LuaPlainInterp& Interp, LuaPlainInterp::NodeGen& Result,
     if(Enum == nullptr)
         return false;
 
-    Text->AppendF(T("pairs(%s"), Interp.MakeEnumStaticTableName(Enum).CStr()).Append(T(")"));
+    Text->AppendF(T("pairs(%s)"), Interp.MakeEnumStaticTableName(Enum).CStr());
     Result.CurrText = Text;
     return true;
 }

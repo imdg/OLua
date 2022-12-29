@@ -6,6 +6,7 @@
 namespace OL
 {
 class AEnumItem;
+class AAttribute;
 class AEnum : public AStat
 {
     DECLEAR_RTTI()
@@ -19,6 +20,7 @@ public:
 
     OLString Name;
     OLList<SPtr<AEnumItem>> Items;
+    SPtr<AAttribute> Attrib;
 };
 
 }

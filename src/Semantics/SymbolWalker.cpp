@@ -267,6 +267,14 @@ EVisitStatus SymbolWalker::BeginVisit(SPtr<AEnum> Node)
     NewDecl->IsExternal = false;
     NewDecl->IsConst = false;
     NewDecl->IsNilable = false;
+
+    if(Node->Attrib != nullptr)
+    {
+        NewDecl->Attrib = new DeclearAttributes();
+        NewDecl->Attrib->CreateAttributeSet(Node->Attrib->Items);
+    }
+    
+
     WalkingStack.Top()->AddDecl(NewDecl, CM);
     return VS_Continue;
 }

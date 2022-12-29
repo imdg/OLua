@@ -329,14 +329,27 @@ AEnum* Parser::Parse_Enum()
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_enum);
     Lex.Next();
 
+    AAttribute* Attrib = nullptr;
+    if(Lex.GetCurrent().Tk == TKS_lbracket)
+    {
+        Attrib = Parse_Attribute();
+        if(Attrib == nullptr)
+        {
+            return nullptr;
+        }
+    }
+
+
     if(Lex.GetCurrent().Tk != TK_name)
     {
         CM.Log(CMT_EnumNeedsName, Lex.GetCurrent().LineInfo);
+        AstPool::Delete(Attrib);
         return nullptr;
     }
 
     AEnum* Enum = AstPool::New<AEnum>(Lex.GetCurrent().LineInfo);
     Enum->Name = Lex.GetCurrent().StrOrNameVal;
+    Enum->Attrib = Attrib;
 
     Lex.Next();
 

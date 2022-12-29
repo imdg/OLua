@@ -201,6 +201,7 @@ private:
     bool ReadNumber(Token& tk);
     bool ReadName(Token& tk, bool NoKeywords);
     int ReadHexChar();
+    int ReadDigitEsc();
 
     bool ReadPreprocesser();
     bool ReadDefine(MacroDefine& DefineInfo);
