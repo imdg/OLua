@@ -44,8 +44,9 @@ end
 extern class enum_type_info extends type_info
     public func enum_name() as string
     public func item_count() as int
-    public func item_name(idx as int) as string
-    public func item_value(idx as int) as int
+    public func items() as (func(p1 as any, p2 as string) as (string, int), any)
+    public func parse(str as string) as int
+    public func tostring(val as int) as string
 end
 
 extern class function_type_info extends type_info
@@ -70,7 +71,7 @@ extern class class_type_info extends type_info
     public func base_type(idx as int) as type_info
 
     public func member_count() as int
-    public func member_name(idx as int) as type_info
+    public func member_name(idx as int) as string
     public func member_type(idx as int) as type_info
     public func member_access(idx as int) as class_member_access
     public func member_is_static(idx as int) as bool

@@ -13,6 +13,8 @@ https://opensource.org/licenses/MIT.
 #include "ArrayType.h"
 #include "MapType.h"
 #include "LPClassHelper.h"
+#include "LuaPlainInterp.h"
+#include "EnumType.h"
 
 namespace OL
 {
@@ -29,20 +31,47 @@ int ClassMemberFlagToAccess(uint Flag)
     return 3;
 }
 
-SPtr<TextParagraph> LPReflHelper::BuildClassRefl(SPtr<ClassType> Class, TextBuilder& TextOwner)
+SPtr<TextParagraph> LPReflHelper::BuildClassRefl(SPtr<ClassType> Class, bool NamedTypeByRef, TextBuilder& TextOwner)
 {
     SPtr<TextParagraph> ReflText = TextOwner.NewParagraph();
+    OLString StaticTabName = LPClassHelper::MakeStaticTableName(Class, T(""));
+    if(NamedTypeByRef)
+    {
+        ReflText->AppendF(T("function() return %s.__type_info end"),  StaticTabName.CStr());
+        return ReflText;
+    }
+
     ReflText->Append(T("setmetatable({ ")).NewLine().IndentInc();
+
+    ReflText->Indent().AppendF(T("[\"__class_name\"] = \"%s\","), Class->Name.CStr()).NewLine();
+    ReflText->Indent().AppendF(T("[\"__get_static_table\"] = function() return %s end,"),StaticTabName.CStr()).NewLine();
+    ReflText->Indent().AppendF(T("[\"__base_types\"] = {"));
+    for(int i = 0; i < Class->BaseTypes.Count(); i++)
+    {
+        if(i != 0)
+            ReflText->Append(T(", "));
+        SPtr<TypeDescBase> BaseType = Class->BaseTypes[i].Lock();
+        if(BaseType->ActuallyIs<ClassType>())
+        {
+            ReflText->Indent().AppendF(T("function() return %s.__type_info end")
+                , LPClassHelper::MakeStaticTableName(BaseType->ActuallyAs<ClassType>(), T("")).CStr() );
+        }
+    }
+    ReflText->Append(T("}, ")).NewLine();
 
     ReflText->Indent().Append(T("[\"__members\"] = {")).IndentInc();
     bool IsFirst = true;
     Class->ForAllMembers(true, [&ReflText, &IsFirst, &TextOwner](ClassMemberDesc& Member) -> bool
     {
+        if(Member.Flags & CMF_Reserved)
+            return true;
+
         if(IsFirst)
             ReflText->NewLine();
         else
             ReflText->Append(T(",")).NewLine();
         IsFirst = false;
+
 
         ReflText->Indent().Append(T("{")).NewLine().IndentInc();
         ReflText->Indent().AppendF(T("[\"__name\"] = \"%s\", "),          Member.Name.CStr()).NewLine();
@@ -52,7 +81,7 @@ SPtr<TextParagraph> LPReflHelper::BuildClassRefl(SPtr<ClassType> Class, TextBuil
         ReflText->Indent().AppendF(T("[\"__is_constructor\"] = %s, "), BOOL_STR(Member.Flags & CMF_Constructor)).NewLine();
         ReflText->Indent().AppendF(T("[\"__nilable\"] = %s, "),       BOOL_STR(Member.IsNilable)).NewLine();
 
-        ReflText->Indent().Append(T("[\"__type\"] = ")).Merge(BuildTypeRefl(Member.DeclTypeDesc.Lock(), TextOwner)).NewLine();
+        ReflText->Indent().Append(T("[\"__type\"] = ")).Merge(BuildTypeRefl(Member.DeclTypeDesc.Lock(), true, TextOwner)).NewLine();
 
         ReflText->IndentDec().Indent().Append(T("}"));
 
@@ -65,24 +94,28 @@ SPtr<TextParagraph> LPReflHelper::BuildClassRefl(SPtr<ClassType> Class, TextBuil
 }
 
 
-SPtr<TextParagraph> LPReflHelper::BuildClassMemberType(ClassMemberDesc& Member, TextBuilder& TextOwner)
+SPtr<TextParagraph> LPReflHelper::BuildClassMemberType(ClassMemberDesc& Member,  bool NamedTypeByRef, TextBuilder& TextOwner)
 {
-    return BuildTypeRefl(Member.DeclTypeDesc.Lock(), TextOwner);
+    return BuildTypeRefl(Member.DeclTypeDesc.Lock(), NamedTypeByRef, TextOwner);
 }
 
-SPtr<TextParagraph> LPReflHelper::BuildTypeRefl(SPtr<TypeDescBase> Type, TextBuilder& TextOwner)
+SPtr<TextParagraph> LPReflHelper::BuildTypeRefl(SPtr<TypeDescBase> Type, bool NamedTypeByRef, TextBuilder& TextOwner)
 {
     if(Type->ActuallyIs<FuncSigniture>())
     {
-        return BuildFunctionType(Type->ActuallyAs<FuncSigniture>(), TextOwner);
+        return BuildFunctionType(Type->ActuallyAs<FuncSigniture>(), NamedTypeByRef, TextOwner);
     }
     else if(Type->ActuallyIs<ArrayType>())
     {
-        return BuildArrayType(Type->ActuallyAs<ArrayType>(), TextOwner);
+        return BuildArrayType(Type->ActuallyAs<ArrayType>(), NamedTypeByRef, TextOwner);
     }
     else if(Type->ActuallyIs<MapType>())
     {
-        return BuildMapType(Type->ActuallyAs<MapType>(), TextOwner);
+        return BuildMapType(Type->ActuallyAs<MapType>(), NamedTypeByRef, TextOwner);
+    }
+    else if(Type->ActuallyIs<EnumType>())
+    {
+        return BuildEnumType(Type->ActuallyAs<EnumType>(), NamedTypeByRef, TextOwner);
     }
     else if(Type->IsInt())
     {
@@ -116,20 +149,20 @@ SPtr<TextParagraph> LPReflHelper::BuildTypeRefl(SPtr<TypeDescBase> Type, TextBui
     }
     else
     {
-            SPtr<TextParagraph> Ret = TextOwner.NewParagraph();
+        SPtr<TextParagraph> Ret = TextOwner.NewParagraph();
         Ret->Append(T("nil"));
         return Ret;
     }
 }
 
-SPtr<TextParagraph> LPReflHelper::BuildFunctionType(SPtr<FuncSigniture> Func, TextBuilder& TextOwner)
+SPtr<TextParagraph> LPReflHelper::BuildFunctionType(SPtr<FuncSigniture> Func, bool NamedTypeByRef, TextBuilder& TextOwner)
 {
     SPtr<TextParagraph> FuncText = TextOwner.NewParagraph();
     FuncText->Append(T("setmetatable({")).NewLine().IndentInc();
     if(Func->HasThis)
     {
         FuncText->Indent().Append(T("[\"__self_type\"] = "))
-            .Merge(BuildTypeRefl(Func->ThisType.Lock(), TextOwner))
+            .Merge(BuildTypeRefl(Func->ThisType.Lock(), true, TextOwner))
             .Append(T(",")).NewLine();
     }
 
@@ -143,7 +176,7 @@ SPtr<TextParagraph> LPReflHelper::BuildFunctionType(SPtr<FuncSigniture> Func, Te
         FuncParamDesc& CurrParam = Func->Params[i];
         FuncText->Indent().Append(T("{")).NewLine().IndentInc();
 
-        FuncText->Indent().Append(T("[\"__type\"] = ")).Merge(BuildTypeRefl(CurrParam.Type.Lock(), TextOwner)).Append(T(", ")).NewLine();
+        FuncText->Indent().Append(T("[\"__type\"] = ")).Merge(BuildTypeRefl(CurrParam.Type.Lock(), true, TextOwner)).Append(T(", ")).NewLine();
         FuncText->Indent().AppendF(T("[\"__nilable\"] = %s, "),   BOOL_STR(CurrParam.IsNilable) ).NewLine();
         FuncText->Indent().AppendF(T("[\"__optional\"] = %s, "),   BOOL_STR(CurrParam.IsOptional) ).NewLine();
         FuncText->Indent().AppendF(T("[\"__const\"] = %s, "),   BOOL_STR(CurrParam.Flags & FPF_Const) ).NewLine();
@@ -166,7 +199,7 @@ SPtr<TextParagraph> LPReflHelper::BuildFunctionType(SPtr<FuncSigniture> Func, Te
         FuncReturnDesc& CurrRet = Func->Returns[i];
         FuncText->Indent().Append(T("{")).NewLine().IndentInc();
 
-        FuncText->Indent().AppendF(T("[\"__type\"] = ")).Merge(BuildTypeRefl(CurrRet.Type.Lock(), TextOwner)).Append(T(",")).NewLine();
+        FuncText->Indent().AppendF(T("[\"__type\"] = ")).Merge(BuildTypeRefl(CurrRet.Type.Lock(), true, TextOwner)).Append(T(",")).NewLine();
         FuncText->Indent().AppendF(T("[\"__nilable\"] = %s"), BOOL_STR(CurrRet.IsNilable)).NewLine();
 
         FuncText->IndentDec().Indent().Append(T("}"));
@@ -180,31 +213,53 @@ SPtr<TextParagraph> LPReflHelper::BuildFunctionType(SPtr<FuncSigniture> Func, Te
     return FuncText;
 }
 
-SPtr<TextParagraph> LPReflHelper::BuildArrayType(SPtr<ArrayType> Array, TextBuilder& TextOwner)
+SPtr<TextParagraph> LPReflHelper::BuildArrayType(SPtr<ArrayType> Array, bool NamedTypeByRef, TextBuilder& TextOwner)
 {
     SPtr<TextParagraph> ArrayText = TextOwner.NewParagraph();
     ArrayText->Append(T("setmetatable({")).NewLine().IndentInc();
 
-    ArrayText->Indent().Append(T("[\"__element_type\"] = ")).Merge(BuildTypeRefl(Array->ElemType.Lock(), TextOwner)).Append(T(",")).NewLine();
+    ArrayText->Indent().Append(T("[\"__element_type\"] = ")).Merge(BuildTypeRefl(Array->ElemType.Lock(), true, TextOwner)).Append(T(",")).NewLine();
     ArrayText->Indent().AppendF(T("[\"__element_nilable\"] = %s"), BOOL_STR(Array->IsElemNilable)).NewLine();
 
     ArrayText->IndentDec().Indent().Append(T("}, { __index = olua_refl.__array_type_info } )"));
     return ArrayText;
 }
 
-SPtr<TextParagraph> LPReflHelper::BuildMapType(SPtr<MapType> Map, TextBuilder& TextOwner)
+SPtr<TextParagraph> LPReflHelper::BuildMapType(SPtr<MapType> Map, bool NamedTypeByRef, TextBuilder& TextOwner)
 {
     SPtr<TextParagraph> MapText = TextOwner.NewParagraph();
     MapText->Append(T("setmetatable({")).NewLine().IndentInc();
 
-    MapText->Indent().Append(T("[\"__key_type\"] = ")).Merge(BuildTypeRefl(Map->KeyType.Lock(), TextOwner)).Append(T(",")).NewLine();
+    MapText->Indent().Append(T("[\"__key_type\"] = ")).Merge(BuildTypeRefl(Map->KeyType.Lock(), true, TextOwner)).Append(T(",")).NewLine();
 
-    MapText->Indent().Append(T("[\"__value_type\"] = ")).Merge(BuildTypeRefl(Map->ValueType.Lock(), TextOwner)).Append(T(",")).NewLine();
+    MapText->Indent().Append(T("[\"__value_type\"] = ")).Merge(BuildTypeRefl(Map->ValueType.Lock(), true, TextOwner)).Append(T(",")).NewLine();
     MapText->Indent().AppendF(T("[\"__value_nilable\"] = %s"), BOOL_STR(Map->IsValueNilable)).NewLine();
 
     MapText->IndentDec().Indent().Append(T("}, { __index = olua_refl.__map_type_info } )"));
 
     return MapText;
+}
+
+
+SPtr<TextParagraph> LPReflHelper::BuildEnumType(SPtr<EnumType> Enum, bool NamedTypeByRef, TextBuilder& TextOwner )
+{
+    SPtr<TextParagraph> EnumText = TextOwner.NewParagraph();
+    OLString StaticTableName = LuaPlainInterp::MakeEnumStaticTableName(Enum);
+    OLString TypeInfoTablename = LuaPlainInterp::MakeEnumStaticTypeInfoName(Enum);
+    if (NamedTypeByRef == false)
+    {
+        EnumText->Indent().AppendF(T("%s = setmetatable({"), TypeInfoTablename.CStr()).IndentInc().NewLine();
+        EnumText->Indent().AppendF(T("[\"__name\"] = %s, "), Enum->Name.CStr()).NewLine();
+        EnumText->Indent().AppendF(T("[\"__items\"] = %s"), StaticTableName.CStr()).NewLine();
+        EnumText->IndentDec().Indent().Append(T("}, { __index = olua_refl.__enum_type_info} )")).NewLine().NewLine();
+
+        return EnumText;
+    }
+    else
+    {
+        EnumText->AppendF(T("function() return %s end"), TypeInfoTablename.CStr());
+        return EnumText;
+    }
 }
 
 }

@@ -684,8 +684,8 @@ void ClassType::EnableReflection()
     // add static member "__type" and virtual function "__gettype()"
     
     ClassMemberDesc& StaticType = Members.AddConstructed();
-    StaticType.Name = T("__type");
-    StaticType.Flags = CMF_Const | CMF_Static;
+    StaticType.Name = T("__type_info");
+    StaticType.Flags = CMF_Const | CMF_Static | CMF_Public | CMF_Reserved;
     StaticType.Type = Member_Variant;
     StaticType.Owner = SThis;
     StaticType.IsNilable = false;
@@ -699,12 +699,12 @@ void ClassType::EnableReflection()
     InsideScope->TypeDefs.Add(GetTypeFunc);
 
     ClassMemberDesc& InstTypeGet = Members.AddConstructed();
-    StaticType.Name = T("__gettype");
-    StaticType.Flags = CMF_Const | CMF_Virtual;
-    StaticType.Type = Member_Variant;
-    StaticType.Owner = SThis;
-    StaticType.IsNilable = false;
-    StaticType.DeclTypeDesc = GetTypeFunc;
+    InstTypeGet.Name = T("__get_type_info");
+    InstTypeGet.Flags = CMF_Const | CMF_Virtual | CMF_Public | CMF_Reserved;
+    InstTypeGet.Type = Member_Function;
+    InstTypeGet.Owner = SThis;
+    InstTypeGet.IsNilable = false;
+    InstTypeGet.DeclTypeDesc = GetTypeFunc;
 }
 
 }

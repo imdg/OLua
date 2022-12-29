@@ -176,11 +176,13 @@ bool SourceFile::DoLocalCompile()
     if(CM.ErrorCount > 0)
         return false;   
 
+    Symbols->Scopes[0]->BindImport(ImportedScope);
+    
     Symbols->ResolveSymbolsAndTypes(CM, SRP_Local);
     if(CM.ErrorCount > 0)
         return false;
 
-    Symbols->Scopes[0]->BindImport(ImportedScope);
+    
 
     // build exports and imports
     OL_ASSERT(Symbols->Scopes.Count() > 0 && Symbols->Scopes[0]->Type == ST_Global);

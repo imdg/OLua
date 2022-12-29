@@ -11,6 +11,7 @@ https://opensource.org/licenses/MIT.
 #include "AEnumItem.h"
 #include "AExpr.h"
 #include "IntrinsicType.h"
+#include "SymbolScope.h"
 
 namespace OL
 {
@@ -23,9 +24,16 @@ STRUCT_RTTI_END(EnumTypeItem)
 RTTI_BEGIN(EnumType)
     RTTI_MEMBER(Name)
     RTTI_MEMBER(UniqueName)
+    RTTI_MEMBER(IsReflection)
+    RTTI_STRUCT_MEMBER(EnumAttrib, DeclearAttributes)
     RTTI_STRUCT_MEMBER(Items, EnumTypeItem)
 RTTI_END(EnumType)
 
+EnumType::EnumType()
+    : IsReflection(false)
+{
+
+}
 EnumType::~EnumType()
 {
     

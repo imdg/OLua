@@ -334,8 +334,9 @@ end
 ### Definition
 OLua applies different restriction on the different usage of Lua table. Tables with sequencial integer as keys are seen as array, and the others are treated as map. These are different types in OLua. Type identifier to define them is shown in this example.
 ```
-local the_array as int[]         --- Define an array of int
-local the_map as [string, bool]  --- Define a map with string as key, and bool as value
+local the_array as int[]              --- Define an array of int
+local the_map as [string, bool]       --- Define a map with string as key, and bool as value
+local the_funcs as func[] (p as int)  --- Define an array of function
 ```
 Note that in the backend they are both Lua tables. So table API applies to both. '.' is still avaliable to access map element if the key is string. And '[ ]' still works to access elements of them both.
 
@@ -495,3 +496,32 @@ c!()            -- OK
 ## Notes and future works
 * Non-nilable class member can be left uninitialized because in many cases this can only be done in constructors. A reminder will be promoted during compilation. There are some plans to make this look better in the future.
 * Mechanism like "method chain" or "optional chainning" is not supported currently, because this cannot map to any lua syntex directly. But it is still in the plan to support.
+
+# Intrinsic methods
+
+| Type | Definition | Is static | Description |
+| ---- | ---- | ---- | ---- |
+| int | func **tostring**() as string | No | Convert a int to string. (Identical to global "tostring") |
+| float | func **tostring**() as string | No | Convert a float to string. (Identical to global "tostring")  |
+| float | func **floor**() as int | No | Return max integer that less than the float number. (Identical to math.floor)  |
+| float | func **ceil**() as int | No | Return min integer that greater than the float number. (Identical to math.ceil) |
+| bool | func **tostring**() as string | No | Convert a int to string. (Identical to global "tostring") |
+| string | func **tointeger**() as int | No | Parse a string as integer. |
+| string | func **tofloat**() as float | No | Parse a string to float. |
+| string | func **tobool**() as bool | No | Parse a string to bool. Supports "1" and "true" as true, case insensitive |
+| string | func **len**() as int | No | Get length of the string |
+| string | func **lower**() as string | No | Return a new string of uppercase |
+| string | func **upper**() as string | No | Return a new string of lowercase |
+| string | func **sub**(pos as int, count as int) as string | No | Return a sub string |
+| string | func **getchar**(pos as int) as string | No | Get a character of the string |
+| (enum) | func **items**() as (iterator) | Yes | Return a iterator to tranverse all items of an enum for a 'for' statement |
+| (enum) | func **parse**(str as string) as (enum type) | Yes | Parse a string as an enum item. |
+| (enum) | func **tostring**(item as (enum type)) as string | Yes | Convert a enum to string. |
+| (array) | func **add**(item as any) | No | Add a new item to the array |
+| (array) | func **insert**(pos as int, item as any) | No | Insert an item to the array at a pos |
+| (array) | func **remove_at**(pos as int) | No | Remove an item at a pos |
+| (array) | func **clear**() | No | Remove all items in an array |
+| (map) | func **add**(key as any, value as any) | No | Add a new key-value pair to the map |
+| (map) | func **remove**(key as any) | No | Remove an item by key |
+| (map) | func **clear**(key as any) | No | Remove all items in a map |
+

@@ -41,7 +41,7 @@ MsgDetailInfo MsgDetails[] = {
     {CMT_ExpectTypeIdentity,    DEFAULT_LEVEL_ERROR,    T("Expect type identity after 'as'") },
     {CMT_ExpectDotName,     DEFAULT_LEVEL_ERROR,    T("Expect member name after '.'") },
     {CMT_IncompleteBracket, DEFAULT_LEVEL_ERROR,    T("Expect ']' to complete the bracket started at (line:%d, col:%d") },
-
+    {CMT_DecimalEscTooLarge, DEFAULT_LEVEL_WARNING, T("Decimal escape is too large. Should be less than 256")},
     
     {CMT_NeedMacroName,     DEFAULT_LEVEL_ERROR,   T("Expect a name for macro definition") },
     {CMT_MacroParamNeedName, DEFAULT_LEVEL_ERROR,   T("Expect a name for macro parameters") },
@@ -125,8 +125,8 @@ MsgDetailInfo MsgDetails[] = {
     {CMT_MemberDeclWrong,       DEFAULT_LEVEL_ERROR,    T("Not a valid class member") },
     {CMT_MethodNeedsName,       DEFAULT_LEVEL_ERROR,    T("Need a method name") },
     {CMT_ReservedNew,           DEFAULT_LEVEL_ERROR,    T("Cannot define a class member named 'new'. It is reserved for default constructor") },
-    {CMT_CtorNotAllowOnExternal,           DEFAULT_LEVEL_WARNING,    T("Cannot define constructors for external classes. This one will be ignored") },
-    {CMT_InitNotAllowOnExternal,           DEFAULT_LEVEL_WARNING,    T("Cannot initialize variable on external classes. This one will be ignored") },
+    {CMT_CtorNotAllowOnExternal,    DEFAULT_LEVEL_WARNING,    T("Cannot define constructors for external classes. This one will be ignored") },
+    {CMT_InitNotAllowOnExternal,    DEFAULT_LEVEL_WARNING,    T("Cannot initialize variable on external classes. This one will be ignored") },
 
     {CMT_CannotDefineGlobal,    DEFAULT_LEVEL_ERROR,    T("Cannot define a global variable here") },
     {CMT_EnumNeedsName,         DEFAULT_LEVEL_ERROR,    T("Enum needs a valid name") },
@@ -136,12 +136,12 @@ MsgDetailInfo MsgDetails[] = {
     {CMT_InterfaceMemberError,  DEFAULT_LEVEL_ERROR,    T("Cannot parse interface member, where only abstract method is allowed") },
 
     
-    {CMT_ExpectAttribName,        DEFAULT_LEVEL_ERROR,    T("Expect a valid attribute name") },
+    {CMT_ExpectAttribName,      DEFAULT_LEVEL_ERROR,    T("Expect a valid attribute name") },
     {CMT_AttribSytexErr,        DEFAULT_LEVEL_ERROR,    T("Attribute syntex error. It should be like '[ name = value, ... ]'") },
     {CMT_AttribValueErr,        DEFAULT_LEVEL_ERROR,    T("Cannot use this token as attribute value. Only integer, float, bool and nil is allowed") },
 
-    {CMT_NeedAliasName,        DEFAULT_LEVEL_ERROR,    T("Expect a name for 'alias'") },
-    {CMT_AliasTypeNeeded,        DEFAULT_LEVEL_ERROR,    T("Expect keyword 'as' and a type identifier for the alias") },
+    {CMT_NeedAliasName,         DEFAULT_LEVEL_ERROR,    T("Expect a name for 'alias'") },
+    {CMT_AliasTypeNeeded,       DEFAULT_LEVEL_ERROR,    T("Expect keyword 'as' and a type identifier for the alias") },
     
 
 
@@ -155,7 +155,7 @@ MsgDetailInfo MsgDetails[] = {
     {CMT_InterfaceBaseTypeError,    DEFAULT_LEVEL_ERROR,    T("Type '%s' cannot be the base type of an interface. Only interface is allowed") },
     {CMT_TooManyBaseClasses,        DEFAULT_LEVEL_ERROR,    T("Too many base classes while only one is allowed. Try using interface instead") },
     {CMT_ClassBaseTypeError,        DEFAULT_LEVEL_ERROR,    T("Type '%s' cannot be the base type of a class. Only interfaces or a class is allowed") },
-    {CMT_MixedInherit,        DEFAULT_LEVEL_ERROR,    T("External and non-external classes cannot inherit each other.") },
+    {CMT_MixedInherit,              DEFAULT_LEVEL_ERROR,    T("External and non-external classes cannot inherit each other.") },
 
     {CMT_NoAliasType,            DEFAULT_LEVEL_ERROR,    T("Cannot find type: '%s'. This alias will be seen as 'any' if this message is processed as a warning") },
     
@@ -178,50 +178,50 @@ MsgDetailInfo MsgDetails[] = {
     {CMT_ParamTypeError,        DEFAULT_LEVEL_ERROR,    T("Type mismatch of parameter %d on function call") },
 
     {CMT_ImplicitGlobal,        DEFAULT_LEVEL_WARNING,    T("Implicitly decleared global variant '%s'") },
-    {CMT_IllegalSuper,        DEFAULT_LEVEL_ERROR,    T("Cannot use 'super' except in a method of a class with a super class") },
-    {CMT_IllegalSelf,        DEFAULT_LEVEL_ERROR,    T("Cannot use 'self' except in a class method") },
+    {CMT_IllegalSuper,          DEFAULT_LEVEL_ERROR,    T("Cannot use 'super' except in a method of a class with a super class") },
+    {CMT_IllegalSelf,           DEFAULT_LEVEL_ERROR,    T("Cannot use 'self' except in a class method") },
 
-    {CMT_UniopNotMatch,        DEFAULT_LEVEL_ERROR,    T("Operator '%s' does not apply on type '%s'") },
-    {CMT_BinopNotMatch,        DEFAULT_LEVEL_ERROR,    T("Operator '%s' does not apply on type '%s' and type '%s'") },
+    {CMT_UniopNotMatch,         DEFAULT_LEVEL_ERROR,    T("Operator '%s' does not apply on type '%s'") },
+    {CMT_BinopNotMatch,         DEFAULT_LEVEL_ERROR,    T("Operator '%s' does not apply on type '%s' and type '%s'") },
 
-    {CMT_OpMustBeFunc,        DEFAULT_LEVEL_ERROR,    T("Overrided operator '%s' must be a instance function") },
-    {CMT_OpReturnCount,        DEFAULT_LEVEL_ERROR,    T("Overrided operator '%s' has to return a value") },
+    {CMT_OpMustBeFunc,          DEFAULT_LEVEL_ERROR,    T("Overrided operator '%s' must be a instance function") },
+    {CMT_OpReturnCount,         DEFAULT_LEVEL_ERROR,    T("Overrided operator '%s' has to return a value") },
     {CMT_OpBoolRequired,        DEFAULT_LEVEL_ERROR,    T("Overrided operator '%s' must return 'bool' type") },
-    {CMT_OpStringRequired,        DEFAULT_LEVEL_ERROR,    T("Overrided operator '%s' must return 'string' type") },
-    {CMT_OpParamCount,        DEFAULT_LEVEL_ERROR,    T("Overrided operator '%s' must define %d parameter(s)") },
+    {CMT_OpStringRequired,      DEFAULT_LEVEL_ERROR,    T("Overrided operator '%s' must return 'string' type") },
+    {CMT_OpParamCount,          DEFAULT_LEVEL_ERROR,    T("Overrided operator '%s' must define %d parameter(s)") },
 
     
-    {CMT_ArrayIterMismatch,        DEFAULT_LEVEL_ERROR,    T("Iterator dose not match the array type") },
-    {CMT_MapIterMismatch,        DEFAULT_LEVEL_ERROR,    T("Iterator dose not match the map type") },
-    {CMT_IterMismatch,        DEFAULT_LEVEL_ERROR,    T("Iterator dose not match the source type") },
-    {CMT_NotAIterator,        DEFAULT_LEVEL_ERROR,    T("Cannot iterate this type") },
+    {CMT_ArrayIterMismatch,     DEFAULT_LEVEL_ERROR,    T("Iterator dose not match the array type") },
+    {CMT_MapIterMismatch,       DEFAULT_LEVEL_ERROR,    T("Iterator dose not match the map type") },
+    {CMT_IterMismatch,          DEFAULT_LEVEL_ERROR,    T("Iterator dose not match the source type") },
+    {CMT_NotAIterator,          DEFAULT_LEVEL_ERROR,    T("Cannot iterate this type") },
     {CMT_ReturnMismatch,        DEFAULT_LEVEL_ERROR,    T("Returned result dose not match the declear amount, decleard %d, but returned %d") },
 
-    {CMT_NoColonForTypeName,        DEFAULT_LEVEL_ERROR,    T("Cannot use ':' to access members on a type name. Try use an instance name.") },
-    {CMT_DotForStatic,        DEFAULT_LEVEL_ERROR,    T("Member '%s' is not a static member of type '%s'") },
-    {CMT_ColonForNonStaticMethod,        DEFAULT_LEVEL_ERROR,    T("Member '%s' is not a non-static method of type '%s'") },
-    {CMT_DotForNonStaticVar,        DEFAULT_LEVEL_ERROR,    T("Member '%s' is not a non-static variable of type '%s'") },
-    {CMT_NoEnumItem,        DEFAULT_LEVEL_ERROR,    T("'%s' is not an item of enum type '%s'") },
+    {CMT_NoColonForTypeName,    DEFAULT_LEVEL_ERROR,    T("Cannot use ':' to access members on a type name. Try use an instance name.") },
+    {CMT_DotForStatic,          DEFAULT_LEVEL_ERROR,    T("Member '%s' is not a static member of type '%s'") },
+    {CMT_ColonForNonStaticMethod, DEFAULT_LEVEL_ERROR,    T("Member '%s' is not a non-static method of type '%s'") },
+    {CMT_DotForNonStaticVar,    DEFAULT_LEVEL_ERROR,    T("Member '%s' is not a non-static variable of type '%s'") },
+    {CMT_NoEnumItem,            DEFAULT_LEVEL_ERROR,    T("'%s' is not an item of enum type '%s'") },
 
 
-    {CMT_NoReturn,        DEFAULT_LEVEL_ERROR,    T("Not all path returns a value") },
-    {CMT_LastReturn,        DEFAULT_LEVEL_ERROR,    T("Statement is not allowed to be after 'return'") },
+    {CMT_NoReturn,              DEFAULT_LEVEL_ERROR,    T("Not all path returns a value") },
+    {CMT_LastReturn,            DEFAULT_LEVEL_ERROR,    T("Statement is not allowed to be after 'return'") },
 
-    {CMT_ConstRestrictAssign,        DEFAULT_LEVEL_ERROR,    T("Cannot assign value to a constant variable") },
-    {CMT_ConstRestrictCall,        DEFAULT_LEVEL_ERROR,    T("Cannot pass constant variable to param %d, which is a non-constant params of a reference type") },
-    {CMT_ConstRestrictOwner,        DEFAULT_LEVEL_ERROR,    T("Cannot call non-constant member function on a constant owner") },
+    {CMT_ConstRestrictAssign,   DEFAULT_LEVEL_ERROR,    T("Cannot assign value to a constant variable") },
+    {CMT_ConstRestrictCall,     DEFAULT_LEVEL_ERROR,    T("Cannot pass constant variable to param %d, which is a non-constant params of a reference type") },
+    {CMT_ConstRestrictOwner,    DEFAULT_LEVEL_ERROR,    T("Cannot call non-constant member function on a constant owner") },
 
-    {CMT_IterTupleNum,        DEFAULT_LEVEL_ERROR,    T("Iterator must return 3 element for iterator function, target and first index") },
-    {CMT_IterEntryType,        DEFAULT_LEVEL_ERROR,    T("Require a iterator function for the first item of iterator") },
-    {CMT_IterFuncType,        DEFAULT_LEVEL_ERROR,    T("Iterator function must have 2 params for the target and index") },
+    {CMT_IterTupleNum,          DEFAULT_LEVEL_ERROR,    T("Iterator must return 3 element for iterator function, target and first index") },
+    {CMT_IterEntryType,         DEFAULT_LEVEL_ERROR,    T("Require a iterator function for the first item of iterator") },
+    {CMT_IterFuncType,          DEFAULT_LEVEL_ERROR,    T("Iterator function must have 2 params for the target and index") },
     {CMT_IterTargetType,        DEFAULT_LEVEL_ERROR,    T("Iterator target is incompatible with the iterator function") },
-    {CMT_IterIndexType,        DEFAULT_LEVEL_ERROR,    T("Iterator index type is incompatible with the iterator function") },
-    {CMT_IterItemNum,        DEFAULT_LEVEL_ERROR,    T("Iterator function returns less results than required") },
-    {CMT_IterFuncIndexType,        DEFAULT_LEVEL_ERROR,    T("Returned index is incompatible with decleared index in iterator function") },
-    {CMT_IterValueType,        DEFAULT_LEVEL_ERROR,    T("Returned value %d is incompatible with that decleared in 'for'") },
+    {CMT_IterIndexType,         DEFAULT_LEVEL_ERROR,    T("Iterator index type is incompatible with the iterator function") },
+    {CMT_IterItemNum,           DEFAULT_LEVEL_ERROR,    T("Iterator function returns less results than required") },
+    {CMT_IterFuncIndexType,     DEFAULT_LEVEL_ERROR,    T("Returned index is incompatible with decleared index in iterator function") },
+    {CMT_IterValueType,         DEFAULT_LEVEL_ERROR,    T("Returned value %d is incompatible with that decleared in 'for'") },
 
 
-    {CMT_SymbolRedefinition,        DEFAULT_LEVEL_ERROR,    T("Symbol '%s' redefinition with: %s(%d,%d)") },
+    {CMT_SymbolRedefinition,    DEFAULT_LEVEL_ERROR,    T("Symbol '%s' redefinition with: %s(%d,%d)") },
 
     
     {CMT_NilableAsIndex,        DEFAULT_LEVEL_ERROR,    T("Cannot use nilable expression as array index or map key") },
@@ -232,13 +232,13 @@ MsgDetailInfo MsgDetails[] = {
     {CMT_AssignNilToNonnilable, DEFAULT_LEVEL_ERROR,    T("Cannot assign 'nil' to non-nilable expression") },
     {CMT_UnwrapNonnilable,      DEFAULT_LEVEL_WARNING,    T("Unwrapping is not nessesary because the expression is already non-nilable") },
 
-    {CMT_NonnilableCoalescing,      DEFAULT_LEVEL_WARNING,    T("Coalescing non-nilable expression is unnessesary.") },
-    {CMT_NilableCoalescingNilable,      DEFAULT_LEVEL_ERROR,    T("Expression to be coalesced is still nilable") },
+    {CMT_NonnilableCoalescing,  DEFAULT_LEVEL_WARNING,    T("Coalescing non-nilable expression is unnessesary.") },
+    {CMT_NilableCoalescingNilable, DEFAULT_LEVEL_ERROR,    T("Expression to be coalesced is still nilable") },
     {CMT_NonnilableMember,      DEFAULT_LEVEL_MSG,    T("Non-nilable member '%s' is not initialized. Remember to initialize it in all constructors") },
 
-    {CMT_NotAcceptedNilable,      DEFAULT_LEVEL_WARNING,    T("This type identity does not accept nilable mark '?'. Processing as non-nilable") },
-    {CMT_DerefNilable,      DEFAULT_LEVEL_ERROR,    T("Attempt to dereference a nilable expression. Use '!' or '??' to unwrap") },
-   {CMT_CallNilable,      DEFAULT_LEVEL_ERROR,    T("Attempt to call a nilable function. Use '!' or '??' to unwrap") },
+    {CMT_NotAcceptedNilable,    DEFAULT_LEVEL_WARNING,    T("This type identity does not accept nilable mark '?'. Processing as non-nilable") },
+    {CMT_DerefNilable,          DEFAULT_LEVEL_ERROR,    T("Attempt to dereference a nilable expression. Use '!' or '??' to unwrap") },
+   {CMT_CallNilable,            DEFAULT_LEVEL_ERROR,    T("Attempt to call a nilable function. Use '!' or '??' to unwrap") },
     
 
 };

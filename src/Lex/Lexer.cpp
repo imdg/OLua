@@ -920,7 +920,7 @@ int Lexer::ReadHexChar()
     int Ch1 = Reader.NextChar();
     if(Ch1 == TR_EOF)
         return -1;
-    //if((CharFeature[Ch1] & CH_HEX_DIGIT) == 0)
+
     if(!CheckChFeature(Ch1, CH_HEX_DIGIT))
     {
         CM.Log(CMT_HexExpected, Reader.GetLine(), Reader.GetCol());
@@ -930,7 +930,7 @@ int Lexer::ReadHexChar()
     int Ch2 = Reader.NextChar();
     if(Ch2 == TR_EOF)
         return -1;
-    //if((CharFeature[Ch2] & CH_HEX_DIGIT) == 0)
+
     if(!CheckChFeature(Ch2, CH_HEX_DIGIT))
     {
         CM.Log(CMT_HexExpected, Reader.GetLine(), Reader.GetCol());
@@ -938,9 +938,28 @@ int Lexer::ReadHexChar()
     }
 
     return (Ch1 << 4) + Ch2;
+}
 
+int Lexer::ReadDigitEsc()
+{
+    int Ch = Reader.CurrChar();
+    int Val = Ch - C('0');
+    Ch = Reader.NextChar();
+    if(CheckChFeature(Ch, CH_DIGIT) == false)
+        return Ch;
+    Val = Val * 10 + Ch;
+    
+    Ch = Reader.NextChar();
+    if(CheckChFeature(Ch, CH_DIGIT) == false)
+        return Ch;
+    Val = Val * 10 + Ch;
+    Reader.NextChar();
 
-
+    if(Val > 0xFF)
+    {
+        CM.Log(CMT_DecimalEscTooLarge, Reader.GetLine(), Reader.GetCol());
+    }
+    return Val;
 }
 bool Lexer::ReadString(Token& tk, const TCHAR Quoater)
 {
@@ -954,8 +973,10 @@ bool Lexer::ReadString(Token& tk, const TCHAR Quoater)
     int Ch = Reader.NextChar();
     Reader.BeginNewToken();
     
+    bool NeedGoNext = true;
     while(Ch != Quoater)
     {
+        NeedGoNext = true;
         if(Ch == C('\\'))
         {
             Ch = Reader.NextChar();
@@ -970,6 +991,7 @@ bool Lexer::ReadString(Token& tk, const TCHAR Quoater)
             case C('v'): Str.AppendCh(C('\v')); break;
             case C('\"'): Str.AppendCh(C('\"')); break;
             case C('\''): Str.AppendCh(C('\'')); break;
+            case C('\\'): Str.AppendCh(C('\\')); break;
             case C('x'): 
                 Ch = ReadHexChar();
                 if(Ch == -1)
@@ -981,8 +1003,16 @@ bool Lexer::ReadString(Token& tk, const TCHAR Quoater)
             case C('u'): break; // to do 
             case C('z'): break; // to do
             default:
-                CM.Log(CMT_UnknowEscape, Reader.GetLine(), Reader.GetCol(), Ch);
-                return false;
+                if(CheckChFeature(Ch, CH_DIGIT))
+                {
+                    Ch = ReadDigitEsc();
+                    NeedGoNext = false;
+                }
+                else
+                {
+                    CM.Log(CMT_UnknowEscape, Reader.GetLine(), Reader.GetCol(), Ch);
+                    return false;
+                }
             }
 
             continue;
@@ -995,7 +1025,10 @@ bool Lexer::ReadString(Token& tk, const TCHAR Quoater)
         }
 
         Str.AppendCh(Ch);
-        Ch = Reader.NextChar();
+        if(NeedGoNext)
+            Ch = Reader.NextChar();
+        else
+            Ch = Reader.CurrChar();
     }
     Reader.NextChar();
     return true;

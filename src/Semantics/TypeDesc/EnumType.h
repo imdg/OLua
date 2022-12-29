@@ -17,6 +17,7 @@ namespace OL
 class AExpr;
 class AEnum;
 class AEnumItem;
+class DeclearAttributes;
 
 struct EnumTypeItem
 {
@@ -30,6 +31,7 @@ class EnumType : public TypeDescBase
 {
     DECLEAR_RTTI();
 public:
+    EnumType();
     virtual ~EnumType();
     void AddItem(SPtr<AEnumItem> Node);
     bool HasItem(OLString ItemName);
@@ -48,5 +50,7 @@ public:
     OLList<EnumTypeItem>    Items;
     OLString                Name;
     OLString                UniqueName;
+    WPtr<DeclearAttributes>         EnumAttrib;
+    bool                    IsReflection;
 };
 }

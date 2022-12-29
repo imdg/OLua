@@ -35,6 +35,7 @@ enum ClassMemberFlags
     CMF_Constructor = 1 << 5,
     CMF_Public      = 1 << 6,
     CMF_Protected   = 1 << 7,
+    CMF_Reserved    = 1 << 8    // Reserved members does not generate normal definitions. They are handled in other ways(Eg. __type_info)
 };
 
 RTTI_ENUM(ETypeValidation,

@@ -21,6 +21,8 @@ https://opensource.org/licenses/MIT.
 #include "TupleType.h"
 #include "LPClassLib.h"
 #include "LPBuiltInFuncInterp.h"
+#include "LPReflHelper.h"
+
 namespace OL
 {
 #define ASSERT_CHILD_NUM(index, count) OL_ASSERT((count) == (ContentStack.Count() - 1 - (index)))
@@ -44,6 +46,13 @@ OLString LuaPlainInterp::MakeEnumStaticTableName(SPtr<EnumType> Enum)
 {
     OLString Ret;
     Ret.Printf(T("__ES_%s_static"), Enum->UniqueName.CStr());
+    return Ret;
+}
+
+OLString LuaPlainInterp::MakeEnumStaticTypeInfoName(SPtr<EnumType> Enum)
+{
+    OLString Ret;
+    Ret.Printf(T("__ES_%s_static_type_info"), Enum->UniqueName.CStr());
     return Ret;
 }
 
@@ -125,6 +134,29 @@ SPtr<TextParagraph> LuaPlainInterp::MakeStandaloneStaticBlock()
     StaticBlock->IndentDec().NewLine();
 
     return StaticBlock;
+}
+
+OLString LuaPlainInterp::ConvertStringEsc(OLString Src)
+{
+    OLString Ret;
+    int Len = Src.Len();
+    for(int i = 0; i < Len; i++)
+    {
+        if(Src[i] == C('\a'))  Ret.Append(T("\\a"));
+        else if(Src[i] == C('\b'))  Ret.Append(T("\\b"));
+        else if(Src[i] == C('\f'))  Ret.Append(T("\\f"));
+        else if(Src[i] == C('\n'))  Ret.Append(T("\\n"));
+        else if(Src[i] == C('\r'))  Ret.Append(T("\\r"));
+        else if(Src[i] == C('\t'))  Ret.Append(T("\\t"));
+        else if(Src[i] == C('\v'))  Ret.Append(T("\\v"));
+        else if(Src[i] == C('\\'))  Ret.Append(T("\\\\"));
+        else if(Src[i] == C('\"'))  Ret.Append(T("\\\""));
+        else if(Src[i] == C('\''))  Ret.Append(T("\\\'"));
+        else
+            Ret.AppendCh(Src[i]);
+    }
+
+    return Ret;
 }
 
 // Add wrapping text if the type of expr itself does not math the type that the exper is used as
@@ -274,11 +306,11 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<AConstExpr> Node)
         break;   
     case IT_string:
         // to do: string modifiers
-        Text->AppendF(T("\"%s\""), Node->StrVal.CStr());
+        Text->AppendF(T("\"%s\""), ConvertStringEsc(Node->StrVal).CStr());
 
         break;   
     case IT_bool:
-        Text->AppendF(T("%s"), Node->BoolVal ? T("true") : T("false"));
+        Text->Append(Node->BoolVal ? T("true") : T("false"));
         break;   
     case IT_nil:
         Text->AppendF(T("nil"));
@@ -627,7 +659,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<ANormalCall> Node)
     int ParamCount = StackCount(Index) - 1;
     for (int i = 0; i < ParamCount; i++)
     {
-        if((i != 0) || NeedSelf == true)
+        if((i != 0) || NeedSelf == true || ConvertToCtor == true)
             Text->Append(T(", "));
         Text->Merge(FromTop(Index, i + 1));
     }
@@ -1649,8 +1681,8 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AEnum> Node)
     SPtr<FuncSigniture> OuterFunc = GetOuterFunc();
     if(OuterFunc == nullptr)
         SeperateStaticBlock = true;
-
-    StaticText->Indent().AppendF(T("%s = {"), MakeEnumStaticTableName(Enum).CStr() ).IndentInc();
+    OLString StaticTableName =  MakeEnumStaticTableName(Enum);
+    StaticText->Indent().AppendF(T("%s = {"), StaticTableName.CStr() ).IndentInc();
     for(int i = 0; i < Enum->Items.Count(); i++)
     {
         if(i != 0)
@@ -1662,6 +1694,10 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AEnum> Node)
     }
     StaticText->NewLine().IndentDec().Indent().Append(T("}")).NewLine();
 
+    if(Enum->IsReflection)
+    {
+        StaticText->Merge(LPReflHelper::BuildEnumType(Enum, false, OutText) );
+    }
 
     if (SeperateStaticBlock == false)
     {

@@ -25,6 +25,7 @@ RTTI_ENUM(ECompileMsgType,
     CMT_ExpectTypeIdentity,
     CMT_ExpectDotName,
     CMT_IncompleteBracket, // %d,%d   begin bracket (line, col)
+    CMT_DecimalEscTooLarge,
 
     CMT_NeedMacroName,
     CMT_MacroParamNeedName, 

@@ -102,12 +102,19 @@ void LPClassHelper::BuildDefinitionItems()
         if(Member.Type != Member_Variant)
             return true;
 
-        SPtr<TextParagraph> VarText = TextOwner.NewParagraph();
-        VarText->AppendF(T("[\"%s\"] = "), Member.Name.CStr()).Hold(T("__init_expr"));
-        if((Member.Flags & CMF_Static) == 0)
-            InstancedDefines.Add(DefinitionItem{VarText, Member.Name});
+        if(Member.Flags & CMF_Reserved)
+        {
+            OL_ASSERT(Member.Name == T("__type_info"));
+        }
         else
-            StaticDefines.Add(DefinitionItem{VarText, Member.Name});
+        {
+            SPtr<TextParagraph> VarText = TextOwner.NewParagraph();
+            VarText->AppendF(T("[\"%s\"] = "), Member.Name.CStr()).Hold(T("__init_expr"));
+            if((Member.Flags & CMF_Static) == 0)
+                InstancedDefines.Add(DefinitionItem{VarText, Member.Name});
+            else
+                StaticDefines.Add(DefinitionItem{VarText, Member.Name});
+        }
         return true;
     });
 
@@ -168,10 +175,22 @@ void LPClassHelper::BuildVTableItems()
     for(int i = 0; i < VirtualFuncs.Count(); i++)
     {
         SPtr<TextParagraph> ItemText = TextOwner.NewParagraph();
-        ItemText->AppendF(T("[\"%s\"] = %s")
-            , VirtualFuncs[i].FromClass->Name.CStr()
-            , MakeMemberName(VirtualFuncs[i].FromClass->Owner.Lock(), VirtualFuncs[i].FromClass, T("")).CStr() );
-        
+        if(VirtualFuncs[i].FromClass->Flags & CMF_Reserved)
+        {
+            OL_ASSERT(VirtualFuncs[i].FromClass->Name == T("__get_type_info"));
+            if(VirtualFuncs[i].FromClass->Name == T("__get_type_info"))
+            {
+                ItemText->AppendF(T("[\"__get_type_info\"] = function() return %s.__type_info end")
+                    , MakeStaticTableName(Class, T("")).CStr());
+            }
+            
+        }
+        else
+        {
+            ItemText->AppendF(T("[\"%s\"] = %s")
+                , VirtualFuncs[i].FromClass->Name.CStr()
+                , MakeMemberName(VirtualFuncs[i].FromClass->Owner.Lock(), VirtualFuncs[i].FromClass, T("")).CStr() );
+        }
         VTableItems.Add(ItemText);
     }
 }
@@ -490,7 +509,7 @@ SPtr<TextParagraph> LPClassHelper::BuildReflectionBlock()
 
     ReflText->Indent().Append(T("[\"__type_info\"] = "));
 
-    SPtr<TextParagraph> TypeInfoText = LPReflHelper::BuildClassRefl(Class, TextOwner);
+    SPtr<TextParagraph> TypeInfoText = LPReflHelper::BuildClassRefl(Class, false, TextOwner);
 
     ReflText->Merge(TypeInfoText).NewLine();
 

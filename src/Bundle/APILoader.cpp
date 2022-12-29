@@ -11,6 +11,7 @@ https://opensource.org/licenses/MIT.
 #include "Env.h"
 #include "BuildSetting.h"
 #include "ClassType.h"
+#include "Logger.h"
 
 namespace OL
 {
@@ -29,6 +30,7 @@ bool APILoader::LoadAPI(OLString APIPath, BuildSetting& Setting)
         {    
             SPtr<SourceFile> APISource = new SourceFile(Path);
             APIFiles.Add(APISource);
+           // WARNING(LogMisc,  T("Load olu API %s"), Path.NameFromPath().CStr());
         }
         else if(Ext == T(".LUA"))
         {
@@ -46,6 +48,7 @@ bool APILoader::LoadAPI(OLString APIPath, BuildSetting& Setting)
             NewInfo->Content = OLString::FromUTF8((const char*) Content);
 
             LuaAPIFiles.Add(NewInfo);
+            //WARNING(LogMisc,  T("Load lua API %s"), NewInfo->FileName.CStr());
             delete[] Content;
         }
     });

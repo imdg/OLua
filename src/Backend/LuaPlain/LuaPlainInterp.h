@@ -68,7 +68,11 @@ public:
     //OLString MakeSelfName(SPtr<ClassType> Class);
     //OLString MakeStaticTableName(SPtr<ClassType> Class, OLString Suffix);
 
-    OLString MakeEnumStaticTableName(SPtr<EnumType> Enum);
+    static OLString MakeEnumStaticTableName(SPtr<EnumType> Enum);
+    static OLString MakeEnumStaticTypeInfoName(SPtr<EnumType> Enum);
+
+    static OLString ConvertStringEsc(OLString Src);
+
 
     SPtr<TextParagraph> FromTop(int CurrIndex, int TopIndex);
     NodeGen&            NodeFromTop(int CurrIndex, int TopIndex);
