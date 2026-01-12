@@ -245,19 +245,19 @@ void SymbolScope::GenScopeName()
 {
     OLString LocalName;
     if (Owner->Is<ABlockStat>())
-        LocalName.AppendF(T("stat%d"), Block->Line.Line);
+        LocalName.AppendF(T("stat%d"), Block->SrcRange.Start.Line);
     else if (Owner->Is<AFuncDef>())
-        LocalName.AppendF(T("%s%d"), Owner->As<AFuncDef>()->Name.CStr(), Block->Line.Line);
+        LocalName.AppendF(T("%s%d"), Owner->As<AFuncDef>()->Name.CStr(), Block->SrcRange.Start.Line);
     else if (Owner->Is<ANormalMethod>())
-        LocalName.AppendF(T("%s%d"), Owner->As<ANormalMethod>()->Name.CStr(), Block->Line.Line);
+        LocalName.AppendF(T("%s%d"), Owner->As<ANormalMethod>()->Name.CStr(), Block->SrcRange.Start.Line);
     else if (Owner->Is<AClassContructor>())
-        LocalName.AppendF(T("ctor%d"), Block->Line.Line);
+        LocalName.AppendF(T("ctor%d"), Block->SrcRange.Start.Line);
     else if (Owner->Is<AFuncExpr>())
-        LocalName.AppendF(T("anonymous%d"), Block->Line.Line);
+        LocalName.AppendF(T("anonymous%d"), Block->SrcRange.Start.Line);
     else if (Owner->Is<AClass>())
-        LocalName.AppendF(T("%s%d"), Owner->As<AClass>()->ClassName.CStr(), Owner->Line.Line);
+        LocalName.AppendF(T("%s%d"), Owner->As<AClass>()->ClassName.CStr(), Owner->SrcRange.Start.Line);
     else if (Owner->Is<AInterface>())
-        LocalName.AppendF(T("%s%d"), Owner->As<AInterface>()->InterfaceName.CStr(), Owner->Line.Line);
+        LocalName.AppendF(T("%s%d"), Owner->As<AInterface>()->InterfaceName.CStr(), Owner->SrcRange.Start.Line);
     if(Parent != nullptr)
         ScopeName.Printf(T("%s_%s"),Parent->ScopeName.CStr(), LocalName.CStr() );
     else
@@ -271,14 +271,14 @@ void    SymbolScope::AddDecl(SPtr<Declearation> NewDecl, CompileMsg& CM)
     {
         if(Refs[i]->Type == Ref_UpVal && Refs[i]->Name == NewDecl->Name)
         {
-            CM.Log(CMT_UseBeforeDecl, Refs[i]->RefNode.Lock()->Line, NewDecl->Name.CStr());
+            CM.Log(CMT_UseBeforeDecl, Refs[i]->RefNode.Lock()->SrcRange, NewDecl->Name.CStr());
         }
     }
     for(int i = 0; i < Decls.Count(); i++)
     {
         if(Decls[i]->Name == NewDecl->Name)
         {
-            CM.Log(CMT_NameConflict, NewDecl->DeclNode.Lock()->Line, Decls[i]->Name.CStr(), Decls[i]->DeclNode.Lock()->Line.Line);
+            CM.Log(CMT_NameConflict, NewDecl->DeclNode.Lock()->SrcRange, Decls[i]->Name.CStr(), Decls[i]->DeclNode.Lock()->SrcRange.Start.Line);
         }
     }
 
@@ -588,7 +588,7 @@ void SymbolScope::FinishUnresolvedSymbol(OLList<SPtr<SymbolScope>>& InSymbolScop
                 {
                     if(IsType == false && (Phase == SRP_GlobalVar || Phase == SRP_Standalone))
                     {
-                        CM.Log(CMT_UnresolvedVar, Ref->RefNode->Line, Ref->Name.CStr());
+                        CM.Log(CMT_UnresolvedVar, Ref->RefNode->SrcRange, Ref->Name.CStr());
                     }
                 }
             }
@@ -708,7 +708,7 @@ void SymbolScope::ResolveTypes(CompileMsg& CM, ESymbolResolvePhase Phase)
                 if (CurrDecl->ValueTypeDesc == nullptr && (Phase == SRP_GlobalVar || Phase == SRP_Standalone))
                 {
                     // Error: Done
-                    CM.Log(CMT_NoType, CurrDecl->ValueTypeNode->Line,
+                    CM.Log(CMT_NoType, CurrDecl->ValueTypeNode->SrcRange,
                         CurrDecl->ValueTypeNode->As<ANamedType>()->TypeName.CStr() );
                     CurrDecl->ValueTypeDesc = IntrinsicType::CreateFromRaw(IT_any);
                 }

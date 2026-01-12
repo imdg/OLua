@@ -32,7 +32,7 @@ bool AConstExpr::IsConstant()
     return true;
 }
 
-AConstExpr* AConstExpr::NewInt(int64 Val, CodeLineInfo& Line)
+AConstExpr* AConstExpr::NewInt(int64 Val, SourceRange& Line)
 {
     AConstExpr* Ret = AstPool::New<AConstExpr>(Line);
     Ret->Type = IT_int;
@@ -40,7 +40,7 @@ AConstExpr* AConstExpr::NewInt(int64 Val, CodeLineInfo& Line)
     return Ret;
 }
 
-AConstExpr* AConstExpr::NewFlt(double Val, CodeLineInfo& Line)
+AConstExpr* AConstExpr::NewFlt(double Val, SourceRange& Line)
 {
     AConstExpr* Ret = AstPool::New<AConstExpr>(Line);
     Ret->Type = IT_float;
@@ -48,7 +48,7 @@ AConstExpr* AConstExpr::NewFlt(double Val, CodeLineInfo& Line)
     return Ret;
 }
 
-AConstExpr* AConstExpr::NewBool(bool Val, CodeLineInfo& Line)
+AConstExpr* AConstExpr::NewBool(bool Val, SourceRange& Line)
 {
     AConstExpr* Ret = AstPool::New<AConstExpr>(Line);
     Ret->Type = IT_bool;
@@ -56,7 +56,7 @@ AConstExpr* AConstExpr::NewBool(bool Val, CodeLineInfo& Line)
     return Ret;
 }
 
-AConstExpr* AConstExpr::NewStr(const TCHAR* Val, CodeLineInfo& Line)
+AConstExpr* AConstExpr::NewStr(const TCHAR* Val, SourceRange& Line)
 {
     AConstExpr* Ret = AstPool::New<AConstExpr>(Line);
     Ret->Type = IT_string;
@@ -64,7 +64,7 @@ AConstExpr* AConstExpr::NewStr(const TCHAR* Val, CodeLineInfo& Line)
     return Ret;
 }
 
-AConstExpr* AConstExpr::NewNil(CodeLineInfo& Line)
+AConstExpr* AConstExpr::NewNil(SourceRange& Line)
 {
     AConstExpr* Ret = AstPool::New<AConstExpr>(Line);
     Ret->Type = IT_nil;

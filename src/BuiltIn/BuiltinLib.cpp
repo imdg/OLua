@@ -114,13 +114,13 @@ public:
     //template< >
     void ParamImpl(EIntrinsicType Arg, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable)
     {
-        FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, IsNilable, CodeLineInfo::Zero );
+        FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, IsNilable, SourceRange::Zero );
     };
 
     //template< >
     void ParamImpl(SPtr<TypeDescBase> Arg, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable)
     {
-        FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, IsNilable, CodeLineInfo::Zero );
+        FuncSig->AddParam(Arg, IsConst, IsVariableParam,  IsOptional, IsNilable, SourceRange::Zero );
     };
 
     template<typename Ty >
@@ -175,19 +175,19 @@ public:
     template<typename Ty2>
     void ReturnImpl(EIntrinsicType Arg, bool IsNilable)
     {
-        FuncSig->AddReturn(Arg, IsNilable, CodeLineInfo::Zero );
+        FuncSig->AddReturn(Arg, IsNilable, SourceRange::Zero );
     };
 
     //template< >
     void ReturnImpl(EIntrinsicType Arg, bool IsNilable)
     {
-        FuncSig->AddReturn(Arg, IsNilable, CodeLineInfo::Zero );
+        FuncSig->AddReturn(Arg, IsNilable, SourceRange::Zero );
     };
 
     //template< >
     void ReturnImpl(SPtr<TypeDescBase> Arg, bool IsNilable)
     {
-        FuncSig->AddReturn(Arg, IsNilable, CodeLineInfo::Zero );
+        FuncSig->AddReturn(Arg, IsNilable, SourceRange::Zero );
     };
 
 };

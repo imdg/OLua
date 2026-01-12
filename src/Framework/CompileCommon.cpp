@@ -12,6 +12,21 @@ https://opensource.org/licenses/MIT.
 namespace OL
 {
 
+STRUCT_RTTI_BEGIN(CodePos)
+    RTTI_MEMBER(Pos)
+    RTTI_MEMBER(Line)
+    RTTI_MEMBER(Col)
+STRUCT_RTTI_END(CodePos)
+
+CodePos CodePos::Zero = {0, 0, 0};
+
+STRUCT_RTTI_BEGIN(SourceRange)
+    RTTI_STRUCT_MEMBER(Start, CodePos)
+    RTTI_STRUCT_MEMBER(End, CodePos)
+    RTTI_MEMBER(Flag)
+STRUCT_RTTI_END(SourceRange)
+
+SourceRange SourceRange::Zero = {CodePos::Zero, CodePos::Zero};
 
 STRUCT_RTTI_BEGIN(CodeLineInfo)
     RTTI_MEMBER(Line)

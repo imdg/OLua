@@ -16,6 +16,26 @@ enum LineFlag
 {
     LF_Break = 1
 };
+
+struct CodePos
+{
+    int Pos;
+    int Line;
+    int Col;
+    static CodePos Zero;
+};
+DECLEAR_STRUCT_RTTI(CodePos)
+
+
+struct SourceRange
+{
+    CodePos Start;
+    CodePos End;
+    uint Flag;
+    static SourceRange Zero;
+};
+DECLEAR_STRUCT_RTTI(SourceRange)
+
 struct CodeLineInfo
 {
     int Line;

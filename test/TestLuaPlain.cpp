@@ -35,15 +35,15 @@ public:
     {
         Vis.OnBeginVisitCallbacks.Add([&TypeDeri](SPtr<ABase> Node)
         { 
-            VERBOSE(LogTester, T("BeginVisit: %s (%d, %d)\n %s"), Node->GetType().Name, Node->Line.Line, Node->Line.Col, TypeDeri.GetDump().CStr()); 
+            VERBOSE(LogTester, T("BeginVisit: %s (%d, %d)\n %s"), Node->GetType().Name, Node->SrcRange.Start.Line, Node->SrcRange.Start.Col, TypeDeri.GetDump().CStr()); 
         });
         Vis.OnEndVisitCallbacks.Add([&TypeDeri](SPtr<ABase> Node)
         { 
-            VERBOSE(LogTester, T("EndVisit: %s (%d, %d)\n %s"), Node->GetType().Name, Node->Line.Line, Node->Line.Col, TypeDeri.GetDump().CStr()); 
+            VERBOSE(LogTester, T("EndVisit: %s (%d, %d)\n %s"), Node->GetType().Name, Node->SrcRange.Start.Line, Node->SrcRange.Start.Col, TypeDeri.GetDump().CStr()); 
         });
         Vis.OnVisitCallbacks.Add([&TypeDeri](SPtr<ABase> Node)
         { 
-            VERBOSE(LogTester, T("Visit: %s (%d, %d)\n %s"), Node->GetType().Name, Node->Line.Line, Node->Line.Col, TypeDeri.GetDump().CStr()); 
+            VERBOSE(LogTester, T("Visit: %s (%d, %d)\n %s"), Node->GetType().Name, Node->SrcRange.Start.Line, Node->SrcRange.Start.Col, TypeDeri.GetDump().CStr()); 
         });
     };
 
@@ -52,11 +52,11 @@ public:
         Vis.OnEndVisitFinishCallbacks.Add([&LuaPlain](SPtr<ABase> Node, EVisitStatus Status)
         {
             MemTextStream Stream;
-            Stream.WriteFormat(T("---OnEndVisitFinish Node:%s (%d,%d)\n"), Node->GetType().Name, Node->Line.Line, Node->Line.Col);
+            Stream.WriteFormat(T("---OnEndVisitFinish Node:%s (%d,%d)\n"), Node->GetType().Name, Node->SrcRange.Start.Line, Node->SrcRange.Start.Col);
             for(int i = 0; i < LuaPlain.ContentStack.Count(); i++)
             {
                 Stream.WriteFormat(T("    %d: %s(%d,%d) :"), i, LuaPlain.ContentStack[i].Node->GetType().Name
-                    , LuaPlain.ContentStack[i].Node->Line.Line, LuaPlain.ContentStack[i].Node->Line.Col);
+                    , LuaPlain.ContentStack[i].Node->SrcRange.Start.Line, LuaPlain.ContentStack[i].Node->SrcRange.Start.Col);
                 LuaPlain.OutText.WriteStreamFrom(Stream, LuaPlain.ContentStack[i].CurrText);
                 Stream.WriteText(T("\n"));
             }

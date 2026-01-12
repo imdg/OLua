@@ -265,7 +265,7 @@ void  CompileMsg::Reset()
 
 
 #define BASE_SIZE 512
-void CompileMsg::Log(ECompileMsgType msg, int Line, int Col, ...)
+void CompileMsg::Log(ECompileMsgType msg, int Line, int Col, int EndLine, int EndCol, ...)
 {
     MsgDetailInfo& CurrMsgDetail = MsgDetails[(int)msg];
     int Level = CurrMsgDetail.Level;
@@ -290,14 +290,26 @@ void CompileMsg::Log(ECompileMsgType msg, int Line, int Col, ...)
 
 
     va_list ap;
-    va_start(ap, Col);
+    va_start(ap, EndCol);
     t_vsnprintf(Buffer, BASE_SIZE, RealFormat, ap);
     va_end(ap);
 
     OLString FullText;
-    FullText.Printf(T("%s(%d,%d): %s: (%s) %s"), FileName.CStr(), Line, Col, MsgLevelTitle[Level]
+    if(EndLine >= 0 && EndCol >=0)
+    {
+        FullText.Printf(T("%s(%d,%d - %d,%d): %s: (%s) %s"), FileName.CStr(), Line, Col, EndLine, EndCol, MsgLevelTitle[Level]
         , TRTTIEnumInfo<ECompileMsgType>::GetEnumText((int)msg, EGF_ValueText)
         , Buffer );
+    }
+    else
+    {
+    
+        FullText.Printf(T("%s(%d,%d): %s: (%s) %s"), FileName.CStr(), Line, Col, MsgLevelTitle[Level]
+            , TRTTIEnumInfo<ECompileMsgType>::GetEnumText((int)msg, EGF_ValueText)
+            , Buffer );
+    }
+
+
     Logger::LogRaw(LogCompile, FullText.CStr());
 }
 void CompileMsg::OverrideMsgLevel(ECompileMsgType msg, int Level)

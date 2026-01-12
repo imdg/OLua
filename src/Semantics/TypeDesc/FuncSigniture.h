@@ -37,7 +37,7 @@ struct FuncParamDesc
     bool IsVariableParam;
     bool IsOptional;
     bool IsNilable;
-    CodeLineInfo Line;
+    SourceRange SrcRange;
 };
 DECLEAR_STRUCT_RTTI(FuncParamDesc)
 
@@ -47,7 +47,7 @@ struct FuncReturnDesc
     OLString UnresolvedTypeName;
     bool IsResolved;
     bool IsNilable;
-    CodeLineInfo Line;
+    SourceRange SrcRange;
 };
 DECLEAR_STRUCT_RTTI(FuncReturnDesc)
 
@@ -79,14 +79,13 @@ public:
     void SetUnresolvedThis(OLString InThisTypeName);
     void SetCtorOwner(SPtr<TypeDescBase> InCtorOwner);
 
-    void AddParam(OLString& UnresolvedName, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line);
-    void AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableParam, bool IsOptional,  bool IsNilable, CodeLineInfo& Line);
-    void AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVariableParam, bool IsOptional,  bool IsNilable, CodeLineInfo& Line);
+    void AddParam(OLString& UnresolvedName, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  SourceRange& SrcRange);
+    void AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableParam, bool IsOptional,  bool IsNilable, SourceRange& SrcRange);
+    void AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVariableParam, bool IsOptional,  bool IsNilable, SourceRange& SrcRange);
 
-    void AddReturn(SPtr<TypeDescBase> Type, bool IsNilable, CodeLineInfo& Line);
-    void AddReturn(OLString& UnresolvedName, bool IsNilable, CodeLineInfo& Line);
-    void AddReturn(EIntrinsicType Type, bool IsNilable,  CodeLineInfo& Line);
-
+    void AddReturn(SPtr<TypeDescBase> Type, bool IsNilable, SourceRange& SrcRange);
+    void AddReturn(OLString& UnresolvedName, bool IsNilable, SourceRange& SrcRange);
+    void AddReturn(EIntrinsicType Type, bool IsNilable,  SourceRange& SrcRange);
     void MakeUniqueReturn(SPtr<TupleType> EmptyTuple);
 
     bool IsParamDecl(AVarDecl* Node);

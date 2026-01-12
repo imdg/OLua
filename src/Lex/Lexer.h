@@ -145,10 +145,12 @@ struct Token
     int64 IntVal;
     double FltVal;
     OLString StrOrNameVal;
-    CodeLineInfo LineInfo;
 
-    void SetCurrLine(TokenReader& Reader);
-    void SetCurrLine(int Line, int Col);
+    SourceRange SrcRange;
+
+    void SetSrcRangeStart(TokenReader& Reader);
+    void SetSrcRangeEnd(TokenReader& Reader);
+
     void Reset();
 
     OLString ToString();
@@ -205,7 +207,7 @@ private:
 
     bool ReadPreprocesser();
     bool ReadDefine(MacroDefine& DefineInfo);
-    bool ExpandMacro(OLString Name, CodeLineInfo Line, int Level);
+    bool ExpandMacro(OLString Name, SourceRange Line, int Level);
     bool ReadMacroCallParam(OLLinkedList<Token>& TokenList, Token& Last, ETokenType EndMark1, ETokenType EndMark2, bool IncludeEndMark);
     bool CheckChFeature(TCHAR Ch, uint Feature);
     struct CondiCompileState

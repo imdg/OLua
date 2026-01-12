@@ -19,11 +19,11 @@ public:
     virtual EVisitStatus Accept(RecursiveVisitor * Vis);
     virtual bool IsConstant();
 
-    static AConstExpr* NewInt(int64 Val, CodeLineInfo& Line);
-    static AConstExpr* NewFlt(double Val, CodeLineInfo& Line);
-    static AConstExpr* NewBool(bool Val, CodeLineInfo& Line);
-    static AConstExpr* NewStr(const TCHAR* Val, CodeLineInfo& Line);
-    static AConstExpr* NewNil(CodeLineInfo& Line);
+    static AConstExpr* NewInt(int64 Val, SourceRange& Line);
+    static AConstExpr* NewFlt(double Val, SourceRange& Line);
+    static AConstExpr* NewBool(bool Val, SourceRange& Line);
+    static AConstExpr* NewStr(const TCHAR* Val, SourceRange& Line);
+    static AConstExpr* NewNil(SourceRange& Line);
     EIntrinsicType Type;
     int64      IntVal;
     double     FltVal;

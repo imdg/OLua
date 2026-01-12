@@ -19,7 +19,7 @@ public:
 
 
     bool IsParentOf(ABase* Child);
-    CodeLineInfo Line;
+    SourceRange SrcRange;
     WPtr<ABase> Parent;
 };
     

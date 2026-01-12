@@ -19,7 +19,7 @@ STRUCT_RTTI_END(PendingImport)
 
 STRUCT_RTTI_BEGIN(ExportDecl)
     RTTI_MEMBER(Name)
-    RTTI_STRUCT_MEMBER(Line, CodeLineInfo)
+    RTTI_STRUCT_MEMBER(SrcRange, SourceRange)
     RTTI_MEMBER(DeclFile, MF_External)
 STRUCT_RTTI_END(ExportDecl)
 
@@ -46,13 +46,13 @@ void SymbolLib::MatchFileTypes(SPtr<SourceFile> InputFile, OLList<SPtr<SourceFil
         }
         if(ExportTypeLib.Exists(Curr.Name))
         {
-            InputFile->CM.Log(CMT_SymbolRedefinition, Curr.Line, Curr.Name.CStr(), ExportTypeLib[Curr.Name].DeclFile->FileName.CStr()
-                , ExportTypeLib[Curr.Name].Line.Line, ExportTypeLib[Curr.Name].Line.Col);
+            InputFile->CM.Log(CMT_SymbolRedefinition, Curr.SrcRange, Curr.Name.CStr(), ExportTypeLib[Curr.Name].DeclFile->FileName.CStr()
+                , ExportTypeLib[Curr.Name].SrcRange.Start.Line, ExportTypeLib[Curr.Name].SrcRange.Start.Col);
         }
         else
         {
 
-            ExportTypeLib.Add(Curr.Name, ExportDecl{Curr.Name, Curr.Line, InputFile});
+            ExportTypeLib.Add(Curr.Name, ExportDecl{Curr.Name, Curr.SrcRange, InputFile});
             if(ImportTypeLib.Exists(Curr.Name))
             {
                 SPtr<PendingImport> CurrImport = ImportTypeLib[Curr.Name];
@@ -126,14 +126,14 @@ void SymbolLib::MatchFileVars(SPtr<SourceFile> InputFile, OLList<SPtr<SourceFile
 
         if(ExportVarLib.Exists(Curr.Name))
         {
-            InputFile->CM.Log(CMT_SymbolRedefinition, Curr.Line, Curr.Name.CStr()
-                , ExportTypeLib[Curr.Name].Line.Line, ExportVarLib[Curr.Name].Line.Col);
+            InputFile->CM.Log(CMT_SymbolRedefinition, Curr.SrcRange, Curr.Name.CStr()
+                , ExportTypeLib[Curr.Name].SrcRange.Start.Line, ExportVarLib[Curr.Name].SrcRange.Start.Col);
         }
 
         else
         {
             if(Curr.IsType == false)
-                ExportVarLib.Add(Curr.Name, ExportDecl{Curr.Name, Curr.Line, InputFile});
+                ExportVarLib.Add(Curr.Name, ExportDecl{Curr.Name, Curr.SrcRange, InputFile});
 
             if(ImportVarLib.Exists(Curr.Name))
             {

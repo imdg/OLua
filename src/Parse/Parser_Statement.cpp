@@ -69,7 +69,7 @@ AStat* Parser::Parse_Stat(bool AcceptGlobal)
         }
         else
         {
-            CM.Log(CMT_CannotDefineGlobal, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_CannotDefineGlobal, Lex.GetCurrent().SrcRange);
             return nullptr;
         }
     case TKK_alias:
@@ -91,7 +91,7 @@ AStat* Parser::Parse_While()
     Lex.Next();
 
     // Parse condition
-    CodeLineInfo CondBegin = Lex.GetCurrent().LineInfo;
+    SourceRange CondBegin = Lex.GetCurrent().SrcRange;
     AExpr* Cond = Parse_Expr();
     if(Cond == nullptr)
     {
@@ -102,19 +102,19 @@ AStat* Parser::Parse_While()
     // Validate 'do'
     if(Lex.GetCurrent().Tk != TKK_do)
     {
-        CM.Log(CMT_WhileMissingDo, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_WhileMissingDo, Lex.GetCurrent().SrcRange);
         AstPool::Delete(Cond);
         return nullptr;
     }
     Lex.Next();
 
     // Save the beginning line for error reporting
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
 
     // Parse inside statements of while-loop
-    AWhile* WhileStat = AstPool::New<AWhile>(Lex.GetCurrent().LineInfo);
+    AWhile* WhileStat = AstPool::New<AWhile>(Lex.GetCurrent().SrcRange);
 
-    CodeLineInfo BlockBegin = Lex.GetCurrent().LineInfo;
+    SourceRange BlockBegin = Lex.GetCurrent().SrcRange;
     ABlock* Block = Parse_Block(false);
     if(Block == nullptr)
     {
@@ -140,8 +140,8 @@ AStat* Parser::Parse_While()
 
 ABlock* Parser::Parse_Block(bool AcceptGlobal)
 {
-    CodeLineInfo BlockBegin = Lex.GetCurrent().LineInfo;
-    ABlock* Block = AstPool::New<ABlock>(Lex.GetCurrent().LineInfo);
+    SourceRange BlockBegin = Lex.GetCurrent().SrcRange;
+    ABlock* Block = AstPool::New<ABlock>(Lex.GetCurrent().SrcRange);
     if(false == Helper_ParseBlock(Block->Stats, AcceptGlobal))
     {
         AstPool::Delete(Block);
@@ -159,8 +159,8 @@ AStat* Parser::Parse_If()
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_if);
     
     // Save beginning line for error reporting
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
-    AIfStat* Ret = AstPool::New<AIfStat>(Lex.GetCurrent().LineInfo);
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
+    AIfStat* Ret = AstPool::New<AIfStat>(Lex.GetCurrent().SrcRange);
 
     Lex.Next();
 
@@ -178,11 +178,11 @@ AStat* Parser::Parse_If()
     {
         AstPool::Delete(Cond);
         AstPool::Delete(Ret);
-        CM.Log(CMT_IfMissingThen, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_IfMissingThen, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
     Lex.Next();
-    CodeLineInfo BlockBegin = Lex.GetCurrent().LineInfo;
+    SourceRange BlockBegin = Lex.GetCurrent().SrcRange;
     ABlock* MainBlock = Parse_Block(false);
     if(MainBlock == nullptr)
     {
@@ -212,7 +212,7 @@ AStat* Parser::Parse_If()
     // Parse all 'elseif' blocks
     while(Lex.GetCurrent().Tk == TKK_elseif)
     {
-        BeginLine = Lex.GetCurrent().LineInfo;
+        BeginLine = Lex.GetCurrent().SrcRange;
 
         Lex.Next();
 
@@ -231,14 +231,14 @@ AStat* Parser::Parse_If()
         {
             AstPool::Delete(ElseIfCond);
             AstPool::Delete(Ret);
-            CM.Log(CMT_ElseIfMissingThen, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_ElseIfMissingThen, Lex.GetCurrent().SrcRange);
             return nullptr;
         }
         Lex.Next();
 
         ElseIfBlockInfo& EI = Ret->ElseIfBlocks.AddConstructed();
         EI.Condition = ElseIfCond;
-        BlockBegin = Lex.GetCurrent().LineInfo;
+        BlockBegin = Lex.GetCurrent().SrcRange;
         // Parse statements in this 'elseif'
 
         ABlock* ElseIfBlock = Parse_Block(false);
@@ -267,7 +267,7 @@ AStat* Parser::Parse_If()
     }
 
     // Have not return yet. Must be a final 'else' block
-    BeginLine = Lex.GetCurrent().LineInfo;
+    BeginLine = Lex.GetCurrent().SrcRange;
     Lex.Next();
     ABlock* ElseBlock = Parse_Block(false);
     if(ElseBlock == nullptr)
@@ -299,7 +299,7 @@ AStat* Parser::Parse_For()
     Lex.Next();
 
     // Parse the first loop variant
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
     AVarDecl* FirstDecl = Parse_VarDecl(false);
     if(FirstDecl == nullptr)
     {
@@ -326,11 +326,11 @@ AStat* Parser::Parse_ForNum(AVarDecl* FirstDecl)
     OL_ASSERT(Lex.GetCurrent().Tk == TKS_assign);
     Lex.Next();
 
-    AForNum* ForNum = AstPool::New<AForNum>(Lex.GetCurrent().LineInfo);
+    AForNum* ForNum = AstPool::New<AForNum>(Lex.GetCurrent().SrcRange);
     ForNum->VarDecl = FirstDecl;
 
     // Parse the initial value
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
     AExpr* From = Parse_Expr();
     if(From == nullptr)
     {
@@ -344,7 +344,7 @@ AStat* Parser::Parse_ForNum(AVarDecl* FirstDecl)
     if(Lex.GetCurrent().Tk != TKS_comma)
     {
         AstPool::Delete(ForNum);
-        CM.Log(CMT_ForNeedsComma, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_ForNeedsComma, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
     Lex.Next();
@@ -377,14 +377,14 @@ AStat* Parser::Parse_ForNum(AVarDecl* FirstDecl)
     if(Lex.GetCurrent().Tk != TKK_do)
     {
         AstPool::Delete(ForNum);
-        CM.Log(CMT_ForNeedsDo, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_ForNeedsDo, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
 
     Lex.Next();
 
     // Parse the loop body
-    BeginLine = Lex.GetCurrent().LineInfo;
+    BeginLine = Lex.GetCurrent().SrcRange;
     ABlock* Block = Parse_Block(false);
     if(Block == nullptr)
     {
@@ -396,7 +396,7 @@ AStat* Parser::Parse_ForNum(AVarDecl* FirstDecl)
     if(Lex.GetCurrent().Tk != TKK_end)
     {
         AstPool::Delete(ForNum);
-        CM.Log(CMT_ForNeedsEnd, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_ForNeedsEnd, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
     Lex.Next();
@@ -406,10 +406,10 @@ AStat* Parser::Parse_ForNum(AVarDecl* FirstDecl)
 // forlist -> vardecl{, vardecl} in exprlist do block end
 AStat* Parser::Parse_ForList(AVarDecl* FirstDecl)
 {
-    AForList* ForList = AstPool::New<AForList>(Lex.GetCurrent().LineInfo);
+    AForList* ForList = AstPool::New<AForList>(Lex.GetCurrent().SrcRange);
     ForList->VarList.Add(FirstDecl);
 
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
     // Parse the variant declearations, sep by ','
     while(Lex.GetCurrent().Tk == TKS_comma)
     {
@@ -428,7 +428,7 @@ AStat* Parser::Parse_ForList(AVarDecl* FirstDecl)
     if(Lex.GetCurrent().Tk != TKK_in)
     {
         AstPool::Delete(ForList);
-        CM.Log(CMT_ForNeedsIn, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_ForNeedsIn, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
 
@@ -449,13 +449,13 @@ AStat* Parser::Parse_ForList(AVarDecl* FirstDecl)
     if(Lex.GetCurrent().Tk != TKK_do)
     {
         AstPool::Delete(ForList);
-        CM.Log(CMT_ForNeedsDo, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_ForNeedsDo, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
     Lex.Next();
 
     // Parse the loop body
-    BeginLine = Lex.GetCurrent().LineInfo;
+    BeginLine = Lex.GetCurrent().SrcRange;
     ABlock* Block = Parse_Block(false);
     if(Block == nullptr)
     {
@@ -468,7 +468,7 @@ AStat* Parser::Parse_ForList(AVarDecl* FirstDecl)
     if(Lex.GetCurrent().Tk != TKK_end)
     {
         AstPool::Delete(ForList);
-        CM.Log(CMT_ForNeedsEnd, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_ForNeedsEnd, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
     Lex.Next();
@@ -481,8 +481,8 @@ AStat* Parser::Parse_Repeat()
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_repeat);
     Lex.Next();
 
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
-    ARepeat* Repeat = AstPool::New<ARepeat>(Lex.GetCurrent().LineInfo);
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
+    ARepeat* Repeat = AstPool::New<ARepeat>(Lex.GetCurrent().SrcRange);
 
     // Parse the loop body first
     ABlock* Block = Parse_Block(false);
@@ -498,7 +498,7 @@ AStat* Parser::Parse_Repeat()
     if(Lex.GetCurrent().Tk != TKK_until)
     {
         AstPool::Delete(Repeat);
-        CM.Log(CMT_RepeatNeedsUntil, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_RepeatNeedsUntil, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
 
@@ -525,10 +525,10 @@ AVarDecl* Parser::Parse_VarDecl(bool AcceptVariableParam)
     
     if(Curr.Tk != TK_name && !(AcceptVariableParam && Curr.Tk == TKS_dot3 ))
     {
-        CM.Log(CMT_NeedVarName, Curr.LineInfo);
+        CM.Log(CMT_NeedVarName, Curr.SrcRange);
         return nullptr;
     }
-    AVarDecl* Decl = AstPool::New<AVarDecl>(Curr.LineInfo);
+    AVarDecl* Decl = AstPool::New<AVarDecl>(Curr.SrcRange);
     if(Curr.Tk == TK_name)
         Decl->VarName = Curr.StrOrNameVal;
     else
@@ -551,7 +551,7 @@ AVarDecl* Parser::Parse_VarDecl(bool AcceptVariableParam)
         if(Decl->VarType == nullptr)
         {
             AstPool::Delete(Decl);
-            CM.Log(CMT_NeedTypeName, TypeToken.LineInfo);
+            CM.Log(CMT_NeedTypeName, TypeToken.SrcRange);
             return nullptr;
         }
         //Lex.Next();
@@ -559,7 +559,7 @@ AVarDecl* Parser::Parse_VarDecl(bool AcceptVariableParam)
     else
     {
         // No type specified, 
-        AIntrinsicType* AnyType = AstPool::New<AIntrinsicType>(Lex.GetCurrent().LineInfo);
+        AIntrinsicType* AnyType = AstPool::New<AIntrinsicType>(Lex.GetCurrent().SrcRange);
         AnyType->Type = IT_any;
         AnyType->IsImplicitAny = true;
         Decl->VarType = AnyType;
@@ -588,7 +588,7 @@ AStat* Parser::Parse_Extern()
             return Class;
         }
     }
-    CM.Log(CMT_ExternDefError, Lex.GetCurrent().LineInfo);
+    CM.Log(CMT_ExternDefError, Lex.GetCurrent().SrcRange);
     return nullptr;
 }
 
@@ -619,7 +619,7 @@ AStat* Parser::Parse_FuncDef(bool IsExtern)
         Token& Curr = Lex.GetCurrent();
         if(Lex.GetCurrent().Tk != TK_name)
         {
-            CM.Log(CMT_FuncNeedName, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_FuncNeedName, Lex.GetCurrent().SrcRange);
             if(Attrib)
                 AstPool::Delete(Attrib);
             return nullptr;
@@ -646,7 +646,7 @@ AStat* Parser::Parse_FuncDef(bool IsExtern)
         Token& FinalName = Lex.Next();
         if(FinalName.Tk != TK_name)
         {
-            CM.Log(CMT_FuncNeedName, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_FuncNeedName, Lex.GetCurrent().SrcRange);
             if(Attrib)
                 AstPool::Delete(Attrib);
             return nullptr;
@@ -661,19 +661,19 @@ AStat* Parser::Parse_FuncDef(bool IsExtern)
     {
         if(i == 0)
         {
-            Owner = AstPool::New<AVarRef>(Lex.GetCurrent().LineInfo);
+            Owner = AstPool::New<AVarRef>(Lex.GetCurrent().SrcRange);
             Owner->As<AVarRef>()->VarName = OwnerName[i];
         }
         else
         {
-            ADotMember* NewOwner = AstPool::New<ADotMember>(Lex.GetCurrent().LineInfo);
+            ADotMember* NewOwner = AstPool::New<ADotMember>(Lex.GetCurrent().SrcRange);
             NewOwner->Target = Owner;
             NewOwner->Field = OwnerName[i];
             Owner = NewOwner;
         }
     }
 
-    AFuncDef* Ret = AstPool::New<AFuncDef>(Lex.GetCurrent().LineInfo);
+    AFuncDef* Ret = AstPool::New<AFuncDef>(Lex.GetCurrent().SrcRange);
     Ret->Owner = Owner;
     Ret->NeedSelf = NeedSelf;
     Ret->Name = FuncName;
@@ -681,7 +681,7 @@ AStat* Parser::Parse_FuncDef(bool IsExtern)
     Ret->Attrib = Attrib;
     
     // Parse the function body
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
     
     AFuncBody* Body = Parse_FuncBody(IsExtern);
     if(Body == nullptr)
@@ -700,8 +700,8 @@ AStat* Parser::Parse_FuncDef(bool IsExtern)
 // typelist -> type | '(' type {, type} ')'
 AFuncBody* Parser::Parse_FuncBody(bool IsAbstract)
 {
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
-    AFuncBody *Ret = AstPool::New<AFuncBody>(Lex.GetCurrent().LineInfo);
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
+    AFuncBody *Ret = AstPool::New<AFuncBody>(Lex.GetCurrent().SrcRange);
 
     if(false == Helper_ParseFuncParam(Ret->Params))
     {
@@ -721,7 +721,7 @@ AFuncBody* Parser::Parse_FuncBody(bool IsAbstract)
     };
 
     Ret->IsDeclearOnly = IsAbstract;
-    BeginLine = Lex.GetCurrent().LineInfo;
+    BeginLine = Lex.GetCurrent().SrcRange;
     // Parse the function body
     if (IsAbstract == false)
     {
@@ -738,7 +738,7 @@ AFuncBody* Parser::Parse_FuncBody(bool IsAbstract)
         // Validate the final 'end'
         if (Lex.GetCurrent().Tk != TKK_end)
         {
-            CM.Log(CMT_FuncMissingEnd, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_FuncMissingEnd, Lex.GetCurrent().SrcRange);
             AstPool::Delete(Ret);
             return nullptr;
         }
@@ -751,7 +751,7 @@ ATypeIdentity*      Parser::Parse_FuncType(bool AcceptNilable)
 {
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_function);
     Lex.Next();
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
 
     bool IsArray = false;
     if(Lex.GetCurrent().Tk == TKS_lbracket)
@@ -759,7 +759,7 @@ ATypeIdentity*      Parser::Parse_FuncType(bool AcceptNilable)
         Lex.Next();
         if(Lex.GetCurrent().Tk != TKS_rbracket)
         {
-            CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().SrcRange);
             return nullptr;
         }
         Lex.Next();
@@ -771,13 +771,13 @@ ATypeIdentity*      Parser::Parse_FuncType(bool AcceptNilable)
     if(Lex.GetCurrent().Tk == TKS_question)
     {
         if(AcceptNilable == false)
-            CM.Log(CMT_NotAcceptedNilable, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_NotAcceptedNilable, Lex.GetCurrent().SrcRange);
         else
             IsNilable = true;
         Lex.Next();
     }
 
-    AFuncType *Ret = AstPool::New<AFuncType>(Lex.GetCurrent().LineInfo);
+    AFuncType *Ret = AstPool::New<AFuncType>(Lex.GetCurrent().SrcRange);
     Ret->IsNilable = IsNilable;
     if(false  == Helper_ParseFuncParam(Ret->Params))
     {
@@ -816,7 +816,7 @@ bool Parser::Helper_ParseFuncParam(OLList<SPtr<AVarDecl>>& ParamList)
     // To parse the param list, validate '(' first
     if(Lex.GetCurrent().Tk != TKS_lparenthese)
     {
-        CM.Log(CMT_FuncNeedsParam, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_FuncNeedsParam, Lex.GetCurrent().SrcRange);
         return false;
     }
     Lex.Next();
@@ -826,7 +826,7 @@ bool Parser::Helper_ParseFuncParam(OLList<SPtr<AVarDecl>>& ParamList)
     {
         if (false == Helper_ParseVarDeclList(ParamList, true))
         {
-            CM.Log(CMT_FailFuncParamDecl, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_FailFuncParamDecl, Lex.GetCurrent().SrcRange);
             return false;
         }
     }
@@ -834,7 +834,7 @@ bool Parser::Helper_ParseFuncParam(OLList<SPtr<AVarDecl>>& ParamList)
     // Finish param list, validate the ')'
     if (Lex.GetCurrent().Tk != TKS_rparenthese)
     {
-        CM.Log(CMT_FuncParamMissingRP, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_FuncParamMissingRP, Lex.GetCurrent().SrcRange);
         return false;
     }
     return true;
@@ -848,12 +848,12 @@ bool Parser::Helper_ParseFuncRet(OLList<SPtr<ATypeIdentity>>& ReturnType)
         Lex.Next();
         if(false == Helper_ParseTypeList(ReturnType))
         {
-            CM.Log(CMT_FailFuncRetType, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_FailFuncRetType, Lex.GetCurrent().SrcRange);
             return false;
         }
         if(Lex.GetCurrent().Tk != TKS_rparenthese)
         {
-            CM.Log(CMT_FuncTypeMissingRB, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_FuncTypeMissingRB, Lex.GetCurrent().SrcRange);
             return false;
         }
         Lex.Next();
@@ -864,7 +864,7 @@ bool Parser::Helper_ParseFuncRet(OLList<SPtr<ATypeIdentity>>& ReturnType)
         ATypeIdentity* RetType = Parse_TypeIdentity(true);
         if(RetType == nullptr)
         {
-            CM.Log(CMT_NeedTypeName, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_NeedTypeName, Lex.GetCurrent().SrcRange);
             return false;
         }
 
@@ -886,7 +886,7 @@ AStat* Parser::Parse_ExprStat()
     // PS: Function call is an L-value that returns references can be assigned to
     if(First->IsLValue() == false)
     {
-        CM.Log(CMT_NeedLValue, First->Line);
+        CM.Log(CMT_NeedLValue, First->SrcRange);
         AstPool::Delete(First);
         return nullptr;
     }
@@ -900,13 +900,13 @@ AStat* Parser::Parse_ExprStat()
     // Sole ACall is an expr, should be wrapped in a ACallStat which is a AStat
     if(First->Is<ACall>())
     {
-        ACallStat* CallStat = AstPool::New<ACallStat>(First->Line);
+        ACallStat* CallStat = AstPool::New<ACallStat>(First->SrcRange);
         CallStat->CallExpr = First->As<ACall>();
         return CallStat;
     }
 
     // Other types of expr should not be seen here
-    CM.Log(CMT_UnknownStat, First->Line);
+    CM.Log(CMT_UnknownStat, First->SrcRange);
     return nullptr;
 }
 
@@ -915,7 +915,7 @@ AStat* Parser::Parse_ExprStat()
 AStat* Parser::Parse_Assignment(AExpr* FirstExpr)
 {
     // Parse all left expr
-    AAssignment* Ret = AstPool::New<AAssignment>(Lex.GetCurrent().LineInfo);
+    AAssignment* Ret = AstPool::New<AAssignment>(Lex.GetCurrent().SrcRange);
     Ret->LeftExprs.Add(SPtr<AExpr>(FirstExpr));
     while(Lex.GetCurrent().Tk == TKS_comma)
     {
@@ -932,7 +932,7 @@ AStat* Parser::Parse_Assignment(AExpr* FirstExpr)
     if(Lex.GetCurrent().Tk != TKS_assign)
     {
         AstPool::Delete(Ret);
-        CM.Log(CMT_AssignNeedsEq, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_AssignNeedsEq, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
     Lex.Next();
@@ -941,7 +941,7 @@ AStat* Parser::Parse_Assignment(AExpr* FirstExpr)
     if(false == Helper_ParseExprList(Ret->RightExprs))
     {
         AstPool::Delete(Ret);
-        CM.Log(CMT_AssignNeedsExpr, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_AssignNeedsExpr, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
     return Ret;
@@ -953,7 +953,7 @@ AStat* Parser::Parse_Return()
 {
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_return);
     Lex.Next();
-    AReturn* Ret = AstPool::New<AReturn>(Lex.GetCurrent().LineInfo);
+    AReturn* Ret = AstPool::New<AReturn>(Lex.GetCurrent().SrcRange);
     Token Curr = Lex.GetCurrent();
     
     // return stat only exist at the end of a block
@@ -970,7 +970,7 @@ AStat* Parser::Parse_Return()
         return Ret;
     else
     {
-        CM.Log(CMT_LastReturn, Curr.LineInfo);
+        CM.Log(CMT_LastReturn, Curr.SrcRange);
         AstPool::Delete(Ret);
         return nullptr;
     }
@@ -984,10 +984,10 @@ AStat* Parser::Parse_Lable()
     Lex.Next();
     if(Lex.GetCurrent().Tk != TK_name)
     {
-        CM.Log(CMT_LableNeedName, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_LableNeedName, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
-    ALabel* Ret = AstPool::New<ALabel>(Lex.GetCurrent().LineInfo);
+    ALabel* Ret = AstPool::New<ALabel>(Lex.GetCurrent().SrcRange);
     Ret->Name = Lex.GetCurrent().StrOrNameVal;
     Lex.Next();
     return Ret;
@@ -997,7 +997,7 @@ AStat* Parser::Parse_Lable()
 AStat* Parser::Parse_Break()
 {
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_break);
-    ABreak* Ret = AstPool::New<ABreak>(Lex.GetCurrent().LineInfo);
+    ABreak* Ret = AstPool::New<ABreak>(Lex.GetCurrent().SrcRange);
     Lex.Next();
     return Ret;
 }
@@ -1009,11 +1009,11 @@ AStat* Parser::Parse_Goto()
     Lex.Next();
     if(Lex.GetCurrent().Tk != TK_name)
     {
-        CM.Log(CMT_GotoNeedName, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_GotoNeedName, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
     Lex.Next();
-    AGoto* Ret = AstPool::New<AGoto>(Lex.GetCurrent().LineInfo);
+    AGoto* Ret = AstPool::New<AGoto>(Lex.GetCurrent().SrcRange);
     Ret->Label = Lex.GetCurrent().StrOrNameVal;
     return Ret;
 }
@@ -1025,7 +1025,7 @@ AStat* Parser::Parse_Local()
     Lex.Next();
 
     // Parse the variant declearation
-    ALocal* Ret = AstPool::New<ALocal>(Lex.GetCurrent().LineInfo);
+    ALocal* Ret = AstPool::New<ALocal>(Lex.GetCurrent().SrcRange);
     while(true)
     {
         AVarDecl* Decl = Parse_VarDecl(false);
@@ -1085,7 +1085,7 @@ AStat* Parser::Parse_Global()
     Lex.Next();
 
     // Parse the variant declearation
-    AGlobal* Ret = AstPool::New<AGlobal>(Lex.GetCurrent().LineInfo);
+    AGlobal* Ret = AstPool::New<AGlobal>(Lex.GetCurrent().SrcRange);
     while(true)
     {
         AVarDecl* Decl = Parse_VarDecl(false);
@@ -1143,7 +1143,7 @@ AAttribute* Parser::Parse_Attribute()
     OL_ASSERT(Lex.GetCurrent().Tk == TKS_lbracket);
     Lex.Next();
 
-    AAttribute* Attrib = AstPool::New<AAttribute>(Lex.GetCurrent().LineInfo);
+    AAttribute* Attrib = AstPool::New<AAttribute>(Lex.GetCurrent().SrcRange);
     if(Lex.GetCurrent().Tk == TKS_rbracket)
         return Attrib;
 
@@ -1151,7 +1151,7 @@ AAttribute* Parser::Parse_Attribute()
     {
         if(Lex.GetCurrent().Tk != TK_name)
         {
-            CM.Log(CMT_ExpectAttribName, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_ExpectAttribName, Lex.GetCurrent().SrcRange);
             AstPool::Delete(Attrib);
             return nullptr;
         }
@@ -1161,7 +1161,7 @@ AAttribute* Parser::Parse_Attribute()
 
         if(Lex.GetCurrent().Tk != TKS_assign)
         {
-            CM.Log(CMT_AttribSytexErr, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_AttribSytexErr, Lex.GetCurrent().SrcRange);
             AstPool::Delete(Attrib);
             return nullptr;
         }
@@ -1189,7 +1189,7 @@ AAttribute* Parser::Parse_Attribute()
             break;                                    
         default:
             {
-                CM.Log(CMT_AttribValueErr, Lex.GetCurrent().LineInfo);
+                CM.Log(CMT_AttribValueErr, Lex.GetCurrent().SrcRange);
                 AstPool::Delete(Attrib);
                 return nullptr;
             }
@@ -1209,7 +1209,7 @@ AAttribute* Parser::Parse_Attribute()
         }
         else
         {
-            CM.Log(CMT_AttribSytexErr, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_AttribSytexErr, Lex.GetCurrent().SrcRange);
             AstPool::Delete(Attrib);
             return nullptr;
         }
@@ -1224,12 +1224,12 @@ AAttribute* Parser::Parse_Attribute()
 AAlias* Parser::Parse_Alias()
 {
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_alias);
-    CodeLineInfo BegiLine = Lex.GetCurrent().LineInfo;
+    SourceRange BegiLine = Lex.GetCurrent().SrcRange;
     Lex.Next();
 
     if(Lex.GetCurrent().Tk != TK_name)
     {
-        CM.Log(CMT_NeedAliasName, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_NeedAliasName, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
 
@@ -1239,7 +1239,7 @@ AAlias* Parser::Parse_Alias()
     Lex.Next();
     if(Lex.GetCurrent().Tk != TKK_as)
     {
-        CM.Log(CMT_AliasTypeNeeded, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_AliasTypeNeeded, Lex.GetCurrent().SrcRange);
         AstPool::Delete(Ret);
         return nullptr;
     }
@@ -1312,7 +1312,7 @@ bool Parser::Helper_ParseVarDeclList(OLList < SPtr<AVarDecl> >& DeclList, bool A
         {
             if(VariableParamSeen)
             {
-                CM.Log(CMT_VariableParamOrder, Decl->Line);
+                CM.Log(CMT_VariableParamOrder, Decl->SrcRange);
                 AstPool::Delete(Decl);
                 return false;
             }
@@ -1335,7 +1335,7 @@ bool Parser::Helper_ParseVarDeclList(OLList < SPtr<AVarDecl> >& DeclList, bool A
     {
         if(Lex.GetCurrent().Tk != TKS_rbracket)
         {
-            CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().SrcRange);
             return false;
         }
         else
@@ -1354,7 +1354,7 @@ bool Parser::Helper_ParseTypeList(OLList<SPtr<ATypeIdentity> >& TypeList)
         ATypeIdentity* NewType = Parse_TypeIdentity(true);
         if(NewType == nullptr)
         {
-            CM.Log(CMT_NeedTypeName, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_NeedTypeName, Lex.GetCurrent().SrcRange);
             return false;
         }
         TypeList.Add(NewType);

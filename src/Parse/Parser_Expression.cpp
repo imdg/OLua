@@ -44,7 +44,7 @@ AExpr* Parser::Parse_BinOpSubexpr()
 {
 
     // For convinience, merge to expr with an operator
-    auto MergeSubexpr = [](AExpr *First, AExpr *Second, EBinOp Op, CodeLineInfo &LineInfo) -> AExpr *
+    auto MergeSubexpr = [](AExpr *First, AExpr *Second, EBinOp Op, SourceRange &SrcRange) -> AExpr *
     { 
         if (First->Is<ASubexpr>())
         {
@@ -62,7 +62,7 @@ AExpr* Parser::Parse_BinOpSubexpr()
                 }
             }
         }
-        ASubexpr *Subexp = AstPool::New<ASubexpr>(LineInfo);
+        ASubexpr *Subexp = AstPool::New<ASubexpr>(SrcRange);
         Subexp->AddOperand(BO_None, First);
         Subexp->AddOperand(Op, Second);
         return Subexp;
@@ -76,7 +76,7 @@ AExpr* Parser::Parse_BinOpSubexpr()
     AExpr* Exp = Parse_UniOpSubexpr();
     if(!Exp)
     {
-        CM.Log(CMT_FailUniOpSubexpr, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_FailUniOpSubexpr, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
 
@@ -123,7 +123,7 @@ AExpr* Parser::Parse_BinOpSubexpr()
                     AExpr *Top2 = ExpStack.Top();
                     ExpStack.Pop();
 
-                    AExpr *NewExp = MergeSubexpr(Top2, Top1, CurrTopInfo.Op, Top1->Line);
+                    AExpr *NewExp = MergeSubexpr(Top2, Top1, CurrTopInfo.Op, Top1->SrcRange);
                     ExpStack.Add(NewExp);
 
                     OpStack.Pop();
@@ -136,7 +136,7 @@ AExpr* Parser::Parse_BinOpSubexpr()
         Exp = Parse_UniOpSubexpr();
         if(Exp == nullptr)
         {
-            CM.Log(CMT_FailUniOpSubexpr, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_FailUniOpSubexpr, Lex.GetCurrent().SrcRange);
             return nullptr;
         }
         ExpStack.Add(Exp);
@@ -154,7 +154,7 @@ AExpr* Parser::Parse_BinOpSubexpr()
         AExpr *Top2 = ExpStack.Top();
         ExpStack.Pop();
 
-        AExpr *NewExp = MergeSubexpr(Top2, Top1, CurrTop, Top1->Line);
+        AExpr *NewExp = MergeSubexpr(Top2, Top1, CurrTop, Top1->SrcRange);
         ExpStack.Add(NewExp);
 
         OpStack.Pop();
@@ -176,13 +176,13 @@ AExpr* Parser::Parse_UniOpSubexpr()
     else
     {
         // Make a new subexpr whenever getting a new uniop
-        CodeLineInfo Line = Lex.GetCurrent().LineInfo;
+        SourceRange SrcRange = Lex.GetCurrent().SrcRange;
         Lex.Next();
         
         AExpr* Exp = Parse_UniOpSubexpr();
         if(Exp != nullptr)
         {
-            ASubexpr* Subexpr = AstPool::New<ASubexpr>(Line);
+            ASubexpr* Subexpr = AstPool::New<ASubexpr>(SrcRange);
             
             Subexpr->FirstUniOp = Op;
             Subexpr->AddOperand(BO_None, Exp);
@@ -214,7 +214,7 @@ AExpr*   Parser::Parse_SimpleExpr()
 
 AExpr* Parser::Parse_FuncExpr()
 {
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+    SourceRange BeginRange = Lex.GetCurrent().SrcRange;
 
     OL_ASSERT(Lex.GetCurrent().Tk == TKK_function);
     Lex.Next();
@@ -222,11 +222,11 @@ AExpr* Parser::Parse_FuncExpr()
     AFuncBody* Body = Parse_FuncBody(false);
     if(Body == nullptr)
     {
-        CM.Log(CMT_FailFuncBody, BeginLine);
+        CM.Log(CMT_FailFuncBody, BeginRange);
         return nullptr;
     }
 
-    AFuncExpr* Ret = AstPool::New<AFuncExpr>(Lex.GetCurrent().LineInfo);
+    AFuncExpr* Ret = AstPool::New<AFuncExpr>(Lex.GetCurrent().SrcRange);
     Ret->Body = Body;
 
     return Ret;
@@ -256,7 +256,7 @@ AExpr*     Parser::Parse_TypeExp()
 
     if(MainExpr == nullptr)
     {
-        CM.Log(CMT_FailExpr, Curr.LineInfo);
+        CM.Log(CMT_FailExpr, Curr.SrcRange);
         return nullptr;
     }
 
@@ -283,7 +283,7 @@ AExpr*     Parser::Parse_TypeExp()
             return nullptr;
         }
 
-        ATypeCast* Ret = AstPool::New<ATypeCast>(Curr.LineInfo);
+        ATypeCast* Ret = AstPool::New<ATypeCast>(Curr.SrcRange);
         //Ret->TypeName = Curr.StrOrNameVal;
         Ret->TargetType = TargetType;
         Ret->CastExpr = MainExpr;
@@ -304,42 +304,42 @@ AConstExpr*    Parser::Parse_ConstExpr()
     Token& Curr = Lex.GetCurrent();
     if( Curr.Tk == TK_intVal)
     {
-        AConstExpr* Ret = AConstExpr::NewInt(Curr.IntVal, Curr.LineInfo);
+        AConstExpr* Ret = AConstExpr::NewInt(Curr.IntVal, Curr.SrcRange);
         Lex.Next();
         return Ret;
     }
     else if( Curr.Tk == TK_floatVal)
     {
-        AConstExpr* Ret = AConstExpr::NewFlt(Curr.FltVal, Curr.LineInfo);
+        AConstExpr* Ret = AConstExpr::NewFlt(Curr.FltVal, Curr.SrcRange);
         Lex.Next();
         return Ret;
     }
     else if( Curr.Tk == TK_stringVal)
     {
-        AConstExpr* Ret = AConstExpr::NewStr(Curr.StrOrNameVal.CStr(), Curr.LineInfo);
+        AConstExpr* Ret = AConstExpr::NewStr(Curr.StrOrNameVal.CStr(), Curr.SrcRange);
         Lex.Next();
         return Ret;
     }
     else if( Curr.Tk == TKK_true)
     {
-        AConstExpr* Ret = AConstExpr::NewBool(true, Curr.LineInfo);
+        AConstExpr* Ret = AConstExpr::NewBool(true, Curr.SrcRange);
         Lex.Next();
         return Ret;
     }
     else if( Curr.Tk == TKK_false)
     {
-        AConstExpr* Ret = AConstExpr::NewBool(false, Curr.LineInfo);
+        AConstExpr* Ret = AConstExpr::NewBool(false, Curr.SrcRange);
         Lex.Next();
         return Ret;
     }
     else if( Curr.Tk == TKK_nil)
     {
-        AConstExpr* Ret = AConstExpr::NewNil(Curr.LineInfo);
+        AConstExpr* Ret = AConstExpr::NewNil(Curr.SrcRange);
         Lex.Next();
         return Ret;
     }
 
-    CM.Log(CMT_ExpectConst, Curr.LineInfo.Line, Curr.LineInfo.Col);
+    CM.Log(CMT_ExpectConst, Curr.SrcRange);
     return nullptr;
 }
 
@@ -349,7 +349,7 @@ AConstExpr*    Parser::Parse_ConstExpr()
 // SuffixedExpr -> PrimaryExpr { '.' Name | '[' expr ']' | ':' Name FuncArgs | FuncArgs}
 AExpr* Parser::Parse_SuffixedExpr()
 {
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
     // First part
     AExpr* PrimaryExp = Parse_PrimaryExpr();
     if(PrimaryExp == nullptr)
@@ -370,12 +370,12 @@ AExpr* Parser::Parse_SuffixedExpr()
             Curr = Lex.Next();
             if(Curr.Tk != TK_name)
             {
-                CM.Log(CMT_ExpectDotName, Curr.LineInfo);
+                CM.Log(CMT_ExpectDotName, Curr.SrcRange);
                 AstPool::Delete(Ret);
                 return nullptr;
             }
            
-            ADotMember* NewNode = AstPool::New<ADotMember>(Curr.LineInfo);
+            ADotMember* NewNode = AstPool::New<ADotMember>(Curr.SrcRange);
             NewNode->Target = Ret;
             NewNode->Field = Curr.StrOrNameVal;
             Ret = NewNode;
@@ -386,7 +386,7 @@ AExpr* Parser::Parse_SuffixedExpr()
         // The member can be any expressions
         else if(Curr.Tk == TKS_lbracket)
         {
-            CodeLineInfo BracketBegin = Curr.LineInfo;
+            SourceRange BracketBegin = Curr.SrcRange;
 
             Lex.Next();
             AExpr* BracketExpr = Parse_Expr();
@@ -399,12 +399,12 @@ AExpr* Parser::Parse_SuffixedExpr()
             // Validate the enclosing ']'
             if(Lex.GetCurrent().Tk != TKS_rbracket)
             {
-                CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().LineInfo, BracketBegin.Line, BracketBegin.Col);
+                CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().SrcRange, BracketBegin.Start.Line, BracketBegin.Start.Col);
                 AstPool::Delete(Ret);
                 return nullptr;
             }
 
-            ABracketMember* NewNode = AstPool::New<ABracketMember>(Curr.LineInfo);
+            ABracketMember* NewNode = AstPool::New<ABracketMember>(Curr.SrcRange);
             NewNode->Target = Ret;
             NewNode->Field = BracketExpr;
             Ret = NewNode;
@@ -413,7 +413,7 @@ AExpr* Parser::Parse_SuffixedExpr()
         }
         else if(Curr.Tk == TKS_exclamation)
         {
-            ANilableUnwrap* Unwrap = AstPool::New<ANilableUnwrap>(Curr.LineInfo);
+            ANilableUnwrap* Unwrap = AstPool::New<ANilableUnwrap>(Curr.SrcRange);
             Unwrap->TargetExpr = Ret;
             Ret = Unwrap;
             Curr = Lex.Next();
@@ -428,23 +428,23 @@ AExpr* Parser::Parse_SuffixedExpr()
             Curr = Lex.Next();
             if(Curr.Tk != TK_name)
             {
-                 CM.Log(CMT_NameAfterColon, Curr.LineInfo);
+                 CM.Log(CMT_NameAfterColon, Curr.SrcRange);
                  AstPool::Delete(Ret);
                  return nullptr;
             }
-            AColonCall* NewNode = AstPool::New<AColonCall>(Curr.LineInfo);
+            AColonCall* NewNode = AstPool::New<AColonCall>(Curr.SrcRange);
             NewNode->NameAfter = Curr.StrOrNameVal;
             // Validate function call
             // 1. '('
             Curr = Lex.Next();
             if(Curr.Tk != TKS_lparenthese)
             {
-                 CM.Log(CMT_ColonForCallOnly, Curr.LineInfo);
+                 CM.Log(CMT_ColonForCallOnly, Curr.SrcRange);
                  AstPool::Delete(Ret);
                  AstPool::Delete(NewNode);
                  return nullptr;
             }
-            CodeLineInfo ParentheseBegin = Curr.LineInfo;
+            SourceRange ParentheseBegin = Curr.SrcRange;
 
             // 2. ')' or an expression list as arugments
             Curr = Lex.Next();
@@ -463,7 +463,7 @@ AExpr* Parser::Parse_SuffixedExpr()
             Curr = Lex.GetCurrent();
             if(Curr.Tk != TKS_rparenthese)
             {
-                 CM.Log(CMT_IncompleteParenthese, Curr.LineInfo, ParentheseBegin.Line, ParentheseBegin.Col);
+                 CM.Log(CMT_IncompleteParenthese, Curr.SrcRange, ParentheseBegin.Start.Line, ParentheseBegin.Start.Col);
                  AstPool::Delete(Ret);
                  AstPool::Delete(NewNode);
                  return nullptr;
@@ -479,13 +479,10 @@ AExpr* Parser::Parse_SuffixedExpr()
         // Validate arguments
         else if(Lex.GetCurrent().Tk == TKS_lparenthese)
         {
-            CodeLineInfo ParentheseBegin = Curr.LineInfo;
+            SourceRange ParentheseBegin = Curr.SrcRange;
             
 
-            ANormalCall* NewNode = AstPool::New<ANormalCall>(Curr.LineInfo);
-
-            // Validate ')' or expression list as arguments
-            Curr = Lex.Next();
+            ANormalCall* NewNode = AstPool::New<ANormalCall>(Curr.SrcRange);
             if(Curr.Tk != TKS_rparenthese && Helper_ParseExprList(NewNode->Params) == false)
             {
                 CM.Log(CMT_FailParamList, ParentheseBegin);
@@ -498,7 +495,7 @@ AExpr* Parser::Parse_SuffixedExpr()
             Curr = Lex.GetCurrent();
             if(Curr.Tk != TKS_rparenthese)
             {
-                 CM.Log(CMT_IncompleteParenthese, Curr.LineInfo, ParentheseBegin.Line, ParentheseBegin.Col);
+                 CM.Log(CMT_IncompleteParenthese, Curr.SrcRange, ParentheseBegin.Start.Line, ParentheseBegin.Start.Col);
                  AstPool::Delete(Ret);
                  AstPool::Delete(NewNode);
                  return nullptr;
@@ -525,26 +522,26 @@ AExpr*  Parser::Parse_PrimaryExpr()
     // Variant name
     if(Curr.Tk == TK_name)
     {
-        AVarRef* Ret = AstPool::New<AVarRef>(Curr.LineInfo);
+        AVarRef* Ret = AstPool::New<AVarRef>(Curr.SrcRange);
         Ret->VarName = Curr.StrOrNameVal;
         Lex.Next();
         return Ret;
     }
     else if(Curr.Tk == TKK_self)
     {
-        ASelf* Ret = AstPool::New<ASelf>(Curr.LineInfo);
+        ASelf* Ret = AstPool::New<ASelf>(Curr.SrcRange);
         Lex.Next();
         return Ret;
     }
         else if(Curr.Tk == TKK_super)
     {
-        ASuper* Ret = AstPool::New<ASuper>(Curr.LineInfo);
+        ASuper* Ret = AstPool::New<ASuper>(Curr.SrcRange);
         Lex.Next();
         return Ret;
     }
     else if(Curr.Tk == TKS_dot3)
     {
-        AVariableParamRef* Ret = AstPool::New<AVariableParamRef>(Curr.LineInfo);
+        AVariableParamRef* Ret = AstPool::New<AVariableParamRef>(Curr.SrcRange);
         Lex.Next();
         return Ret;
     }
@@ -552,7 +549,7 @@ AExpr*  Parser::Parse_PrimaryExpr()
     // Using '(  )'
     else if(Curr.Tk == TKS_lparenthese)
     {
-        CodeLineInfo ParentheseBegin = Curr.LineInfo;
+        SourceRange ParentheseBegin = Curr.SrcRange;
         Lex.Next();
         AParentheses* ParentheseExpr = AstPool::New<AParentheses>(ParentheseBegin);
 
@@ -565,7 +562,7 @@ AExpr*  Parser::Parse_PrimaryExpr()
 
         if (Lex.GetCurrent().Tk != TKS_rparenthese)
         {
-            CM.Log(CMT_IncompleteParenthese, Lex.GetCurrent().LineInfo, ParentheseBegin.Line, ParentheseBegin.Col);
+            CM.Log(CMT_IncompleteParenthese, Lex.GetCurrent().SrcRange, ParentheseBegin.Start.Line, ParentheseBegin.Start.Col);
             AstPool::Delete(InsideExpr);
             return nullptr;
         }
@@ -575,7 +572,7 @@ AExpr*  Parser::Parse_PrimaryExpr()
         return ParentheseExpr;
     }
 
-    CM.Log(CMT_NotPrimaryExpr, Curr.LineInfo);
+    CM.Log(CMT_NotPrimaryExpr, Curr.SrcRange);
     return nullptr;
 }
 
@@ -585,11 +582,11 @@ AConstructor*  Parser::Parse_Constructor()
     // Ensure current token is '{'
     if(Lex.GetCurrent().Tk != TKS_lbrace)
     {
-        CM.Log(CMT_ExpectConstructor, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_ExpectConstructor, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
 
-    AConstructor* Ret = AstPool::New<AConstructor>(Lex.GetCurrent().LineInfo);
+    AConstructor* Ret = AstPool::New<AConstructor>(Lex.GetCurrent().SrcRange);
     
     bool HasKey = false;
     
@@ -613,7 +610,7 @@ AConstructor*  Parser::Parse_Constructor()
             if(Ahead.Tk == TKS_assign)
             {
                 HasKey = true;
-                Key = AConstExpr::NewStr(Curr.StrOrNameVal.CStr(), Curr.LineInfo);
+                Key = AConstExpr::NewStr(Curr.StrOrNameVal.CStr(), Curr.SrcRange);
                 Lex.Next();
                 Lex.Next();
             }
@@ -622,7 +619,7 @@ AConstructor*  Parser::Parse_Constructor()
         // { [something] = Value } Style, definitely a key-value style
         else if(Curr.Tk == TKS_lbracket)
         {
-            CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+            SourceRange BeginLine = Lex.GetCurrent().SrcRange;
 
             Lex.Next();
             Key = Parse_Expr();
@@ -635,7 +632,7 @@ AConstructor*  Parser::Parse_Constructor()
 
             if(Lex.GetCurrent().Tk != TKS_rbracket)
             {
-                CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().LineInfo, BeginLine.Line, BeginLine.Col);
+                CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().SrcRange, BeginLine.Start.Line, BeginLine.Start.Col);
                 AstPool::Delete(Key);
                 AstPool::Delete(Ret);
                 return nullptr;
@@ -650,7 +647,7 @@ AConstructor*  Parser::Parse_Constructor()
         {
             if(Lex.GetCurrent().Tk != TKS_assign)
             {
-                CM.Log(CMT_ConstructorNeedValue, Lex.GetCurrent().LineInfo);
+                CM.Log(CMT_ConstructorNeedValue, Lex.GetCurrent().SrcRange);
                 AstPool::Delete(Key);
                 AstPool::Delete(Ret);
                 return nullptr;
@@ -659,7 +656,7 @@ AConstructor*  Parser::Parse_Constructor()
         }
         
         // Parse value expression
-        CodeLineInfo ExprBegin = Lex.GetCurrent().LineInfo;
+        SourceRange ExprBegin = Lex.GetCurrent().SrcRange;
         AExpr* Value = Parse_Expr();
         if(Value == nullptr)
         {
@@ -682,7 +679,7 @@ AConstructor*  Parser::Parse_Constructor()
                 {
                     if(Ret->Elems[i].Key == nullptr)
                     {
-                        CM.Log(CMT_PartialKeys, Lex.GetCurrent().LineInfo);
+                        CM.Log(CMT_PartialKeys, Lex.GetCurrent().SrcRange);
                         AstPool::Delete(Ret);
                         return nullptr;
                     }
@@ -696,7 +693,7 @@ AConstructor*  Parser::Parse_Constructor()
         }
         else
         {
-            CM.Log(CMT_ConstructorMissComma, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_ConstructorMissComma, Lex.GetCurrent().SrcRange);
             AstPool::Delete(Ret);
             return nullptr;
         }
@@ -714,11 +711,11 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
     bool NeedToParseNilable = true;
     
     bool HasParenthess = false;
-    CodeLineInfo ParenthessBegin;
+    SourceRange ParenthessBegin;
 
     if(Curr.Tk == TKS_lparenthese)
     {
-        ParenthessBegin = Curr.LineInfo;
+        ParenthessBegin = Curr.SrcRange;
         Curr = Lex.Next();
         HasParenthess = true;
     }
@@ -734,7 +731,7 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
         case TKT_byte:
         case TKT_char:
         {
-            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.LineInfo);
+            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.SrcRange);
             Intr->Type = IT_int;
             Lex.Next();
             TypeIdn =  Intr;
@@ -743,7 +740,7 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
         case TKT_float:
         case TKT_double:
         {
-            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.LineInfo);
+            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.SrcRange);
             Intr->Type = IT_float;
             Lex.Next();
             TypeIdn =  Intr;
@@ -751,7 +748,7 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
         }
         case TKT_bool:
         {
-            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.LineInfo);
+            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.SrcRange);
             Intr->Type = IT_bool;
             Lex.Next();
             TypeIdn =  Intr;
@@ -759,7 +756,7 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
         }
         case TKT_string:
         {
-            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.LineInfo);
+            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.SrcRange);
             Intr->Type = IT_string;
             Lex.Next();
             TypeIdn =  Intr;
@@ -767,7 +764,7 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
         }
         case TKT_any:
         {
-            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.LineInfo);
+            AIntrinsicType* Intr = AstPool::New<AIntrinsicType>(Curr.SrcRange);
             Intr->Type = IT_any;
             Lex.Next();
             TypeIdn =  Intr;
@@ -775,7 +772,7 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
         }    
         case TK_name:
         {
-            ANamedType* Named = AstPool::New<ANamedType>(Curr.LineInfo);
+            ANamedType* Named = AstPool::New<ANamedType>(Curr.SrcRange);
             Named->TypeName = Curr.StrOrNameVal;
             Lex.Next();
             TypeIdn = Named;
@@ -795,26 +792,26 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
         }
         default:
         {
-            CM.Log(CMT_ExpectTypeIdentity, Curr.LineInfo);
+            CM.Log(CMT_ExpectTypeIdentity, Curr.SrcRange);
             return nullptr;
         }
     }
     
     if(Lex.GetCurrent().Tk == TKS_lbracket)
     {
-        CodeLineInfo BracketBegin = Lex.GetCurrent().LineInfo;
+        SourceRange BracketBegin = Lex.GetCurrent().SrcRange;
         Lex.Next();
         
         if(Lex.GetCurrent().Tk == TKS_rbracket)
         {
-            AArrayType* Arr = AstPool::New<AArrayType>(Lex.GetCurrent().LineInfo);
+            AArrayType* Arr = AstPool::New<AArrayType>(Lex.GetCurrent().SrcRange);
             Arr->ElemType = TypeIdn;
             TypeIdn = Arr;
             Lex.Next();
         }
         else
         {
-            CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().LineInfo, BracketBegin.Line, BracketBegin.Col);
+            CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().SrcRange, BracketBegin.Start.Line, BracketBegin.Start.Col);
             AstPool::Delete(TypeIdn);
             return nullptr;
         }
@@ -824,7 +821,7 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
     {
         if(Lex.GetCurrent().Tk != TKS_rparenthese)
         {
-            CM.Log(CMT_IncompleteParenthese, Lex.GetCurrent().LineInfo, ParenthessBegin.Line, ParenthessBegin.Col);
+            CM.Log(CMT_IncompleteParenthese, Lex.GetCurrent().SrcRange, ParenthessBegin.Start.Line, ParenthessBegin.Start.Col);
             AstPool::Delete(TypeIdn);
             return nullptr;
         }
@@ -839,7 +836,7 @@ ATypeIdentity*  Parser::Parse_TypeIdentity(bool AcceptNilable)
             // Type alias, type cast does not accept nilable state
             if(AcceptNilable == false)
             {
-                CM.Log(CMT_NotAcceptedNilable, Lex.GetCurrent().LineInfo);
+                CM.Log(CMT_NotAcceptedNilable, Lex.GetCurrent().SrcRange);
                 TypeIdn->IsNilable = false;
             }
             else
@@ -858,7 +855,7 @@ AMapType* Parser::Parse_MapType()
 {
     OL_ASSERT(Lex.GetCurrent().Tk == TKS_lbracket);
 
-    CodeLineInfo BeginLine = Lex.GetCurrent().LineInfo;
+    SourceRange BeginLine = Lex.GetCurrent().SrcRange;
 
     Lex.Next();
 
@@ -886,7 +883,7 @@ AMapType* Parser::Parse_MapType()
         AstPool::Delete(First);
         if(Second != nullptr)
             AstPool::Delete(Second);
-        CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().LineInfo, BeginLine.Line, BeginLine.Col);
+        CM.Log(CMT_IncompleteBracket, Lex.GetCurrent().SrcRange, BeginLine.Start.Line, BeginLine.Start.Col);
         return nullptr;
     }
     Lex.Next();

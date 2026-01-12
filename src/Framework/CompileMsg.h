@@ -223,12 +223,18 @@ public:
 
     CompileMsg();
     void SetFile(const TCHAR* File);
-    void Log(ECompileMsgType msg, int Line, int Col,  ...);
+    void Log(ECompileMsgType msg, int Line, int Col, int EndLine, int EndCol  ...);
 
     template <typename ...T>
     void Log(ECompileMsgType msg, CodeLineInfo& LineInfo , T... args)
     {
-        Log(msg, LineInfo.Line, LineInfo.Col, args...);
+        Log(msg, LineInfo.Line, LineInfo.Col, -1, -1, args...);
+    };
+
+    template <typename ...T>
+    void Log(ECompileMsgType msg, SourceRange& SrcRange , T... args)
+    {
+        Log(msg, SrcRange.Start.Line, SrcRange.Start.Col, SrcRange.End.Line, SrcRange.End.Col, args...);
     };
 
     void Reset();

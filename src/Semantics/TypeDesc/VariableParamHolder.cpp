@@ -83,7 +83,7 @@ void VariableParamHolder::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM
     {
         if (Phase == SRP_GlobalVar || Phase == SRP_Standalone)
         {
-            CM.Log(CMT_NoType, DeclNode->Line, UnresolvedTypeName.CStr());
+            CM.Log(CMT_NoType, DeclNode->SrcRange, UnresolvedTypeName.CStr());
         }
     }
     else

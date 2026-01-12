@@ -35,7 +35,7 @@ void MapType::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolRes
         {
             if (Phase == SRP_GlobalVar || Phase == SRP_Standalone)
             {
-                CM.Log(CMT_NoType, DeclNode->Line,  UnresolvedKeyType.CStr());
+                CM.Log(CMT_NoType, DeclNode->SrcRange,  UnresolvedKeyType.CStr());
                 KeyType = IntrinsicType::CreateFromRaw(IT_any);
             }
         } 
@@ -52,7 +52,7 @@ void MapType::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolRes
         {
             if (Phase == SRP_GlobalVar || Phase == SRP_Standalone)
             {
-                CM.Log(CMT_NoType, DeclNode->Line,  UnresolvedValueType.CStr());
+                CM.Log(CMT_NoType, DeclNode->SrcRange,  UnresolvedValueType.CStr());
                 ValueType = IntrinsicType::CreateFromRaw(IT_any);
             }
         }

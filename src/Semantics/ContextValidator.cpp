@@ -34,7 +34,7 @@ EVisitStatus ContextValidator::EndVisit(SPtr<AFuncBody> Node)
         VisitStackConsume<CodeBlockInfo> Curr(BlockStack);
         if(Node->ReturnType.Count() > 0 && Curr.GetElemCount() > 0 && Curr.GetElem(0).ReturnCalled == false)
         {
-            CM.Log(CMT_NoReturn, Node->Line);
+            CM.Log(CMT_NoReturn, Node->SrcRange);
         }
     }
     return VS_Continue;
@@ -187,7 +187,7 @@ EVisitStatus ContextValidator::Visit(SPtr<AVariableParamRef> Node)
     SPtr<FuncSigniture> Func = GetOuterFunc();
     if(Func == nullptr || Func->HasVariableParam() == false)
     {
-        CM.Log(CMT_NoVariableParam, Node->Line);
+        CM.Log(CMT_NoVariableParam, Node->SrcRange);
         return VS_Stop;
     }
     return VS_Continue;
@@ -197,7 +197,7 @@ void ContextValidator::CheckStatAfterReturn(SPtr<ABase> Node)
 {
     if(BlockStack.Top().ReturnCalled)
     {
-        CM.Log(CMT_LastReturn, Node->Line);
+        CM.Log(CMT_LastReturn, Node->SrcRange);
     }
 }
 

@@ -44,7 +44,7 @@ STRUCT_RTTI_END(SymbolImport)
 
 STRUCT_RTTI_BEGIN(SymbolExport)
     RTTI_MEMBER(Name)
-    RTTI_STRUCT_MEMBER(Line, CodeLineInfo)
+    RTTI_STRUCT_MEMBER(SrcRange, SourceRange)
     RTTI_MEMBER(IsType)
 STRUCT_RTTI_END(SymbolExport)
 
@@ -192,7 +192,7 @@ bool SourceFile::DoLocalCompile()
     {
         SymbolExport ExportInfo;
         ExportInfo.Name = RootScope->Decls[i]->Name;
-        ExportInfo.Line = RootScope->Decls[i]->DeclNode->Line;
+        ExportInfo.SrcRange = RootScope->Decls[i]->DeclNode->SrcRange;
         if(RootScope->Decls[i]->DeclType == DT_Class 
             || RootScope->Decls[i]->DeclType == DT_Enum 
             || RootScope->Decls[i]->DeclType == DT_Interface 
@@ -357,7 +357,7 @@ void SourceFile::PrintUnbindError()
             SPtr<ABase> RefNode = RootScope->Refs[i]->RefNode.Lock();
             if(RootScope->Refs[i]->RootRef != nullptr)
                 RefNode = RootScope->Refs[i]->RootRef->RefNode.Lock();
-            CM.Log(CMT_UnresolvedVar, RefNode->Line, RootScope->Refs[i]->Name.CStr());
+            CM.Log(CMT_UnresolvedVar, RefNode->SrcRange, RootScope->Refs[i]->Name.CStr());
             
         }
         ItImpTypes.Next();
@@ -380,7 +380,7 @@ void SourceFile::PrintUnbindError()
             SPtr<ABase> RefNode = RootScope->Refs[i]->RefNode.Lock();
             if(RootScope->Refs[i]->RootRef != nullptr)
                 RefNode = RootScope->Refs[i]->RootRef->RefNode.Lock();
-            CM.Log(CMT_UnresolvedVar, RefNode->Line, RootScope->Refs[i]->Name.CStr());
+            CM.Log(CMT_UnresolvedVar, RefNode->SrcRange, RootScope->Refs[i]->Name.CStr());
             
         }
         ItImpVars.Next();

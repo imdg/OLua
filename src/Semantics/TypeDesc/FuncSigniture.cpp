@@ -27,7 +27,7 @@ STRUCT_RTTI_BEGIN(FuncParamDesc)
     RTTI_MEMBER(UnresolvedTypeName)
     RTTI_MEMBER(IsResolved)
     RTTI_MEMBER(IsNilable)
-    RTTI_STRUCT_MEMBER(Line, CodeLineInfo)
+    RTTI_STRUCT_MEMBER(SrcRange, SourceRange)
 STRUCT_RTTI_END(FuncParamDesc)
 
 STRUCT_RTTI_BEGIN(FuncReturnDesc)
@@ -35,7 +35,7 @@ STRUCT_RTTI_BEGIN(FuncReturnDesc)
     RTTI_MEMBER(UnresolvedTypeName)
     RTTI_MEMBER(IsResolved)
     RTTI_MEMBER(IsNilable)
-    RTTI_STRUCT_MEMBER(Line, CodeLineInfo)
+    RTTI_STRUCT_MEMBER(SrcRange, SourceRange)
 STRUCT_RTTI_END(FuncReturnDesc)
 
 
@@ -77,72 +77,72 @@ void FuncSigniture::SetCtorOwner(SPtr<TypeDescBase> InCtorOwner)
 }
 
 
-void FuncSigniture::AddParam(OLString &UnresolvedName, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line)
+void FuncSigniture::AddParam(OLString &UnresolvedName, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  SourceRange& SrcRange)
 {
     FuncParamDesc& NewDesc = Params.AddConstructed();
     NewDesc.Flags = IsConst ? FPF_Const : 0;
     NewDesc.UnresolvedTypeName = UnresolvedName;
     NewDesc.IsResolved = false;
-    NewDesc.Line = Line;
+    NewDesc.SrcRange = SrcRange;
     NewDesc.IsVariableParam = IsVariableParam;
     NewDesc.IsOptional = IsOptional;
     NewDesc.IsNilable = IsNilable || IsOptional;  // Optional param is forced to be nilable
 }
 
-void FuncSigniture::AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line)
+void FuncSigniture::AddParam(EIntrinsicType Type, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  SourceRange& SrcRange)
 {
     FuncParamDesc& NewDesc = Params.AddConstructed();
     NewDesc.Flags = IsConst ? FPF_Const : 0;
     NewDesc.Type = IntrinsicType::CreateFromRaw(Type);
     NewDesc.UnresolvedTypeName = T("");
     NewDesc.IsResolved = true;
-    NewDesc.Line = Line;
+    NewDesc.SrcRange = SrcRange;
     NewDesc.IsVariableParam = IsVariableParam;
     NewDesc.IsOptional = IsOptional;
     NewDesc.IsNilable = IsNilable || IsOptional; // Optional param is forced to be nilable
 
 }
 
-void FuncSigniture::AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  CodeLineInfo& Line)
+void FuncSigniture::AddParam(SPtr<TypeDescBase> Type, bool IsConst, bool IsVariableParam, bool IsOptional, bool IsNilable,  SourceRange& SrcRange)
 {
     FuncParamDesc& NewDesc = Params.AddConstructed();
     NewDesc.Flags = IsConst ? FPF_Const : 0;
     NewDesc.Type = Type;
     NewDesc.UnresolvedTypeName = T("");
     NewDesc.IsResolved = true;
-    NewDesc.Line = Line;
+    NewDesc.SrcRange = SrcRange;
     NewDesc.IsVariableParam = IsVariableParam;
     NewDesc.IsOptional = IsOptional;
     NewDesc.IsNilable = IsNilable || IsOptional; // Optional param is forced to be nilable
 }
 
-void FuncSigniture::AddReturn(SPtr<TypeDescBase> Type, bool IsNilable, CodeLineInfo& Line)
+void FuncSigniture::AddReturn(SPtr<TypeDescBase> Type, bool IsNilable, SourceRange& SrcRange)
 {
     FuncReturnDesc& NewDesc = Returns.AddConstructed();
     NewDesc.IsResolved = true;
     NewDesc.Type = Type;
     NewDesc.UnresolvedTypeName = T("");
-    NewDesc.Line = Line;
+    NewDesc.SrcRange = SrcRange;
     NewDesc.IsNilable = IsNilable;
 }
 
-void FuncSigniture::AddReturn(OLString& UnresolvedName, bool IsNilable, CodeLineInfo& Line)
+void FuncSigniture::AddReturn(OLString& UnresolvedName, bool IsNilable, SourceRange& SrcRange)
 {
     FuncReturnDesc& NewDesc = Returns.AddConstructed();
     NewDesc.IsResolved = false;
     
     NewDesc.UnresolvedTypeName = UnresolvedName;
-    NewDesc.Line = Line;
+    NewDesc.SrcRange = SrcRange;
     NewDesc.IsNilable = IsNilable;
 }
 
-void FuncSigniture::AddReturn(EIntrinsicType Type, bool IsNilable, CodeLineInfo& Line)
+void FuncSigniture::AddReturn(EIntrinsicType Type, bool IsNilable, SourceRange& SrcRange)
 {
     FuncReturnDesc& NewDesc = Returns.AddConstructed();
     NewDesc.IsResolved = true;
     NewDesc.Type = IntrinsicType::CreateFromRaw(Type);
     NewDesc.UnresolvedTypeName = T("");
-    NewDesc.Line = Line;
+    NewDesc.SrcRange = SrcRange;
     NewDesc.IsNilable = IsNilable;
 }
 
@@ -278,7 +278,7 @@ void FuncSigniture::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESym
             {
                 if (Phase == SRP_GlobalVar || Phase == SRP_Standalone)
                 {
-                    CM.Log(CMT_NoType, Params[i].Line,  Params[i].UnresolvedTypeName.CStr());
+                    CM.Log(CMT_NoType, Params[i].SrcRange,  Params[i].UnresolvedTypeName.CStr());
                     Params[i].Type = IntrinsicType::CreateFromRaw(IT_any);
                     Params[i].IsResolved = true;
                 }
@@ -300,7 +300,7 @@ void FuncSigniture::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESym
             {
                 if (Phase == SRP_GlobalVar || Phase == SRP_Standalone)
                 {
-                    CM.Log(CMT_NoType, Returns[i].Line,  Returns[i].UnresolvedTypeName.CStr());
+                    CM.Log(CMT_NoType, Returns[i].SrcRange,  Returns[i].UnresolvedTypeName.CStr());
                     Returns[i].Type = IntrinsicType::CreateFromRaw(IT_any);
                     Returns[i].IsResolved = true;
                 }

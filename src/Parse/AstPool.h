@@ -20,10 +20,10 @@ public:
 
 
     template<typename AstType, typename... ConstructParam>
-    AstType* NewAst(CodeLineInfo Line, ConstructParam... Params)
+    AstType* NewAst(SourceRange SrcRange, ConstructParam... Params)
     {
         AstType* Ret = new AstType(Params...);
-        Ret->Line = Line;
+        Ret->SrcRange = SrcRange;
         return Ret;
     };
 
@@ -34,9 +34,9 @@ public:
     };
 
     template<typename AstType, typename... ConstructParam>
-    static AstType* New(CodeLineInfo Line, ConstructParam... Params)
+    static AstType* New(SourceRange SrcRange, ConstructParam... Params)
     {
-        return GetInst()->NewAst<AstType>(Line, Params...);
+        return GetInst()->NewAst<AstType>(SrcRange, Params...);
     }
 
     template<typename AstType>

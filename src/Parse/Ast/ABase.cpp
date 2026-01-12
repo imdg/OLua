@@ -5,7 +5,7 @@ namespace OL
 {
 
 RTTI_BEGIN(ABase)
-    RTTI_STRUCT_MEMBER(Line, CodeLineInfo)
+    RTTI_STRUCT_MEMBER(SrcRange, SourceRange)
     RTTI_MEMBER(Parent, MF_External)
 RTTI_END(ABase)
 

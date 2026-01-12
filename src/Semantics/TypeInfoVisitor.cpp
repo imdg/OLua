@@ -55,7 +55,7 @@ OLString TypeInfoVisitor::MakeUniqueName(SPtr<TypeDescBase> CurrType)
         else if(ScopeOwner->Is<AFuncExpr>())
         {
             OLString Name;
-            Name.Printf(T("funcexpr_%d_%d"), ScopeOwner->Line.Line, ScopeOwner->Line.Col);
+            Name.Printf(T("funcexpr_%d_%d"), ScopeOwner->SrcRange.Start.Line, ScopeOwner->SrcRange.Start.Col);
             ScopeNames.Add(Name);
         }
 
@@ -179,7 +179,7 @@ void TypeInfoVisitor::TryReceiveComplexSubType(SPtr<TypeDescBase> Owner, SPtr<Ty
     {
         SPtr<FuncSigniture> Func = Owner.PtrAs<FuncSigniture>();
         if(Func->IsReturnDecl(Node.Get()))
-            Func->AddReturn(SubType, Node->IsNilable, Node->Line);
+            Func->AddReturn(SubType, Node->IsNilable, Node->SrcRange);
     }
     else if(Owner->Is<ArrayType>())
     {
@@ -288,7 +288,7 @@ EVisitStatus TypeInfoVisitor::Visit(SPtr<ANamedType> Node)
     {
         SPtr<FuncSigniture> Func = Top.PtrAs<FuncSigniture>();
         if(Func->IsReturnDecl(Node.Get()))
-            Func->AddReturn(Node->TypeName, Node->IsNilable, Node->Line);
+            Func->AddReturn(Node->TypeName, Node->IsNilable, Node->SrcRange);
     }
     else if(Top->Is<ArrayType>())
     {
@@ -324,7 +324,7 @@ EVisitStatus TypeInfoVisitor::Visit(SPtr<AIntrinsicType> Node)
     {
         SPtr<FuncSigniture> Func = Top.PtrAs<FuncSigniture>();
         if(Func->IsReturnDecl(Node.Get()))
-            Func->AddReturn(Node->Type, Node->IsNilable, Node->Line);
+            Func->AddReturn(Node->Type, Node->IsNilable, Node->SrcRange);
     }
     else if(Top->Is<ArrayType>())
     {
@@ -463,11 +463,11 @@ EVisitStatus TypeInfoVisitor::VisitAsFuncParam(SPtr<AVarDecl> Node, SPtr<FuncSig
         {
             SPtr<VariableParamHolder> VariableParam = new VariableParamHolder(Node, Node->VarType->As<ANamedType>()->TypeName);
             CurrScope->TypeDefs.Add(VariableParam);
-            FuncSig->AddParam(VariableParam, Node->IsConst, Node->IsVariableParam,  Node->IsOptionalParam, Node->VarType->IsNilable, Node->Line);
+            FuncSig->AddParam(VariableParam, Node->IsConst, Node->IsVariableParam,  Node->IsOptionalParam, Node->VarType->IsNilable, Node->SrcRange);
         }   
         else
         {
-            FuncSig->AddParam(Node->VarType->As<ANamedType>()->TypeName, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable,  Node->Line);
+            FuncSig->AddParam(Node->VarType->As<ANamedType>()->TypeName, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable,  Node->SrcRange);
         }
     }
     // For intrinsic type, create directly
@@ -477,10 +477,10 @@ EVisitStatus TypeInfoVisitor::VisitAsFuncParam(SPtr<AVarDecl> Node, SPtr<FuncSig
         {
             SPtr<VariableParamHolder> VariableParam = new VariableParamHolder(Node, IntrinsicType::CreateFromRaw(Node->VarType->As<AIntrinsicType>()->Type ));
             CurrScope->TypeDefs.Add(VariableParam);
-            FuncSig->AddParam(VariableParam, Node->IsConst, Node->IsVariableParam,  Node->IsOptionalParam, Node->VarType->IsNilable,  Node->Line);
+            FuncSig->AddParam(VariableParam, Node->IsConst, Node->IsVariableParam,  Node->IsOptionalParam, Node->VarType->IsNilable,  Node->SrcRange);
         }
         else
-            FuncSig->AddParam(Node->VarType->As<AIntrinsicType>()->Type, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable, Node->Line);
+            FuncSig->AddParam(Node->VarType->As<AIntrinsicType>()->Type, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable, Node->SrcRange);
     }
     // For other complex types, they are defined together with the variant, like FuncType, Array, Map
     // So TypeDescBase should be ready after visiting this AVarDecl
@@ -499,7 +499,7 @@ EVisitStatus TypeInfoVisitor::VisitAsFuncParam(SPtr<AVarDecl> Node, SPtr<FuncSig
                 CurrScope->TypeDefs.Add(VariableParam);
                 ParamType = VariableParam;
             }
-            FuncSig->AddParam(ParamType, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable, Node->Line);
+            FuncSig->AddParam(ParamType, Node->IsConst, Node->IsVariableParam, Node->IsOptionalParam, Node->VarType->IsNilable, Node->SrcRange);
         }
     }
 

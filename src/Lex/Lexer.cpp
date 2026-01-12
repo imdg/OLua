@@ -22,7 +22,8 @@ STRUCT_RTTI_BEGIN(Token)
     RTTI_MEMBER(IntVal)
     RTTI_MEMBER(FltVal)
     RTTI_MEMBER(StrOrNameVal)
-    RTTI_STRUCT_MEMBER(LineInfo, CodeLineInfo)
+
+    RTTI_STRUCT_MEMBER(SrcRange, SourceRange)
 STRUCT_RTTI_END(Token)
 
 
@@ -49,16 +50,19 @@ int CharFeature[] = {
 
 
 
-void Token::SetCurrLine(TokenReader& Reader)
+
+void Token::SetSrcRangeStart(TokenReader& Reader)
 {
-    LineInfo.Col = Reader.GetCol();
-    LineInfo.Line = Reader.GetLine();
+    SrcRange.Start.Pos = Reader.GetPos();
+    SrcRange.Start.Line = Reader.GetLine();
+    SrcRange.Start.Col = Reader.GetCol();
 }
 
-void Token::SetCurrLine(int Line, int Col)
+void Token::SetSrcRangeEnd(TokenReader& Reader)
 {
-    LineInfo.Line = Line;
-    LineInfo.Col = Col;
+    SrcRange.End.Pos = Reader.GetPos();
+    SrcRange.End.Line = Reader.GetLine();
+    SrcRange.End.Col = Reader.GetCol();
 }
 
 void Token::Reset()
@@ -67,14 +71,15 @@ void Token::Reset()
     IntVal = 0;
     FltVal = 0;
     StrOrNameVal = T("");
-    LineInfo.Line = 0;
-    LineInfo.Col = 0;
+    SrcRange.Start = CodePos::Zero;
+    SrcRange.End = CodePos::Zero;
+    SrcRange.Flag = 0;
 }
 
 OLString Token::ToString()
 {
     OLString Ret;
-    Ret.AppendF(T("[%d:%d]"), LineInfo.Line, LineInfo.Col);
+    Ret.AppendF(T("[%d:%d-%d:%d]"), SrcRange.Start.Line, SrcRange.Start.Col, SrcRange.End.Line, SrcRange.End.Col);
     Ret.Append( ENUM_VALUE_TEXT(ETokenType, Tk));
     if(Tk == TK_intVal)
         Ret.AppendF(T("(%d)"), IntVal);
@@ -201,7 +206,7 @@ Token& Lexer::Next()
 
     for(int i = 0; i < BreakPoints.Count(); i++)
     {
-        if(Curr.LineInfo.Line == BreakPoints[i])
+        if(Curr.SrcRange.Start.Line == BreakPoints[i])
         {
             // Break point hit
             // Set the debugger break point here
@@ -264,7 +269,7 @@ void Lexer::ReadNext(Token& tk)
 
         if(tk.Tk == TK_name && MacroDef.Exists(tk.StrOrNameVal))
         {
-            ExpandMacro(tk.StrOrNameVal, tk.LineInfo, 0);
+            ExpandMacro(tk.StrOrNameVal, tk.SrcRange, 0);
             KeepReading = true;
             continue;;
         }
@@ -277,11 +282,11 @@ void Lexer::ReadNext(Token& tk)
     if(BreakOnNextToken)
     {
         BreakOnNextToken = false;
-        tk.LineInfo.Flag = LF_Break;
+        tk.SrcRange.Flag = LF_Break;
     }
     else
     {
-        tk.LineInfo.Flag = 0;
+        tk.SrcRange.Flag = 0;
     }
     
 }
@@ -289,13 +294,13 @@ void Lexer::ReadNext(Token& tk)
 bool Lexer::ReadDefine(MacroDefine& DefineInfo)
 {
     Token MacroTk;
-    CodeLineInfo BeginLine;
+    CodePos BeginLine;
     ReadSingleToken(MacroTk, true, false);
-    BeginLine = MacroTk.LineInfo;
+    BeginLine = MacroTk.SrcRange.Start;
 
     if(MacroTk.Tk != TK_name)
     {
-        CM.Log(CMT_NeedMacroName, MacroTk.LineInfo);
+        CM.Log(CMT_NeedMacroName, MacroTk.SrcRange);
         return false;
     }
 
@@ -317,12 +322,12 @@ bool Lexer::ReadDefine(MacroDefine& DefineInfo)
             ReadSingleToken(MacroTk, true, false);
             if(MacroTk.Tk == TK_eol || MacroTk.Tk == TK_eof)
             {
-                CM.Log(CMT_IncompleteParenthese, BeginLine, BeginLine.Line, BeginLine.Col);
+                CM.Log(CMT_IncompleteParenthese, Reader.GetLine(), Reader.GetCol(), -1, -1, BeginLine.Line, BeginLine.Col);
                 return false;
             }
             else if(MacroTk.Tk != TK_name)
             {
-                CM.Log(CMT_MacroParamNeedName, MacroTk.LineInfo);
+                CM.Log(CMT_MacroParamNeedName, MacroTk.SrcRange);
                 return false;
             }
 
@@ -335,7 +340,7 @@ bool Lexer::ReadDefine(MacroDefine& DefineInfo)
                 break;
             else
             {
-                CM.Log(CMT_MacroSytexError, BeginLine);
+                CM.Log(CMT_MacroSytexError, BeginLine.Line, BeginLine.Col, -1, -1);
                 return false;
             }
         }
@@ -366,7 +371,7 @@ bool Lexer::ReadPreprocesser()
     ReadSingleToken(PreprocesserTk, true, true);
     if(PreprocesserTk.Tk != TK_name)
     {
-        CM.Log(CMT_NeedMacroOpt, PreprocesserTk.LineInfo);
+        CM.Log(CMT_NeedMacroOpt, PreprocesserTk.SrcRange);
         return false;
     }
 
@@ -390,7 +395,7 @@ bool Lexer::ReadPreprocesser()
         ReadSingleToken(Macro, true, false);
         if(Macro.Tk != TK_name)
         {
-            CM.Log(CM_NeedMacroNameForIf, Macro.LineInfo);
+            CM.Log(CM_NeedMacroNameForIf, Macro.SrcRange);
             return false;
         }
 
@@ -415,7 +420,7 @@ bool Lexer::ReadPreprocesser()
         ReadSingleToken(Macro, true, false);
         if(Macro.Tk != TK_name)
         {
-            CM.Log(CM_NeedMacroNameForIf, Macro.LineInfo);
+            CM.Log(CM_NeedMacroNameForIf, Macro.SrcRange);
             return false;
         }
 
@@ -440,12 +445,12 @@ bool Lexer::ReadPreprocesser()
         ReadSingleToken(Macro, true, false);
         if(Macro.Tk != TK_name)
         {
-            CM.Log(CM_NeedMacroNameForIf, Macro.LineInfo);
+            CM.Log(CM_NeedMacroNameForIf, Macro.SrcRange);
             return false;
         }
         if(CondiCompile.Count() == 1)
         {
-            CM.Log(CMT_CondiCompileNotMatch, PreprocesserTk.LineInfo);
+            CM.Log(CMT_CondiCompileNotMatch, PreprocesserTk.SrcRange);
             return false;
         }
         CondiCompileState Sibling = CondiCompile.PickPop();
@@ -470,12 +475,12 @@ bool Lexer::ReadPreprocesser()
         ReadSingleToken(Macro, true, false);
         if(Macro.Tk != TK_name)
         {
-            CM.Log(CM_NeedMacroNameForIf, Macro.LineInfo);
+            CM.Log(CM_NeedMacroNameForIf, Macro.SrcRange);
             return false;
         }
         if(CondiCompile.Count() == 1)
         {
-            CM.Log(CMT_CondiCompileNotMatch, PreprocesserTk.LineInfo);
+            CM.Log(CMT_CondiCompileNotMatch, PreprocesserTk.SrcRange);
             return false;
         }
 
@@ -499,7 +504,7 @@ bool Lexer::ReadPreprocesser()
     {
         if(CondiCompile.Count() == 1)
         {
-            CM.Log(CMT_CondiCompileNotMatch, PreprocesserTk.LineInfo);
+            CM.Log(CMT_CondiCompileNotMatch, PreprocesserTk.SrcRange);
             return false;
         }
 
@@ -520,7 +525,7 @@ bool Lexer::ReadPreprocesser()
     {
         if(CondiCompile.Count() == 1)
         {
-            CM.Log(CMT_CondiCompileNotMatch, PreprocesserTk.LineInfo);
+            CM.Log(CMT_CondiCompileNotMatch, PreprocesserTk.SrcRange);
             return false;
         }
         CondiCompile.Pop();
@@ -563,7 +568,7 @@ bool Lexer::ReadMacroCallParam(OLLinkedList<Token>& TokenList,  Token& Last, ETo
 }
 
 
-bool Lexer::ExpandMacro(OLString Name, CodeLineInfo Line, int Level)
+bool Lexer::ExpandMacro(OLString Name, SourceRange Line, int Level)
 {
     if(Level >= 100)
     {
@@ -664,8 +669,7 @@ void Lexer::ReadSingleToken(Token& tk, bool ForMacro, bool NoKeywords)
     
     Reader.SkipSpace(ForMacro ? false : true);
     int Ch = Reader.CurrChar();
-    tk.SetCurrLine(Reader);
-
+    tk.SetSrcRangeStart(Reader);
 
     if(Ch == TR_EOF)
     {
@@ -708,12 +712,14 @@ void Lexer::ReadSingleToken(Token& tk, bool ForMacro, bool NoKeywords)
                     Reader.NextCharUntil(C('\n'));
                 }
 
-
+                
                 Reader.NextChar();
                 tk.Tk = TK_none;
             }
             else
+            {
                 tk.Tk = TKS_sub;
+            }
         }
         break;
     case C('*'):
@@ -726,7 +732,8 @@ void Lexer::ReadSingleToken(Token& tk, bool ForMacro, bool NoKeywords)
             if(Reader.NextCharIfCurr(C('/')))
                 tk.Tk = TKS_idiv;
             else
-                tk.Tk = TKS_div;           
+                tk.Tk = TKS_div;
+            tk.SetSrcRangeEnd(Reader);           
         }
         break;
     case C('='):
@@ -890,14 +897,15 @@ void Lexer::ReadSingleToken(Token& tk, bool ForMacro, bool NoKeywords)
         }
         else
         {
-            CM.Log(CMT_UnknownCh,  Reader.GetLine(), Reader.GetCol(), Ch);
+            CM.Log(CMT_UnknownCh,  Reader.GetLine(), Reader.GetCol(), -1, -1, Ch);
             tk.Tk = TK_error;
         }
 
         break;
     }
-}
 
+    tk.SetSrcRangeEnd(Reader);
+}
 
 bool Lexer::IsDigit(TCHAR Ch)
 {
@@ -923,7 +931,7 @@ int Lexer::ReadHexChar()
 
     if(!CheckChFeature(Ch1, CH_HEX_DIGIT))
     {
-        CM.Log(CMT_HexExpected, Reader.GetLine(), Reader.GetCol());
+        CM.Log(CMT_HexExpected, Reader.GetLine(), Reader.GetCol(), -1, -1);
         return -1;
     }
 
@@ -933,7 +941,7 @@ int Lexer::ReadHexChar()
 
     if(!CheckChFeature(Ch2, CH_HEX_DIGIT))
     {
-        CM.Log(CMT_HexExpected, Reader.GetLine(), Reader.GetCol());
+        CM.Log(CMT_HexExpected, Reader.GetLine(), Reader.GetCol(), -1, -1);
         return -1;
     }
 
@@ -957,7 +965,7 @@ int Lexer::ReadDigitEsc()
 
     if(Val > 0xFF)
     {
-        CM.Log(CMT_DecimalEscTooLarge, Reader.GetLine(), Reader.GetCol());
+        CM.Log(CMT_DecimalEscTooLarge, Reader.GetLine(), Reader.GetCol(), -1, -1);
     }
     return Val;
 }
@@ -1010,7 +1018,7 @@ bool Lexer::ReadString(Token& tk, const TCHAR Quoater)
                 }
                 else
                 {
-                    CM.Log(CMT_UnknowEscape, Reader.GetLine(), Reader.GetCol(), Ch);
+                    CM.Log(CMT_UnknowEscape, Reader.GetLine(), Reader.GetCol(), -1, -1, Ch);
                     return false;
                 }
             }
@@ -1020,7 +1028,7 @@ bool Lexer::ReadString(Token& tk, const TCHAR Quoater)
 
         if(Ch == TR_EOF)
         {
-            CM.Log(CMT_UnfinishedString, StartLine, StartCol);
+            CM.Log(CMT_UnfinishedString, StartLine, StartCol, -1, -1);
             return false;
         }
 
@@ -1088,7 +1096,7 @@ bool Lexer::ReadNumber(Token& tk)
                 //if((CharFeature[Ch] & CH_DIGIT) == false)
                 if(!CheckChFeature(Ch, CH_DIGIT))
                 {
-                    CM.Log(CMT_ExponentNumErr, Reader.GetLine(), Reader.GetCol(), Reader.Pick().CStr());
+                    CM.Log(CMT_ExponentNumErr, Reader.GetLine(), Reader.GetCol(), -1, -1, Reader.Pick().CStr());
                     return false;
                 }
 
@@ -1106,7 +1114,7 @@ bool Lexer::ReadNumber(Token& tk)
                 //if((CharFeature[Ch] & CH_DIGIT) == false)
                 if(!CheckChFeature(Ch, CH_DIGIT))
                 {
-                    CM.Log(CMT_DecimalNumErr, Reader.GetLine(), Reader.GetCol(), Reader.Pick().CStr());
+                    CM.Log(CMT_DecimalNumErr, Reader.GetLine(), Reader.GetCol(), -1, -1, Reader.Pick().CStr());
                     return false;
                 }
                 continue;

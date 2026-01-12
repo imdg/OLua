@@ -67,15 +67,15 @@ public:
                 {
                     debugTypeDeri.OnBeginVisitCallbacks.Add([&typeDeri](SPtr<ABase> Node)
                     {
-                        VERBOSE(LogTester, T("BeginVisit: %s (%d, %d)\n %s"), Node->GetType().Name, Node->Line.Line, Node->Line.Col, typeDeri.GetDump().CStr());
+                        VERBOSE(LogTester, T("BeginVisit: %s (%d, %d)\n %s"), Node->GetType().Name, Node->SrcRange.Start.Line, Node->SrcRange.Start.Col, typeDeri.GetDump().CStr());
                     });
                     debugTypeDeri.OnEndVisitCallbacks.Add([&typeDeri](SPtr<ABase> Node)
                     {
-                        VERBOSE(LogTester, T("EndVisit: %s (%d, %d)\n %s"), Node->GetType().Name,  Node->Line.Line, Node->Line.Col, typeDeri.GetDump().CStr());
+                        VERBOSE(LogTester, T("EndVisit: %s (%d, %d)\n %s"), Node->GetType().Name,  Node->SrcRange.Start.Line, Node->SrcRange.Start.Col, typeDeri.GetDump().CStr());
                     });
                     debugTypeDeri.OnVisitCallbacks.Add([&typeDeri](SPtr<ABase> Node)
                     {
-                        VERBOSE(LogTester, T("Visit: %s (%d, %d)\n %s"),Node->GetType().Name, Node->Line.Line, Node->Line.Col, typeDeri.GetDump().CStr());
+                        VERBOSE(LogTester, T("Visit: %s (%d, %d)\n %s"),Node->GetType().Name, Node->SrcRange.Start.Line, Node->SrcRange.Start.Col, typeDeri.GetDump().CStr());
                     });
                 }
                 root->Accept(&debugTypeDeri);

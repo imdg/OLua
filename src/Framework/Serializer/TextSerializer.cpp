@@ -49,7 +49,7 @@ void TextSerializer::WriteShortRTTI(void* Data, TypeInfo* Type)
     else if(Type->IsKindOf(ABase::RTTI))
     {
         ABase* Obj = (ABase*)Data;
-        Output->WriteFormat(T("%s(%d, %d)"), Obj->GetType().Name, Obj->Line.Line, Obj->Line.Col);
+        Output->WriteFormat(T("%s(%d, %d - %d, %d)"), Obj->GetType().Name, Obj->SrcRange.Start.Line, Obj->SrcRange.Start.Col, Obj->SrcRange.End.Line, Obj->SrcRange.End.Col);
     }
 }
 

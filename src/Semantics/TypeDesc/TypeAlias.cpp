@@ -67,7 +67,7 @@ void TypeAlias::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolR
 
     if(Phase == SRP_Standalone || Phase == SRP_GlobalVar)
     {
-        CM.Log(CMT_NoAliasType, DeclNode->Line, UnresolvedTypeName.CStr());
+        CM.Log(CMT_NoAliasType, DeclNode->SrcRange, UnresolvedTypeName.CStr());
         ActualType = IntrinsicType::CreateFromRaw(IT_any);
     }
 

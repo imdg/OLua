@@ -1131,7 +1131,7 @@ EVisitStatus LuaPlainInterp::EndVisit(SPtr<AFuncBody> Node)
         OL_ASSERT(Found.IsClassMember == true);
         if(Found.FromClass == nullptr)
         {
-            ERROR(LogLuaPlain, T("Cannot find member of node (%d,%d)"), Node->Line.Line, Node->Line.Col);
+            ERROR(LogLuaPlain, T("Cannot find member of node (%d,%d)"), Node->SrcRange.Start.Line, Node->SrcRange.Start.Col);
         }
         else
         {
@@ -1351,7 +1351,7 @@ EVisitStatus LuaPlainInterp::Visit(SPtr<AVarRef> Node)
     SPtr<Reference> Ref = CurrScope->FindRefByNode(Node.Get());
     if(Ref == nullptr)
     {
-        ERROR(LogLuaPlain, T("Unresolved ref at (%d, %d)"), Node->Line.Line, Node->Line.Col);
+        ERROR(LogLuaPlain, T("Unresolved ref at (%d, %d)"), Node->SrcRange.Start.Line, Node->SrcRange.Start.Col);
         CurrText->AppendF(T("$REF(%s)"), Node->VarName.CStr());
         ContentStack.Add(NodeGen(Node, CurrText));
         return VS_Continue;

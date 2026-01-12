@@ -187,6 +187,11 @@ int TokenReader::GetCol()
     return End - LastLineEnd;
 }
 
+int TokenReader::GetPos()
+{
+    return End;
+}
+
 void TokenReader::LoadFromMemory(const TCHAR* SrcBuffer, int SrcLen)
 {
     BufferString = SrcBuffer;

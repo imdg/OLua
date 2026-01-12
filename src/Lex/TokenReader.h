@@ -45,6 +45,7 @@ public:
     OLString& GetSourceFileName();
     int GetLine();
     int GetCol();
+    int GetPos();
 
 private:
     int Start;

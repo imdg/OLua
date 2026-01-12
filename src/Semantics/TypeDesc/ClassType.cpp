@@ -85,7 +85,7 @@ bool ClassType::ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM)
 {
     if(NewMember.Name == T("new"))
     {
-        CM.Log(CMT_ReservedNew, NewMember.Decl->DeclNode->Line);
+        CM.Log(CMT_ReservedNew, NewMember.Decl->DeclNode->SrcRange);
         return false;
     }
 
@@ -105,7 +105,7 @@ bool ClassType::ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM)
 
         if(NewMember.DeclTypeDesc->ActuallyIs<FuncSigniture>() == false || (NewMember.Flags & CMF_Static) != 0 )
         {
-            CM.Log(CMT_OpMustBeFunc, NewMember.Decl->DeclNode->Line, NewMember.Name.CStr());
+            CM.Log(CMT_OpMustBeFunc, NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr());
             return false;
         }
         SPtr<FuncSigniture> Func = NewMember.DeclTypeDesc.Lock().PtrAs<FuncSigniture>();
@@ -113,7 +113,7 @@ bool ClassType::ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM)
         {
             if(Func->Params.Count() != 0)
             {
-                CM.Log(CMT_OpParamCount, NewMember.Decl->DeclNode->Line, NewMember.Name.CStr(), 0);
+                CM.Log(CMT_OpParamCount, NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr(), 0);
                 return false;
             }
         }
@@ -121,14 +121,14 @@ bool ClassType::ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM)
         {
             if(Func->Params.Count() != 1)
             {
-                CM.Log(CMT_OpParamCount, NewMember.Decl->DeclNode->Line, NewMember.Name.CStr(), 1);
+                CM.Log(CMT_OpParamCount, NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr(), 1);
                 return false;
             }
         }
 
         if(Func->Returns.Count() != 1)
         {
-            CM.Log(CMT_OpReturnCount, NewMember.Decl->DeclNode->Line, NewMember.Name.CStr());
+            CM.Log(CMT_OpReturnCount, NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr());
             return false;
         }
 
@@ -141,7 +141,7 @@ bool ClassType::ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM)
         {
             if(Func->Returns[0].Type->IsBool() == false)
             {
-                CM.Log(CMT_OpBoolRequired,  NewMember.Decl->DeclNode->Line, NewMember.Name.CStr());
+                CM.Log(CMT_OpBoolRequired,  NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr());
                 return false;
             }
         }
@@ -149,7 +149,7 @@ bool ClassType::ValidateMember(ClassMemberDesc& NewMember, CompileMsg& CM)
         {
             if(Func->Returns[0].Type->IsString() == false)
             {
-                CM.Log(CMT_OpStringRequired,  NewMember.Decl->DeclNode->Line, NewMember.Name.CStr());
+                CM.Log(CMT_OpStringRequired,  NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr());
                 return false;
             }
         }
@@ -167,7 +167,7 @@ void ClassType::AddClassVar(OLString Name, SPtr<AModifier> Modifier, SPtr<ATypeI
     NewMember.Init = Init;
     if(IsExternal && Init != nullptr)
     {
-        CM.Log(CMT_InitNotAllowOnExternal, Init->Line);
+        CM.Log(CMT_InitNotAllowOnExternal, Init->SrcRange);
         NewMember.Init = nullptr;
     }
     NewMember.Owner = SThis;
@@ -263,7 +263,7 @@ void ClassType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, ESym
         {
             if (Phase == SRP_GlobalVar || Phase == SRP_Standalone)
             {
-                CM.Log(CMT_NoBaseType, DeclNode->Line, UnresolvedBase[i].Name.CStr());
+                CM.Log(CMT_NoBaseType, DeclNode->SrcRange, UnresolvedBase[i].Name.CStr());
             }
             continue;
         }
@@ -277,7 +277,7 @@ void ClassType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, ESym
                 bool IsExternalBase = Found->ActuallyAs<ClassType>()->IsExternal;
                 if((IsExternal && !IsExternalBase) || (!IsExternal && IsExternalBase))
                 {
-                    CM.Log(CMT_MixedInherit, DeclNode->Line);
+                    CM.Log(CMT_MixedInherit, DeclNode->SrcRange);
                 }
                 else
                 {
@@ -287,12 +287,12 @@ void ClassType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, ESym
                         BaseTypes.Add(Found->GetActualType());
                     }
                     else
-                        CM.Log(CMT_TooManyBaseClasses, DeclNode->Line);
+                        CM.Log(CMT_TooManyBaseClasses, DeclNode->SrcRange);
                 }
             }
             else
             {
-                CM.Log(CMT_ClassBaseTypeError, DeclNode->Line, UnresolvedBase[i].Name.CStr());
+                CM.Log(CMT_ClassBaseTypeError, DeclNode->SrcRange, UnresolvedBase[i].Name.CStr());
             }
         }
     }
@@ -694,7 +694,7 @@ void ClassType::EnableReflection()
     //InsideScope->Re
 
     SPtr<FuncSigniture> GetTypeFunc = new FuncSigniture();
-    GetTypeFunc->AddReturn(BuiltinLib::GetInst().GetTypeInfoClass(), false, CodeLineInfo::Zero);
+    GetTypeFunc->AddReturn(BuiltinLib::GetInst().GetTypeInfoClass(), false, SourceRange::Zero);
     GetTypeFunc->SetThis(SThis);
     InsideScope->TypeDefs.Add(GetTypeFunc);
 

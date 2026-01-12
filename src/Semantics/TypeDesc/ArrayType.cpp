@@ -36,7 +36,7 @@ void ArrayType::ResolveReferredType(SymbolScope* Scope, CompileMsg& CM, ESymbolR
         {
             if(Phase == SRP_GlobalVar || Phase == SRP_Standalone)
             {
-                CM.Log(CMT_NoType, DeclNode->Line,  UnresolvedElemType.CStr());
+                CM.Log(CMT_NoType, DeclNode->SrcRange,  UnresolvedElemType.CStr());
                 ElemType = IntrinsicType::CreateFromRaw(IT_any);
             }
             

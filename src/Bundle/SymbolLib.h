@@ -27,7 +27,7 @@ DECLEAR_STRUCT_RTTI(PendingImport)
 struct ExportDecl
 {
     OLString Name;
-    CodeLineInfo Line;
+    SourceRange SrcRange;
     WPtr<SourceFile> DeclFile;
     
 };

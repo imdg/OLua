@@ -34,7 +34,7 @@ AClass* Parser::Parse_Class(bool IsExternal)
         }
     }
 
-    AClass* Ret = AstPool::New<AClass>(Lex.GetCurrent().LineInfo);
+    AClass* Ret = AstPool::New<AClass>(Lex.GetCurrent().SrcRange);
     Ret->Attrib = Attrib;
     
     if(Helper_ParseClassTitle(Ret, IsExternal) == false)
@@ -59,7 +59,7 @@ bool Parser::Helper_ParseClassTitle(AClass* Owner, bool IsExternal)
 {
     if(Lex.GetCurrent().Tk != TK_name)
     {
-        CM.Log(CMT_ClassNeedsName, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_ClassNeedsName, Lex.GetCurrent().SrcRange);
         return false;
     }
     Owner->ClassName = Lex.GetCurrent().StrOrNameVal;
@@ -73,10 +73,10 @@ bool Parser::Helper_ParseClassTitle(AClass* Owner, bool IsExternal)
             Token& Curr = Lex.GetCurrent();
             if(Curr.Tk != TK_name)
             {
-                CM.Log(CMT_NeedBaseName, Curr.LineInfo);
+                CM.Log(CMT_NeedBaseName, Curr.SrcRange);
                 return false;
             }
-            ANamedType* BaseType = AstPool::New<ANamedType>(Curr.LineInfo);
+            ANamedType* BaseType = AstPool::New<ANamedType>(Curr.SrcRange);
             BaseType->TypeName = Curr.StrOrNameVal;
             Owner->BaseClasses.Add(BaseType);
 
@@ -118,7 +118,7 @@ bool Parser::Helper_ParseClassBody(AClass* Owner, bool IsExternal)
 // SingleModifier -> public | protected | private | abstract | virtual | override | static | const
 AModifier* Parser::Parse_Modifier() 
 {
-    AModifier* Ret = AstPool::New<AModifier>(Lex.GetCurrent().LineInfo);
+    AModifier* Ret = AstPool::New<AModifier>(Lex.GetCurrent().SrcRange);
 
     while(true)
     {
@@ -178,7 +178,7 @@ AClassMember* Parser::Parse_ClassMember(bool IsExternal)
     {
         if(IsExternal)
         {
-            CM.Log(CMT_CtorNotAllowOnExternal, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_CtorNotAllowOnExternal, Lex.GetCurrent().SrcRange);
         }
         AClassContructor* Constr = Parse_ClassConstructor();
         if(Constr == nullptr)
@@ -191,7 +191,7 @@ AClassMember* Parser::Parse_ClassMember(bool IsExternal)
         return Constr;
     }
 
-    CM.Log(CMT_MemberDeclWrong, Lex.GetCurrent().LineInfo);
+    CM.Log(CMT_MemberDeclWrong, Lex.GetCurrent().SrcRange);
     return nullptr;
 }
 
@@ -214,7 +214,7 @@ AMethod* Parser::Parse_Method(bool IsAbstract)
 
     if(Lex.GetCurrent().Tk != TK_name)
     {
-        CM.Log(CMT_MethodNeedsName, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_MethodNeedsName, Lex.GetCurrent().SrcRange);
         if(Attrib)
             AstPool::Delete(Attrib);
         return nullptr;
@@ -230,7 +230,7 @@ AMethod* Parser::Parse_Method(bool IsAbstract)
         return nullptr;
     }
 
-    ANormalMethod* Ret = AstPool::New<ANormalMethod>(Lex.GetCurrent().LineInfo);
+    ANormalMethod* Ret = AstPool::New<ANormalMethod>(Lex.GetCurrent().SrcRange);
     Ret->Body = Body;
     Ret->Name = Name;
     Ret->Attrib = Attrib;
@@ -245,7 +245,7 @@ AClassContructor* Parser::Parse_ClassConstructor()
 
     if(Lex.GetCurrent().Tk != TK_name)
     {
-        CM.Log(CMT_MethodNeedsName, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_MethodNeedsName, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
     OLString Name = Lex.GetCurrent().StrOrNameVal;
@@ -257,7 +257,7 @@ AClassContructor* Parser::Parse_ClassConstructor()
         return nullptr;
     }
 
-    AClassContructor* Ret = AstPool::New<AClassContructor>(Lex.GetCurrent().LineInfo);
+    AClassContructor* Ret = AstPool::New<AClassContructor>(Lex.GetCurrent().SrcRange);
     Ret->Body = Body;
     Ret->Name = Name;
     return Ret;
@@ -270,7 +270,7 @@ AClassVar* Parser::Parse_ClassVar(bool IsExternal)
     Lex.Next();
 
     // Parse the variant declearation
-    AClassVar* Ret = AstPool::New<AClassVar>(Lex.GetCurrent().LineInfo);
+    AClassVar* Ret = AstPool::New<AClassVar>(Lex.GetCurrent().SrcRange);
     while(true)
     {
         AVarDecl* Decl = Parse_VarDecl(false);
@@ -342,12 +342,12 @@ AEnum* Parser::Parse_Enum()
 
     if(Lex.GetCurrent().Tk != TK_name)
     {
-        CM.Log(CMT_EnumNeedsName, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_EnumNeedsName, Lex.GetCurrent().SrcRange);
         AstPool::Delete(Attrib);
         return nullptr;
     }
 
-    AEnum* Enum = AstPool::New<AEnum>(Lex.GetCurrent().LineInfo);
+    AEnum* Enum = AstPool::New<AEnum>(Lex.GetCurrent().SrcRange);
     Enum->Name = Lex.GetCurrent().StrOrNameVal;
     Enum->Attrib = Attrib;
 
@@ -369,7 +369,7 @@ AEnum* Parser::Parse_Enum()
         {
             if(Lex.GetCurrent().Tk != TKK_end)
             {
-                CM.Log(CMT_EnumItemSytexError, Lex.GetCurrent().LineInfo);
+                CM.Log(CMT_EnumItemSytexError, Lex.GetCurrent().SrcRange);
                 AstPool::Delete(Enum);
                 return nullptr;
             }
@@ -388,11 +388,11 @@ AEnumItem* Parser::Parse_EnumItem()
 {
     if(Lex.GetCurrent().Tk != TK_name)
     {
-        CM.Log(CMT_ErrorInEnumItem, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_ErrorInEnumItem, Lex.GetCurrent().SrcRange);
         return nullptr;
     }
 
-    AEnumItem* EnumItem = AstPool::New<AEnumItem>(Lex.GetCurrent().LineInfo);
+    AEnumItem* EnumItem = AstPool::New<AEnumItem>(Lex.GetCurrent().SrcRange);
     EnumItem->Name = Lex.GetCurrent().StrOrNameVal;
 
     if(Lex.GetLookAhead().Tk == TKS_assign)
@@ -431,7 +431,7 @@ AInterface* Parser::Parse_Interface()
     }
 
 
-    AInterface* Ret = AstPool::New<AInterface>(Lex.GetCurrent().LineInfo);
+    AInterface* Ret = AstPool::New<AInterface>(Lex.GetCurrent().SrcRange);
     Ret->Attrib = Attrib;
 
     if(Helper_ParseInterfaceTitle(Ret) == false)
@@ -454,7 +454,7 @@ bool Parser::Helper_ParseInterfaceTitle(AInterface* Owner)
 {
     if(Lex.GetCurrent().Tk != TK_name)
     {
-        CM.Log(CMT_InterfaceNeedsName, Lex.GetCurrent().LineInfo);
+        CM.Log(CMT_InterfaceNeedsName, Lex.GetCurrent().SrcRange);
         return false;
     }
     Owner->InterfaceName = Lex.GetCurrent().StrOrNameVal;
@@ -468,10 +468,10 @@ bool Parser::Helper_ParseInterfaceTitle(AInterface* Owner)
             Token& Curr = Lex.GetCurrent();
             if(Curr.Tk != TK_name)
             {
-                CM.Log(CMT_NeedBaseName, Curr.LineInfo);
+                CM.Log(CMT_NeedBaseName, Curr.SrcRange);
                 return false;
             }
-            ANamedType* BaseType = AstPool::New<ANamedType>(Curr.LineInfo);
+            ANamedType* BaseType = AstPool::New<ANamedType>(Curr.SrcRange);
             BaseType->TypeName = Curr.StrOrNameVal;
             Owner->BaseInterfaces.Add(BaseType);
 
@@ -512,7 +512,7 @@ bool Parser::Helper_ParseInterfaceBody(AInterface* Owner)
             }
             if(Method->Is<ANormalMethod>() == false)
             {
-                CM.Log(CMT_InterfaceMemberError, Lex.GetCurrent().LineInfo);
+                CM.Log(CMT_InterfaceMemberError, Lex.GetCurrent().SrcRange);
                 AstPool::Delete(Modifier);
                 AstPool::Delete(Method);
                 return false;
@@ -522,7 +522,7 @@ bool Parser::Helper_ParseInterfaceBody(AInterface* Owner)
         }
         else
         {
-            CM.Log(CMT_InterfaceMemberError, Lex.GetCurrent().LineInfo);
+            CM.Log(CMT_InterfaceMemberError, Lex.GetCurrent().SrcRange);
             return false;
         }
     }
@@ -534,7 +534,7 @@ bool Parser::Helper_ParseInterfaceBody(AInterface* Owner)
 ARoot* Parser::Parse_Root(OLString Name)
 {
     //OL_ASSERT(Lex.GetCurrent().Tk != TK_none );
-    ARoot* Root = AstPool::New<ARoot>(Lex.Next().LineInfo);
+    ARoot* Root = AstPool::New<ARoot>(Lex.Next().SrcRange);
     ABlock* Block = Parse_Block(true);
     if(Block == nullptr)
     {

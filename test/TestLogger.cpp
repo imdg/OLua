@@ -26,8 +26,8 @@ public:
         CompileMsg cm;
 
         cm.SetFile(T("C:\\NotAFile.ol"));
-        cm.Log(CMT_Dummy, 0, 0);
-        cm.Log(CMT_UnknownCh, 126, 7, C('('));
+        cm.Log(CMT_Dummy, 0, 0, -1, -1);
+        cm.Log(CMT_UnknownCh, 126, 7, -1, -1, C('('));
 
         return 0;
     };

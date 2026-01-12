@@ -67,7 +67,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ASubexpr> Node)
         CurrType = DeriStack[Index + 1].PrimaryType->AcceptUniOp(Node->FirstUniOp);
         if(CurrType == nullptr)
         {
-            CM.Log(CMT_UniopNotMatch, Node->Line, ASubexpr::UniopToString(Node->FirstUniOp)
+            CM.Log(CMT_UniopNotMatch, Node->SrcRange, ASubexpr::UniopToString(Node->FirstUniOp)
                 , DeriStack[Index + 1].PrimaryType->ToString(DeriStack[Index + 1].IsNilable).CStr());
             return VS_Stop;
         }
@@ -91,11 +91,11 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ASubexpr> Node)
         {
             if(ResultIsNilable == false)
             {
-                CM.Log(CMT_NonnilableCoalescing, Node->Line);
+                CM.Log(CMT_NonnilableCoalescing, Node->SrcRange);
             }
             else if(TargetIsNilable == true)
             {
-                CM.Log(CMT_NilableCoalescingNilable, Node->Line);
+                CM.Log(CMT_NilableCoalescingNilable, Node->SrcRange);
             }
 
             if(MatchType(Target, false, CurrType, false, TargetNode, false) == TCR_NoWay)
@@ -112,7 +112,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ASubexpr> Node)
                 ResultIsNilable = true;
             if(Result.Type == nullptr)
             {
-                CM.Log(CMT_BinopNotMatch, Node->Line, ASubexpr::BinopToString(Node->OperandList[i].Op), CurrType->ToString(ResultIsNilable).CStr(), Target->ToString(TargetIsNilable).CStr());
+                CM.Log(CMT_BinopNotMatch, Node->SrcRange, ASubexpr::BinopToString(Node->OperandList[i].Op), CurrType->ToString(ResultIsNilable).CStr(), Target->ToString(TargetIsNilable).CStr());
                 return VS_Stop;
             }
             CurrType = Result.Type;
@@ -194,7 +194,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ADotMember> Node)
 
     if(IsNilable && Setting.NilSafety != VL_None)
     {
-        CM.Log(CMT_DerefNilable, Node->Line);
+        CM.Log(CMT_DerefNilable, Node->SrcRange);
     }
 
     if(DotTarget.PrimaryType->ActuallyIs<MapType>())
@@ -271,18 +271,18 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ABracketMember> Node)
 
     if(Target.IsNilable && Setting.NilSafety != VL_None)
     {
-        CM.Log(CMT_DerefNilable, Node->Line);
+        CM.Log(CMT_DerefNilable, Node->SrcRange);
     }
 
     if(Target.PrimaryType->ActuallyIs<ArrayType>())
     {
         if(Field.IsNilable && Setting.NilSafety != VL_None)
         {
-            CM.Log(CMT_NilableAsIndex, Node->Line);
+            CM.Log(CMT_NilableAsIndex, Node->SrcRange);
         }
         if(MatchType(Field.PrimaryType, false, IntrinsicType::CreateFromRaw(IT_int), false, Field.Node, false) == TCR_NoWay)
         {
-            CM.Log(CMT_ArrayNeedIntIndex, Node->Line);
+            CM.Log(CMT_ArrayNeedIntIndex, Node->SrcRange);
         }
         DeriStack.Top().PrimaryType = Target.PrimaryType->ActuallyAs<ArrayType>()->ElemType.Lock();
         DeriStack.Top().IsConst = Target.IsConst;
@@ -299,11 +299,11 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ABracketMember> Node)
     {
         if(Field.IsNilable && Setting.NilSafety != VL_None)
         {
-            CM.Log(CMT_NilableAsIndex, Node->Line);
+            CM.Log(CMT_NilableAsIndex, Node->SrcRange);
         }
         if(MatchType(Field.PrimaryType, false, Target.PrimaryType->ActuallyAs<MapType>()->KeyType.Lock(), false, Field.Node, false) == TCR_NoWay)
         {
-            CM.Log(CMT_MapKeyTypeMismatch, Node->Line);
+            CM.Log(CMT_MapKeyTypeMismatch, Node->SrcRange);
         }
 
         DeriStack.Top().PrimaryType = Target.PrimaryType->ActuallyAs<MapType>()->ValueType.Lock();
@@ -319,7 +319,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ABracketMember> Node)
     }
     else
     {
-        CM.Log(CMT_InvalidBracket, Node->Line, Target.PrimaryType->ToString(Target.IsNilable).CStr());
+        CM.Log(CMT_InvalidBracket, Node->SrcRange, Target.PrimaryType->ToString(Target.IsNilable).CStr());
         return VS_Stop;
     }
 
@@ -343,13 +343,13 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ANormalCall> Node)
     bool IsFuncNilable = DeriStack[Index + 1].IsNilable;
     if(IsFuncNilable)
     {
-        CM.Log(CMT_CallNilable, Node->Line);
+        CM.Log(CMT_CallNilable, Node->SrcRange);
     }
     if(FuncBase->ActuallyIs<FuncSigniture>() == false)
     {
         if(FuncBase->IsAny() == false)
         {
-            CM.Log(CMT_RequirFunc, Node->Line);
+            CM.Log(CMT_RequirFunc, Node->SrcRange);
             return VS_Stop;
         }
         else
@@ -393,7 +393,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
 
     if(IsNilable && Setting.NilSafety != VL_None)
     {
-        CM.Log(CMT_DerefNilable, Node->Line);
+        CM.Log(CMT_DerefNilable, Node->SrcRange);
     }
 
     if(FuncOwner->ActuallyIs<MapType>())
@@ -449,7 +449,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
 
     if(MemberType == nullptr)
     {
-        ERROR(LogCompile, T("Internal error while dereferencing member %s (%d,%d)"), Node->NameAfter.CStr(), Node->Line.Line, Node->Line.Col);
+        ERROR(LogCompile, T("Internal error while dereferencing member %s (%d,%d)"), Node->NameAfter.CStr(), Node->SrcRange.Start.Line, Node->SrcRange.Start.Col);
         DeriStack[Index].PrimaryType = IntrinsicType::CreateFromRaw(IT_any);
         DeriStack[Index].IsNilable = true;
         Node->ExprType = DeriStack[Index].PrimaryType ;
@@ -476,7 +476,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
         }
         else
         {
-            CM.Log(CMT_RequirFunc, Node->Line);
+            CM.Log(CMT_RequirFunc, Node->SrcRange);
             return VS_Stop;
         }
     }
@@ -487,7 +487,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AColonCall> Node)
 
     if(!IsConst && IsOwnerConst)
     {
-        CM.Log(CMT_ConstRestrictOwner, Node->Line);
+        CM.Log(CMT_ConstRestrictOwner, Node->SrcRange);
         return VS_Stop;
     }
 
@@ -557,7 +557,7 @@ EVisitStatus TypeDerivationVisitor::Visit(SPtr<AVarRef> Node)
     {
         DeriStack.Add(TypeDeriContex(Node, IntrinsicType::CreateFromRaw(IT_any), false));
         DeriStack.Top().IsNilable = true;
-        CM.Log(CMT_ImplicitGlobal, Node->Line, Node->VarName.CStr());
+        CM.Log(CMT_ImplicitGlobal, Node->SrcRange, Node->VarName.CStr());
         Node->ExprType = IntrinsicType::CreateFromRaw(IT_any, true);
         Node->IsNilable = true;
     }
@@ -605,20 +605,20 @@ EVisitStatus TypeDerivationVisitor::Visit(SPtr<ASuper> Node)
     SPtr<ClassType> Class = GetOuterClass();
     if(Class == nullptr)
     {
-        CM.Log(CMT_IllegalSuper, Node->Line);
+        CM.Log(CMT_IllegalSuper, Node->SrcRange);
         return VS_Stop;
     }
     SPtr<ClassType> SuperClass = Class->GetSuperClass();
     if(Class == nullptr)
     {
-        CM.Log(CMT_IllegalSuper, Node->Line);
+        CM.Log(CMT_IllegalSuper, Node->SrcRange);
         return VS_Stop;
     }
 
     SPtr<FuncSigniture> Func = GetOuterFunc();
     if(Func == nullptr)
     {
-        CM.Log(CMT_IllegalSuper, Node->Line);
+        CM.Log(CMT_IllegalSuper, Node->SrcRange);
         return VS_Stop;
     }
     
@@ -627,7 +627,7 @@ EVisitStatus TypeDerivationVisitor::Visit(SPtr<ASuper> Node)
     // 'super' is only valid in a member function of a class with a base class
     if(Class->IsMethod(Func) == false)
     {
-        CM.Log(CMT_IllegalSuper, Node->Line);
+        CM.Log(CMT_IllegalSuper, Node->SrcRange);
         return VS_Stop;
     }
 
@@ -652,14 +652,14 @@ EVisitStatus TypeDerivationVisitor::Visit(SPtr<ASelf> Node)
     SPtr<ClassType> Class = GetOuterClass();
     if(Class == nullptr)
     {
-        CM.Log(CMT_IllegalSelf, Node->Line);
+        CM.Log(CMT_IllegalSelf, Node->SrcRange);
         return VS_Stop;
     }
 
     SPtr<FuncSigniture> Func = GetOuterFunc();
     if(Func == nullptr)
     {
-        CM.Log(CMT_IllegalSelf, Node->Line);
+        CM.Log(CMT_IllegalSelf, Node->SrcRange);
         return VS_Stop;
     }
 
@@ -667,7 +667,7 @@ EVisitStatus TypeDerivationVisitor::Visit(SPtr<ASelf> Node)
     // 'super' is only valid in a member function of a class 
     if(Class->IsMethod(Func) == false)
     {
-        CM.Log(CMT_IllegalSelf, Node->Line);
+        CM.Log(CMT_IllegalSelf, Node->SrcRange);
         return VS_Stop;
     }
 
@@ -727,7 +727,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ANilableUnwrap> Node)
     DeriStack[Index].IsConst = DeriStack.Top().IsConst;
     if(DeriStack.Top().IsNilable == false && Setting.NilSafety != VL_None)
     {
-        CM.Log(CMT_UnwrapNonnilable, Node->Line);
+        CM.Log(CMT_UnwrapNonnilable, Node->SrcRange);
     }
 
     DeriStack[Index].IsNilable = false;
@@ -785,7 +785,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AClassVar> Node)
             SPtr<Declearation> Decl = CurrScope->FindDeclByNode(Node->Decls[i].Get());
             if(Decl->IsNilable == false && Setting.NilSafety != VL_None)
             {
-                CM.Log(CMT_NonnilableMember, Node->Line, Node->Decls[i]->VarName.CStr());
+                CM.Log(CMT_NonnilableMember, Node->SrcRange, Node->Decls[i]->VarName.CStr());
             }
         }
     }
@@ -830,7 +830,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AAssignment> Node)
 
         if(LVal.IsConst == true)
         {
-            CM.Log(CMT_ConstRestrictAssign, Node->Line);
+            CM.Log(CMT_ConstRestrictAssign, Node->SrcRange);
         }
         
         MatchType(RVal.PrimaryType, RVal.IsNilable, LVal.PrimaryType, LVal.IsNilable, RVal.Node, false);
@@ -889,7 +889,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
         }
         else
         {
-            CM.Log(CMT_ArrayIterMismatch, Node->Iterator->Line);
+            CM.Log(CMT_ArrayIterMismatch, Node->Iterator->SrcRange);
         }
 
     }
@@ -898,7 +898,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
         SPtr<MapType> Map = IteratorType->ActuallyAs<MapType>();
         if(Node->VarList.Count() != 2)
         {
-            CM.Log(CMT_MapIterMismatch, Node->Iterator->Line);
+            CM.Log(CMT_MapIterMismatch, Node->Iterator->SrcRange);
         }
         else
         {
@@ -921,7 +921,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
         SPtr<TypeDescBase> Type2;
         if(Node->VarList.Count() != 1 || Node->VarList.Count() != 2)
         {
-            CM.Log(CMT_IterMismatch, Node->Iterator->Line);
+            CM.Log(CMT_IterMismatch, Node->Iterator->SrcRange);
         }
         if(Node->VarList.Count() >= 1)
         {
@@ -937,7 +937,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
         ETypeValidation Result = IteratorType->ActuallyAs<ConstructorType>()->ValidateIterator(Type1, Type2);
         if(Result == TCR_NoWay)
         {
-            CM.Log(CMT_IterMismatch, Node->Iterator->Line);
+            CM.Log(CMT_IterMismatch, Node->Iterator->SrcRange);
         }
     }
     else if(IteratorType->IsAny())
@@ -961,12 +961,12 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
             if(Tuple->Subtypes[0].Type->ActuallyIs<FuncSigniture>() == false)
             {
                 // error
-                CM.Log(CMT_IterEntryType, Node->Line);
+                CM.Log(CMT_IterEntryType, Node->SrcRange);
                 return false;
             }
             if(Tuple->Subtypes[0].IsNilable == true && Setting.NilSafety != VL_None)
             {
-                CM.Log(CMT_NilableIter, Node->Line);
+                CM.Log(CMT_NilableIter, Node->SrcRange);
             }
 
             SPtr<FuncSigniture> IterFun = Tuple->Subtypes[0].Type.Lock()->ActuallyAs<FuncSigniture>();
@@ -985,7 +985,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
                 if(Result == TCR_NoWay)
                 {
                     // error
-                    CM.Log(CMT_IterTargetType, Node->Line);
+                    CM.Log(CMT_IterTargetType, Node->SrcRange);
                     return false;
                 }
             }
@@ -993,7 +993,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
             if( IterFun->Returns.Count() <  Node->VarList.Count())
             {
                 // error
-                CM.Log(CMT_IterItemNum, Node->Line);
+                CM.Log(CMT_IterItemNum, Node->SrcRange);
                 return false;
             }
             
@@ -1005,7 +1005,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
                 if(Result == TCR_NoWay)
                 {
                     // error
-                    CM.Log(CMT_IterIndexType, Node->Line);
+                    CM.Log(CMT_IterIndexType, Node->SrcRange);
                     return false;
                 }
 
@@ -1014,7 +1014,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
                 if(Result == TCR_NoWay)
                 {
                     // error
-                    CM.Log(CMT_IterFuncIndexType, Node->Line);
+                    CM.Log(CMT_IterFuncIndexType, Node->SrcRange);
                     return false;
                 }
             }
@@ -1025,7 +1025,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
                 if(Result == TCR_NoWay)
                 {
                     //error
-                    CM.Log(CMT_IterValueType, Node->Line, i);
+                    CM.Log(CMT_IterValueType, Node->SrcRange, i);
                     return false;
                 }
             }
@@ -1038,7 +1038,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AForList> Node)
     }
     else
     {
-        CM.Log(CMT_NotAIterator, Node->Iterator->Line);
+        CM.Log(CMT_NotAIterator, Node->Iterator->SrcRange);
     }
 
     DeriStack.PopTo(Index);
@@ -1118,7 +1118,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AGlobal> Node)
             SPtr<Declearation> Decl = CurrScope->FindDeclByNode(Node->Decls[i].Get());
             if(Decl->IsNilable == false && Setting.NilSafety != VL_None)
             {
-                CM.Log(CMT_NonnilableNotInit, Node->Line, Decl->Name.CStr() );
+                CM.Log(CMT_NonnilableNotInit, Node->SrcRange, Decl->Name.CStr() );
             }
         }
     }
@@ -1166,7 +1166,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<ALocal> Node)
             SPtr<Declearation> Decl = CurrScope->FindDeclByNode(Node->Decls[i].Get());
             if(Decl->IsNilable == false && Setting.NilSafety != VL_None)
             {
-                CM.Log(CMT_NonnilableNotInit, Node->Line, Decl->Name.CStr() );
+                CM.Log(CMT_NonnilableNotInit, Node->SrcRange, Decl->Name.CStr() );
             }
         }
     }
@@ -1233,7 +1233,7 @@ EVisitStatus TypeDerivationVisitor::EndVisit(SPtr<AReturn> Node)
     SPtr<FuncSigniture> Func = GetOuterFunc();
     if(Node->Ret.Count() != Func->Returns.Count())
     {
-        CM.Log(CMT_ReturnMismatch, Node->Line, Func->Returns.Count(), Node->Ret.Count());
+        CM.Log(CMT_ReturnMismatch, Node->SrcRange, Func->Returns.Count(), Node->Ret.Count());
     }
     else
     {
@@ -1288,12 +1288,12 @@ ETypeValidation TypeDerivationVisitor::MatchType(SPtr<TypeDescBase> From, bool I
 {
     if(IsFromNilable && IsToNilable == false && Setting.NilSafety != VL_None)
     {
-        CM.Log(CMT_NilableConvert, Node->Line);
+        CM.Log(CMT_NilableConvert, Node->SrcRange);
     }
 
     if(IsToNilable == false && From->IsNil()) 
     {
-        CM.Log(CMT_AssignNilToNonnilable, Node->Line);
+        CM.Log(CMT_AssignNilToNonnilable, Node->SrcRange);
     }
 
     ETypeValidation Result = From->ValidateConvert(To);
@@ -1301,14 +1301,14 @@ ETypeValidation TypeDerivationVisitor::MatchType(SPtr<TypeDescBase> From, bool I
     {
     case TCR_DataLose:
         if(!IsExplicit)
-            CM.Log(CMT_TypeConvDataLose, Node->Line, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
+            CM.Log(CMT_TypeConvDataLose, Node->SrcRange, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
         break;
     case TCR_Unsafe:
         if(!IsExplicit)
-            CM.Log(CMT_TypeConvUnSafe, Node->Line, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
+            CM.Log(CMT_TypeConvUnSafe, Node->SrcRange, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
         break;
     case TCR_NoWay:
-        CM.Log(CMT_TypeConvNoWay, Node->Line, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
+        CM.Log(CMT_TypeConvNoWay, Node->SrcRange, From->ToString(IsFromNilable).CStr(), To->ToString(IsToNilable).CStr());
         break;
     default:
         break;
@@ -1334,7 +1334,7 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefClass(SPtr<ClassT
     FindMemberResult Member =  Class->FindMember(Name, true);
     if(Member.FromClass == nullptr)
     {
-        CM.Log(CMT_NoMember, Node->Line, Class->Name.CStr(), Name.CStr());
+        CM.Log(CMT_NoMember, Node->SrcRange, Class->Name.CStr(), Name.CStr());
         if(Setting.AllowImplicitAny)
         {
             return DerefResult{IntrinsicType::CreateFromRaw(IT_any), false, true};
@@ -1356,7 +1356,7 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefClass(SPtr<ClassT
                 {
                     if((Member.FromClass->Flags & CMF_Protected) == 0 || !Class->IsBaseType(Member.FromClass->Owner.Lock().Get()))
                     {
-                        CM.Log(CMT_PrivateMember, Node->Line,  Name.CStr(), Class->Name.CStr());
+                        CM.Log(CMT_PrivateMember, Node->SrcRange,  Name.CStr(), Class->Name.CStr());
                     }
                     
                 }
@@ -1365,14 +1365,14 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefClass(SPtr<ClassT
             // ClassName:Member  not allowed
             if(UseTypeName && UseColon)
             {
-                CM.Log(CMT_NoColonForTypeName, Node->Line);
+                CM.Log(CMT_NoColonForTypeName, Node->SrcRange);
             }
             // ClassName.Member  for static method, or static var, or constructor
             else if(UseTypeName && !UseColon)
             {
                 if((Member.FromClass->Flags & CMF_Static) == 0
                     && (Member.FromClass->Flags & CMF_Constructor) == 0)
-                    CM.Log(CMT_DotForStatic, Node->Line, Name.CStr(), Class->Name.CStr());
+                    CM.Log(CMT_DotForStatic, Node->SrcRange, Name.CStr(), Class->Name.CStr());
 
                 if(Member.FromClass->Flags & CMF_Constructor)
                 {
@@ -1385,7 +1385,7 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefClass(SPtr<ClassT
                 if(  Member.FromClass->Type != Member_Function 
                     || (Member.FromClass->Flags & CMF_Static) != 0 )
                     {
-                        CM.Log(CMT_ColonForNonStaticMethod, Node->Line, Name.CStr(), Class->Name.CStr());
+                        CM.Log(CMT_ColonForNonStaticMethod, Node->SrcRange, Name.CStr(), Class->Name.CStr());
                     }
             }
             // Inst.Member  for non-static var
@@ -1394,7 +1394,7 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefClass(SPtr<ClassT
                 if(  Member.FromClass->Type != Member_Variant 
                     || (Member.FromClass->Flags & CMF_Static) != 0 )
                 {
-                    CM.Log(CMT_DotForNonStaticVar, Node->Line, Name.CStr(), Class->Name.CStr());
+                    CM.Log(CMT_DotForNonStaticVar, Node->SrcRange, Name.CStr(), Class->Name.CStr());
                 }
             }
 
@@ -1427,7 +1427,7 @@ SPtr<TypeDescBase> TypeDerivationVisitor::DerefMap(SPtr<MapType> Map, OLString N
     if(Map->KeyType->ActuallyIs<IntrinsicType>() == false
         || Map->KeyType->ActuallyAs<IntrinsicType>()->Type != IT_string)
     {
-        CM.Log(CMT_MapNeedStringKey, Node->Line);
+        CM.Log(CMT_MapNeedStringKey, Node->SrcRange);
     }
 
     return Map->ValueType.Lock();
@@ -1442,7 +1442,7 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefInterface(SPtr<In
     InterfaceMember* Member =  Interface->FindMember(Name, true);
     if(Member == nullptr)
     {
-        CM.Log(CMT_NoMember, Node->Line, Interface->Name.CStr(), Name.CStr());
+        CM.Log(CMT_NoMember, Node->SrcRange, Interface->Name.CStr(), Name.CStr());
         if(Setting.AllowImplicitAny)
         {
             return DerefResult{IntrinsicType::CreateFromRaw(IT_any), false, false};
@@ -1486,7 +1486,7 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefEnum(SPtr<EnumTyp
 
         DerefResult BaseDeref = DerefClass(EnumBaseClass, Name, Node, true, false);
         if(BaseDeref.Type == nullptr)
-            CM.Log(CMT_NoEnumItem, Node->Line, Name.CStr(), Enum->Name.CStr());
+            CM.Log(CMT_NoEnumItem, Node->SrcRange, Name.CStr(), Enum->Name.CStr());
         else
             return BaseDeref;
     }
@@ -1494,7 +1494,7 @@ TypeDerivationVisitor::DerefResult TypeDerivationVisitor::DerefEnum(SPtr<EnumTyp
     {
         DerefResult BaseDeref = DerefClass(EnumBaseClass, Name, Node, false, true);
         if(BaseDeref.Type == nullptr)
-            CM.Log(CMT_NoEnumItem, Node->Line, Name.CStr(), Enum->Name.CStr());
+            CM.Log(CMT_NoEnumItem, Node->SrcRange, Name.CStr(), Enum->Name.CStr());
         else
             return BaseDeref;
     }
@@ -1517,12 +1517,12 @@ bool TypeDerivationVisitor::MatchFuncCall(SPtr<FuncSigniture> Func, int RetIndex
     bool OK = true;
     if(MaxRequiredParams >= 0 && InStackParams > MaxRequiredParams)
     {
-        CM.Log(CMT_TooManyParam, Node->Line, Func->ToString(false).CStr());
+        CM.Log(CMT_TooManyParam, Node->SrcRange, Func->ToString(false).CStr());
         OK = false;
     }
     else if(InStackParams < MinRequireParams)
     {
-        CM.Log(CMT_TooFewParam, Node->Line, Func->ToString(false).CStr());
+        CM.Log(CMT_TooFewParam, Node->SrcRange, Func->ToString(false).CStr());
         OK = false;
     }
     else
@@ -1547,12 +1547,12 @@ bool TypeDerivationVisitor::MatchFuncCall(SPtr<FuncSigniture> Func, int RetIndex
             
             if(MatchType(CurrCtx.PrimaryType, CurrCtx.IsNilable, ParamType, ParamIsNilable, CurrCtx.Node, false) == TCR_NoWay)
             {
-                CM.Log(CMT_ParamTypeError, Node->Line, (p+1));
+                CM.Log(CMT_ParamTypeError, Node->SrcRange, (p+1));
                 OK = false;
             }
             if(CurrCtx.IsConst && (FuncParam.Flags & FPF_Const) == 0 && CurrCtx.PrimaryType->IsRefType())
             {
-                CM.Log(CMT_ConstRestrictCall, Node->Line, (p+1));
+                CM.Log(CMT_ConstRestrictCall, Node->SrcRange, (p+1));
                 OK = false;
             }
 
@@ -1613,7 +1613,7 @@ OLString   TypeDerivationVisitor::GetDump()
         Ret.AppendF(T("    %s : [%s (%d, %d)] - %s\n")
             , Curr.IsType ? T("Type") : T("Value")
             , Curr.Node->GetType().Name
-            , Curr.Node->Line.Line, Curr.Node->Line.Col
+            , Curr.Node->SrcRange.Start.Line, Curr.Node->SrcRange.Start.Col
             , Curr.PrimaryType == nullptr? T("nullptr") : Curr.PrimaryType->ToString(Curr.IsNilable).CStr());
     }
     return Ret;

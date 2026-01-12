@@ -36,7 +36,7 @@ DECLEAR_STRUCT_RTTI(SymbolImport)
 struct SymbolExport
 {
     OLString        Name;
-    CodeLineInfo    Line;
+    SourceRange    SrcRange;
     bool            IsType;
 
 };

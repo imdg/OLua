@@ -44,7 +44,7 @@ bool InterfaceType::ValidateMember(InterfaceMember& NewMember, CompileMsg& CM)
 {
     if(NewMember.Name == T("new"))
     {
-        CM.Log(CMT_ReservedNew, NewMember.Decl->DeclNode->Line);
+        CM.Log(CMT_ReservedNew, NewMember.Decl->DeclNode->SrcRange);
         return false;
     }
 
@@ -63,7 +63,7 @@ bool InterfaceType::ValidateMember(InterfaceMember& NewMember, CompileMsg& CM)
 
         if((NewMember.Flags & CMF_Static) != 0 )
         {
-            CM.Log(CMT_OpMustBeFunc, NewMember.Decl->DeclNode->Line, NewMember.Name.CStr());
+            CM.Log(CMT_OpMustBeFunc, NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr());
             return false;
         }
         SPtr<FuncSigniture> Func = NewMember.Func.Lock();
@@ -71,7 +71,7 @@ bool InterfaceType::ValidateMember(InterfaceMember& NewMember, CompileMsg& CM)
         {
             if(Func->Params.Count() != 0)
             {
-                CM.Log(CMT_OpParamCount, NewMember.Decl->DeclNode->Line, NewMember.Name.CStr(), 0);
+                CM.Log(CMT_OpParamCount, NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr(), 0);
                 return false;
             }
         }
@@ -79,14 +79,14 @@ bool InterfaceType::ValidateMember(InterfaceMember& NewMember, CompileMsg& CM)
         {
             if(Func->Params.Count() != 1)
             {
-                CM.Log(CMT_OpParamCount, NewMember.Decl->DeclNode->Line, NewMember.Name.CStr(), 1);
+                CM.Log(CMT_OpParamCount, NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr(), 1);
                 return false;
             }
         }
 
         if(Func->Returns.Count() != 1)
         {
-            CM.Log(CMT_OpReturnCount, NewMember.Decl->DeclNode->Line, NewMember.Name.CStr());
+            CM.Log(CMT_OpReturnCount, NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr());
             return false;
         }
 
@@ -96,7 +96,7 @@ bool InterfaceType::ValidateMember(InterfaceMember& NewMember, CompileMsg& CM)
         {
             if(Func->Returns[0].Type->IsBool() == false)
             {
-                CM.Log(CMT_OpBoolRequired,  NewMember.Decl->DeclNode->Line, NewMember.Name.CStr());
+                CM.Log(CMT_OpBoolRequired,  NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr());
                 return false;
             }
         }
@@ -104,7 +104,7 @@ bool InterfaceType::ValidateMember(InterfaceMember& NewMember, CompileMsg& CM)
         {
             if(Func->Returns[0].Type->IsString() == false)
             {
-                CM.Log(CMT_OpStringRequired,  NewMember.Decl->DeclNode->Line, NewMember.Name.CStr());
+                CM.Log(CMT_OpStringRequired,  NewMember.Decl->DeclNode->SrcRange, NewMember.Name.CStr());
                 return false;
             }
         }
@@ -152,7 +152,7 @@ void InterfaceType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, 
         {
             // Error: Done
             if (Phase == SRP_GlobalVar || Phase == SRP_Standalone)
-                CM.Log(CMT_NoBaseType, DeclNode->Line, UnresolvedBase[i].Name.CStr());
+                CM.Log(CMT_NoBaseType, DeclNode->SrcRange, UnresolvedBase[i].Name.CStr());
             continue;
         }
         else
@@ -164,7 +164,7 @@ void InterfaceType::ResolveReferredType(SymbolScope* CurrScope, CompileMsg& CM, 
             }
             else
             {
-                CM.Log(CMT_InterfaceBaseTypeError, DeclNode->Line, UnresolvedBase[i].Name.CStr());
+                CM.Log(CMT_InterfaceBaseTypeError, DeclNode->SrcRange, UnresolvedBase[i].Name.CStr());
             }
         }
     }

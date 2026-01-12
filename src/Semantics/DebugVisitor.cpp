@@ -21,10 +21,10 @@ DebugVisitor::DebugVisitor(RecursiveVisitor* InWrappedVisitor, bool InEnableBrea
 
 void DebugVisitor::OnVisit(SPtr<ABase> Node)
 {
-    if(Node->Line.Flag & LF_Break)
+    if(Node->SrcRange.Flag & LF_Break)
     {
         if(EnableBreak)
-            VERBOSE(LogMisc, T("Breakpoint hitsat (%d, %d)\n"), Node->Line.Line, Node->Line.Col);
+            VERBOSE(LogMisc, T("Breakpoint hitsat (%d, %d)\n"), Node->SrcRange.Start.Line, Node->SrcRange.Start.Col);
     }
     for(int i = 0; i < OnVisitCallbacks.Count(); i++)
     {
@@ -34,10 +34,10 @@ void DebugVisitor::OnVisit(SPtr<ABase> Node)
 
 void DebugVisitor::OnBeginVisit(SPtr<ABase> Node)
 {
-    if(Node->Line.Flag & LF_Break)
+    if(Node->SrcRange.Flag & LF_Break)
     {
         if(EnableBreak)
-            VERBOSE(LogMisc, T("Breakpoint hits at (%d, %d)\n"), Node->Line.Line, Node->Line.Col);
+            VERBOSE(LogMisc, T("Breakpoint hits at (%d, %d)\n"), Node->SrcRange.Start.Line, Node->SrcRange.Start.Col);
     }
 
     for(int i = 0; i < OnBeginVisitCallbacks.Count(); i++)
@@ -48,10 +48,10 @@ void DebugVisitor::OnBeginVisit(SPtr<ABase> Node)
 
 void DebugVisitor::OnEndVisit(SPtr<ABase> Node)
 {
-    if(Node->Line.Flag & LF_Break)
+    if(Node->SrcRange.Flag & LF_Break)
     {
         if(EnableBreak)
-            VERBOSE(LogMisc, T("Breakpoint hitsat (%d, %d)\n"), Node->Line.Line, Node->Line.Col);
+            VERBOSE(LogMisc, T("Breakpoint hitsat (%d, %d)\n"), Node->SrcRange.Start.Line, Node->SrcRange.Start.Col);
     }
 
     for(int i = 0; i < OnEndVisitCallbacks.Count(); i++)
